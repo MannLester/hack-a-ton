@@ -15,7 +15,7 @@ import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primit
 import { PortfolioView } from "@/components/participants/portfolio-view";
 import { TeamView } from "@/components/participants/team-builder-view";
 
-export function ParticipantView({
+export function LandingView({
   activeTab,
   setActiveTab,
   query,

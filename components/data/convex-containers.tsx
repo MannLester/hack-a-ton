@@ -28,7 +28,7 @@ import {
 } from "@/components/data/adapters";
 import { AdminView } from "@/components/admin/moderation-view";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
-import { ParticipantView } from "@/components/participants/explore-view";
+import { LandingView } from "@/components/landing/landing-view";
 
 export function ConvexOrganizerView({
   activeTab,
@@ -247,7 +247,7 @@ export function ConvexParticipantView({
   };
 
   return (
-    <ParticipantView
+    <LandingView
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       query={query}

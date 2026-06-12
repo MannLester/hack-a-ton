@@ -10,7 +10,7 @@ import {
   ConvexParticipantView,
 } from "@/components/data/convex-containers";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
-import { ParticipantView } from "@/components/participants/explore-view";
+import { LandingView } from "@/components/landing/landing-view";
 import { OrganizerAuthGate } from "@/components/shared/auth-controls";
 import { formats, themes } from "@/components/shared/config";
 import { useClerkAuthState } from "@/components/shared/convex-provider";
@@ -243,7 +243,7 @@ export function HackatonApp() {
               onLikeTeammate={likeTeammate}
             />
           ) : (
-            <ParticipantView
+            <LandingView
               activeTab={participantTab}
               setActiveTab={setParticipantTab}
               query={query}
