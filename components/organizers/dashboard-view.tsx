@@ -1,9 +1,9 @@
 import { CheckCircle2, ClipboardCheck, Edit3, Plus, Users } from "lucide-react";
 import { hackathons, type Hackathon } from "@/lib/sample-data";
 import type { OrganizerTab } from "@/components/shared/types";
-import { SectionTitle, StatCard, statusClass } from "@/components/shared/ui";
+import { SectionTitle, StatCard, statusClass } from "@/components/shared/primitives";
 import { CreateListingView } from "@/components/organizers/create-listing-view";
-import { OrganizerInsightsView } from "@/components/organizers/organizer-insights-view";
+import { OrganizerInsightsView } from "@/components/organizers/insights-view";
 
 export function OrganizerView({
   activeTab,

@@ -10,9 +10,9 @@ import {
 import type { Teammate } from "@/components/shared/types";
 import type { Hackathon } from "@/lib/sample-data";
 import { teamsLooking } from "@/lib/sample-data";
-import { FeaturePanel, SectionTitle } from "@/components/shared/ui";
-import { SwipeStack } from "@/components/participants/swipe-stack";
-import { TeamSwipeStack } from "@/components/participants/team-swipe-stack";
+import { FeaturePanel, SectionTitle } from "@/components/shared/primitives";
+import { SwipeStack } from "@/components/participants/teammate-swipe-stack";
+import { TeamSwipeStack } from "@/components/participants/team-lookup-swipe-stack";
 
 const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch"];
 

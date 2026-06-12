@@ -17,16 +17,18 @@ import {
   demoOrganizerId,
   demoStaffUserId,
   demoUserId,
-  getUiHackathon,
-  getUiTeammate,
   type OrganizerTab,
   type ParticipantTab,
   type Teammate,
   type UiHackathon,
 } from "@/components/shared/types";
-import { AdminView } from "@/components/admin/admin-view";
-import { OrganizerView } from "@/components/organizers/organizer-view";
-import { ParticipantView } from "@/components/participants/participant-view";
+import {
+  getUiHackathon,
+  getUiTeammate,
+} from "@/components/data/adapters";
+import { AdminView } from "@/components/admin/moderation-view";
+import { OrganizerView } from "@/components/organizers/dashboard-view";
+import { ParticipantView } from "@/components/participants/explore-view";
 
 export function ConvexOrganizerView({
   activeTab,

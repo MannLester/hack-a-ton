@@ -1,2 +1,2 @@
-export { AdminView } from "./admin-view";
-export { ReviewCard } from "./review-card";
+export { AdminView } from "./moderation-view";
+export { ReviewCard } from "./submission-card";

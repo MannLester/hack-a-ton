@@ -13,9 +13,9 @@ import { formats, themes } from "@/components/shared/config";
 import type { Hackathon } from "@/lib/sample-data";
 import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
-import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/ui";
+import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
-import { TeamView } from "@/components/participants/team-view";
+import { TeamView } from "@/components/participants/team-builder-view";
 
 export function ParticipantView({
   activeTab,

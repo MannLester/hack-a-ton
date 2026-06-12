@@ -1,9 +1,55 @@
 import type { Doc } from "@/convex/_generated/dataModel";
-import {
-  getUiHackathon,
-  type PortfolioProfile,
-  type UiHackathon,
+import { type Hackathon } from "@/lib/sample-data";
+import type {
+  ConvexHackathon,
+  ConvexLftProfile,
+  PortfolioProfile,
+  Teammate,
+  UiHackathon,
 } from "@/components/shared/types";
+
+function getDisplayStatus(
+  status: Doc<"hackathons">["status"],
+): Hackathon["status"] {
+  if (status === "published") return "Open";
+  if (status === "needs_edits") return "Closing soon";
+  return "Upcoming";
+}
+
+export function getUiHackathon(hackathon: ConvexHackathon): UiHackathon {
+  return {
+    id: hackathon._id,
+    convexId: hackathon._id,
+    name: hackathon.name,
+    organizer: hackathon.organizerName,
+    date: hackathon.dateLabel,
+    deadline: hackathon.registrationDeadlineLabel,
+    format: hackathon.format,
+    location: hackathon.location,
+    eligibility: hackathon.eligibility,
+    themes: hackathon.themes,
+    teamSize: hackathon.teamSize,
+    prize: hackathon.prize,
+    status: getDisplayStatus(hackathon.status),
+    difficulty: hackathon.difficulty,
+    interested: hackathon.interestedCount,
+    lftCount: hackathon.lftCount,
+    savedCount: hackathon.savedCount,
+    summary: hackathon.summary,
+  };
+}
+
+export function getUiTeammate(profile: ConvexLftProfile): Teammate {
+  return {
+    name: profile.displayName,
+    role: profile.role,
+    school: profile.schoolOrCompany ?? "Independent builder",
+    stack: profile.stack.join(", "),
+    availability: profile.availability,
+    goal: profile.goal,
+    match: `${profile.matchPercent}%`,
+  };
+}
 
 export type ConvexPortfolioProfile = {
   user: Doc<"users"> | null;

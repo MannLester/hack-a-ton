@@ -1,6 +1,6 @@
 import { Heart, X } from "lucide-react";
 import type { Teammate } from "@/components/shared/types";
-import { PanelCard } from "@/components/shared/ui";
+import { PanelCard } from "@/components/shared/primitives";
 
 export function TeammateCard({
   teammate,

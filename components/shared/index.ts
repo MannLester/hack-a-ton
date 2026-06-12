@@ -14,8 +14,6 @@ export {
   demoOrganizerId,
   demoStaffUserId,
   demoUserId,
-  getUiHackathon,
-  getUiTeammate,
 } from "./types";
 export {
   EmptyState,
@@ -25,4 +23,4 @@ export {
   StatCard,
   StatusPill,
   statusClass,
-} from "./ui";
+} from "./primitives";

@@ -2,4 +2,11 @@ export {
   ConvexAdminView,
   ConvexOrganizerView,
   ConvexParticipantView,
-} from "./convex-views";
+} from "./convex-containers";
+export {
+  getUiHackathon,
+  getUiTeammate,
+  getUiOrganizerHackathon,
+  getUiReviewHackathon,
+  getUiPortfolioProfile,
+} from "./adapters";

@@ -1,5 +1,5 @@
 import type { Hackathon } from "@/lib/sample-data";
-import { PanelCard } from "@/components/shared/ui";
+import { PanelCard } from "@/components/shared/primitives";
 
 export function ReviewCard({
   hackathon,

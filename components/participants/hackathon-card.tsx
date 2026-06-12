@@ -7,7 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
-import { PanelCard, StatusPill, statusClass } from "@/components/shared/ui";
+import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 
 export function HackathonCard({
   hackathon,
