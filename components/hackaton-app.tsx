@@ -1,134 +1,25 @@
 "use client";
 
-import Image from "next/image";
-import { useMutation, useQuery } from "convex/react";
-import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { hackathons, teammates } from "@/lib/sample-data";
+import { AppNavigation } from "./hackaton/app-navigation";
+import { formats, themes } from "./hackaton/config";
 import {
-  formats,
-  organizerTabs,
-  participantTabs,
-  themes,
-} from "./hackaton/config";
+  ConvexAdminView,
+  ConvexOrganizerView,
+  ConvexParticipantView,
+} from "./hackaton/convex-views";
 import {
-  demoUserId,
   demoOrganizerId,
   demoStaffUserId,
-  getUiTeammate,
-  getUiHackathon,
   type OrganizerTab,
   type ParticipantTab,
   type Persona,
-  type PortfolioProfile,
   type Teammate,
-  type UiHackathon,
 } from "./hackaton/types";
 import { AdminView } from "./hackaton/views/admin-view";
 import { OrganizerView } from "./hackaton/views/organizer-view";
 import { ParticipantView } from "./hackaton/views/participant-view";
-
-type ConvexPortfolioProfile = {
-  user: Doc<"users"> | null;
-  badges: (Doc<"badges"> & { awardedAt: number })[];
-  stats: {
-    participations: number;
-    finals: number;
-    wins: number;
-    verified: number;
-  };
-  entries: Doc<"portfolioEntries">[];
-};
-
-type OrganizerDashboard = {
-  stats: {
-    published: number;
-    pendingReview: number;
-    drafts: number;
-  };
-  hackathons: Doc<"hackathons">[];
-};
-
-type OrganizerInsights = {
-  totals: {
-    savedCount: number;
-    interestedCount: number;
-    lftClickCount: number;
-    externalRegistrationClickCount: number;
-  };
-  listings: {
-    hackathonId: string;
-    hackathonName: string;
-    savedCount: number;
-    interestedCount: number;
-    lftClickCount: number;
-    externalRegistrationClickCount: number;
-  }[];
-};
-
-type PendingReview = Doc<"listingReviews"> & {
-  hackathon: Doc<"hackathons"> | null;
-  organizer: Doc<"organizers"> | null;
-};
-
-function getUiOrganizerHackathon(
-  hackathon: Doc<"hackathons">,
-  interestedCount: number,
-): UiHackathon {
-  return getUiHackathon({
-    ...hackathon,
-    organizerName: "Your organizer",
-    interestedCount,
-    lftCount: 0,
-    savedCount: 0,
-  });
-}
-
-function getUiReviewHackathon(review: PendingReview): UiHackathon | null {
-  if (!review.hackathon) return null;
-
-  const hackathon = getUiHackathon({
-    ...review.hackathon,
-    organizerName: review.organizer?.name ?? "Unknown organizer",
-    interestedCount: 0,
-    lftCount: 0,
-    savedCount: 0,
-  });
-
-  return {
-    ...hackathon,
-    id: review._id,
-  };
-}
-
-function getUiPortfolioProfile(
-  profile: ConvexPortfolioProfile,
-): PortfolioProfile | undefined {
-  if (!profile.user) return undefined;
-
-  return {
-    displayName: profile.user.displayName,
-    initials: profile.user.initials,
-    meta: [profile.user.schoolOrCompany, profile.user.location]
-      .filter(Boolean)
-      .join(" · "),
-    bio: profile.user.bio ?? "No bio yet.",
-    badges: profile.badges.map((badge) => badge.name),
-    stats: [
-      { label: "Participations", value: String(profile.stats.participations) },
-      { label: "Finals", value: String(profile.stats.finals) },
-      { label: "Wins", value: String(profile.stats.wins) },
-      { label: "Verified", value: String(profile.stats.verified) },
-    ],
-    entries: profile.entries.map((entry) => ({
-      hackathonName: entry.hackathonName,
-      result: entry.result,
-      source: entry.source,
-    })),
-  };
-}
 
 export function HackatonApp() {
   const [persona, setPersona] = useState<Persona>("participant");
@@ -166,9 +57,6 @@ export function HackatonApp() {
       }),
     [format, query, theme],
   );
-  const activeTabs =
-    persona === "participant" ? participantTabs : organizerTabs;
-
   const toggleSavedHackathon = (hackathonId: string) => {
     setSavedHackathonIds((currentIds) =>
       currentIds.includes(hackathonId)
@@ -202,93 +90,15 @@ export function HackatonApp() {
 
   return (
     <main className="min-h-screen bg-[#f5f3ea] text-zinc-950">
-      <header className="sticky top-0 z-30 border-b-2 border-zinc-950 bg-zinc-950 text-white shadow-[0_4px_0_#00a7e8]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <button
-            onClick={() => {
-              setPersona("participant");
-              setParticipantTab("explore");
-            }}
-            className="flex items-center gap-3 text-left"
-          >
-            <Image
-              src="/brand/hack-a-ton-logo.png"
-              alt="Hack-A-Ton"
-              width={48}
-              height={48}
-              className="size-12 rounded-md border border-white/20 object-cover"
-              priority
-            />
-            <span>
-              <span className="block text-lg font-black leading-5 tracking-tight">
-                Hack-A-Ton
-              </span>
-              <span className="block text-xs font-bold text-[#ffd21f]">
-                Discover · Team · Flex
-              </span>
-            </span>
-          </button>
-
-          <div className="hidden rounded-lg border border-white/15 bg-white/10 p-1 sm:flex">
-            <button
-              onClick={() => setPersona("participant")}
-              className={`h-9 rounded-md px-4 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white hover:bg-white/10"}`}
-            >
-              Participant
-            </button>
-            <button
-              onClick={() => setPersona("organizer")}
-              className={`h-9 rounded-md px-4 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white hover:bg-white/10"}`}
-            >
-              Organizer
-            </button>
-          </div>
-
-          <nav className="hidden items-center gap-1 lg:flex">
-            {activeTabs.map((tab) => {
-              const Icon = tab.icon;
-              const active =
-                persona === "participant"
-                  ? participantTab === tab.id
-                  : organizerTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() =>
-                    persona === "participant"
-                      ? setParticipantTab(tab.id as ParticipantTab)
-                      : setOrganizerTab(tab.id as OrganizerTab)
-                  }
-                  className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-black ${active ? "bg-white text-zinc-950" : "text-zinc-200 hover:bg-white/10"}`}
-                >
-                  <Icon className="size-4" /> {tab.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <button
-            onClick={() => setShowAdmin((value) => !value)}
-            className="hidden h-10 items-center gap-2 rounded-md border border-white/15 px-3 text-sm font-black text-white hover:bg-white/10 md:inline-flex"
-          >
-            <ShieldCheck className="size-4" /> Staff
-          </button>
-        </div>
-        <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">
-          <button
-            onClick={() => setPersona("participant")}
-            className={`h-11 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white"}`}
-          >
-            Participant
-          </button>
-          <button
-            onClick={() => setPersona("organizer")}
-            className={`h-11 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white"}`}
-          >
-            Organizer
-          </button>
-        </div>
-      </header>
+      <AppNavigation
+        persona={persona}
+        participantTab={participantTab}
+        organizerTab={organizerTab}
+        setPersona={setPersona}
+        setParticipantTab={setParticipantTab}
+        setOrganizerTab={setOrganizerTab}
+        toggleAdmin={() => setShowAdmin((value) => !value)}
+      />
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
         {showAdmin ? (
@@ -358,272 +168,6 @@ export function HackatonApp() {
           />
         )}
       </div>
-
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-zinc-950 bg-white lg:hidden">
-        <div className="grid grid-cols-3">
-          {activeTabs.map((tab) => {
-            const Icon = tab.icon;
-            const active =
-              persona === "participant"
-                ? participantTab === tab.id
-                : organizerTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() =>
-                  persona === "participant"
-                    ? setParticipantTab(tab.id as ParticipantTab)
-                    : setOrganizerTab(tab.id as OrganizerTab)
-                }
-                className={`flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-black ${active ? "text-zinc-950" : "text-zinc-500"}`}
-              >
-                <Icon className="size-5" /> {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </main>
-  );
-}
-
-function ConvexOrganizerView({
-  activeTab,
-  setActiveTab,
-}: {
-  activeTab: OrganizerTab;
-  setActiveTab: (tab: OrganizerTab) => void;
-}) {
-  const dashboard = useQuery(
-    api.organizers.getDashboard,
-    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
-  ) as OrganizerDashboard | undefined;
-  const insights = useQuery(
-    api.organizers.getInsights,
-    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
-  ) as OrganizerInsights | undefined;
-  const interestedByHackathonName = new Map(
-    insights?.listings.map((listing) => [
-      listing.hackathonName,
-      listing.interestedCount,
-    ]) ?? [],
-  );
-  const listings =
-    dashboard?.hackathons && dashboard.hackathons.length > 0
-      ? dashboard.hackathons.map((hackathon) =>
-          getUiOrganizerHackathon(
-            hackathon,
-            interestedByHackathonName.get(hackathon.name) ?? 0,
-          ),
-        )
-      : undefined;
-  const stats = dashboard
-    ? {
-        published: dashboard.stats.published,
-        pendingReview: dashboard.stats.pendingReview,
-        interestedParticipants: insights?.totals.interestedCount ?? 0,
-      }
-    : undefined;
-
-  return (
-    <OrganizerView
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      listings={listings}
-      stats={stats}
-      insights={insights?.totals}
-    />
-  );
-}
-
-function ConvexAdminView({
-  pendingReviewIds,
-  onRemovePendingReview,
-}: {
-  pendingReviewIds: string[];
-  onRemovePendingReview: (hackathonId: string) => void;
-}) {
-  const pendingReviews = useQuery(api.staff.listPendingReviews, {}) as
-    | PendingReview[]
-    | undefined;
-  const approveListing = useMutation(api.staff.approveListing);
-  const requestListingEdits = useMutation(api.staff.requestListingEdits);
-  const pendingHackathons = pendingReviews
-    ?.map(getUiReviewHackathon)
-    .filter((hackathon): hackathon is UiHackathon => hackathon !== null);
-  const hasPendingReviews = Boolean(pendingHackathons?.length);
-
-  const approveReview = async (reviewId: string) => {
-    onRemovePendingReview(reviewId);
-
-    if (!demoStaffUserId) return;
-
-    await approveListing({
-      staffUserId: demoStaffUserId,
-      reviewId: reviewId as Id<"listingReviews">,
-    });
-  };
-
-  const requestEdits = async (reviewId: string) => {
-    onRemovePendingReview(reviewId);
-
-    if (!demoStaffUserId) return;
-
-    await requestListingEdits({
-      staffUserId: demoStaffUserId,
-      reviewId: reviewId as Id<"listingReviews">,
-      note: "Needs edits from staff review.",
-    });
-  };
-
-  return (
-    <AdminView
-      pendingReviewIds={pendingReviewIds}
-      onRemovePendingReview={onRemovePendingReview}
-      pendingHackathons={hasPendingReviews ? pendingHackathons : undefined}
-      onRequestEdits={hasPendingReviews ? requestEdits : undefined}
-      onApprove={hasPendingReviews ? approveReview : undefined}
-    />
-  );
-}
-
-function ConvexParticipantView({
-  activeTab,
-  setActiveTab,
-  query,
-  setQuery,
-  format,
-  setFormat,
-  theme,
-  setTheme,
-  fallbackHackathons,
-  savedHackathonIds,
-  onToggleLocalSave,
-  visibleTeammates,
-  likedTeammates,
-  showMatches,
-  setShowMatches,
-  onDismissTeammate,
-  onLikeTeammate,
-}: {
-  activeTab: ParticipantTab;
-  setActiveTab: (tab: ParticipantTab) => void;
-  query: string;
-  setQuery: (query: string) => void;
-  format: (typeof formats)[number];
-  setFormat: (format: (typeof formats)[number]) => void;
-  theme: (typeof themes)[number];
-  setTheme: (theme: (typeof themes)[number]) => void;
-  fallbackHackathons: UiHackathon[];
-  savedHackathonIds: string[];
-  onToggleLocalSave: (hackathonId: string) => void;
-  visibleTeammates: Teammate[];
-  likedTeammates: Teammate[];
-  showMatches: boolean;
-  setShowMatches: (showMatches: boolean) => void;
-  onDismissTeammate: (teammateName: string) => void;
-  onLikeTeammate: (teammate: Teammate) => void;
-}) {
-  const [hiddenConvexTeammateNames, setHiddenConvexTeammateNames] = useState<
-    string[]
-  >([]);
-  const convexHackathons = useQuery(api.hackathons.listPublished, {
-    queryText: query,
-    format,
-    theme,
-  });
-  const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
-  const convexTeammates = useQuery(
-    api.teams.listActiveProfiles,
-    demoUserId ? { viewerUserId: demoUserId } : "skip",
-  );
-  const convexPortfolioProfile = useQuery(
-    api.portfolio.getProfile,
-    demoUserId ? { userId: demoUserId } : "skip",
-  );
-  const saveListing = useMutation(api.hackathons.saveListing);
-  const unsaveListing = useMutation(api.hackathons.unsaveListing);
-  const displayedHackathons =
-    convexHackathons && convexHackathons.length > 0
-      ? convexHackathons.map(getUiHackathon)
-      : fallbackHackathons;
-  const displayedTeammates =
-    convexTeammates && convexTeammates.length > 0
-      ? convexTeammates
-          .map(getUiTeammate)
-          .filter(
-            (teammate) => !hiddenConvexTeammateNames.includes(teammate.name),
-          )
-      : visibleTeammates;
-  const displayedPortfolioProfile = convexPortfolioProfile
-    ? getUiPortfolioProfile(convexPortfolioProfile)
-    : undefined;
-  const displayedFeaturedHackathon = featuredHackathon
-    ? getUiHackathon(featuredHackathon)
-    : (fallbackHackathons[0] ?? null);
-
-  const toggleSavedHackathon = async (hackathonId: string) => {
-    const isSaved = savedHackathonIds.includes(hackathonId);
-    onToggleLocalSave(hackathonId);
-
-    if (!demoUserId) return;
-
-    const hackathon = displayedHackathons.find(
-      (item) => item.id === hackathonId,
-    );
-
-    if (!hackathon?.convexId) return;
-
-    if (isSaved) {
-      await unsaveListing({
-        userId: demoUserId,
-        hackathonId: hackathon.convexId,
-      });
-      return;
-    }
-
-    await saveListing({ userId: demoUserId, hackathonId: hackathon.convexId });
-  };
-
-  const dismissTeammate = (teammateName: string) => {
-    setHiddenConvexTeammateNames((currentNames) =>
-      currentNames.includes(teammateName)
-        ? currentNames
-        : [...currentNames, teammateName],
-    );
-    onDismissTeammate(teammateName);
-  };
-
-  const likeTeammate = (teammate: Teammate) => {
-    setHiddenConvexTeammateNames((currentNames) =>
-      currentNames.includes(teammate.name)
-        ? currentNames
-        : [...currentNames, teammate.name],
-    );
-    onLikeTeammate(teammate);
-  };
-
-  return (
-    <ParticipantView
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      query={query}
-      setQuery={setQuery}
-      format={format}
-      setFormat={setFormat}
-      theme={theme}
-      setTheme={setTheme}
-      filteredHackathons={displayedHackathons}
-      featuredHackathon={displayedFeaturedHackathon}
-      savedHackathonIds={savedHackathonIds}
-      onToggleSave={toggleSavedHackathon}
-      visibleTeammates={displayedTeammates}
-      likedTeammates={likedTeammates}
-      showMatches={showMatches}
-      setShowMatches={setShowMatches}
-      onDismissTeammate={dismissTeammate}
-      onLikeTeammate={likeTeammate}
-      portfolioProfile={displayedPortfolioProfile}
-    />
   );
 }
