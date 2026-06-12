@@ -9,6 +9,7 @@
  */
 
 import type * as hackathons from "../hackathons.js";
+import type * as teams from "../teams.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   hackathons: typeof hackathons;
+  teams: typeof teams;
 }>;
 
 /**
