@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
+import { AuthActionButton } from "@/components/shared/auth-controls";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 
 export function HackathonCard({
@@ -80,12 +81,18 @@ export function HackathonCard({
           <button className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-black text-white hover:bg-zinc-800">
             Details <ChevronRight className="size-4" />
           </button>
-          <button
-            onClick={() => onToggleSave(hackathon.id)}
+          <AuthActionButton
+            action="save_hackathon"
+            onAuthorizedClick={() => onToggleSave(hackathon.id)}
             className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-900 bg-white px-3 text-sm font-black text-zinc-800 hover:bg-[#ffd21f]/20"
+            signedOutLabel={
+              <>
+                <Bookmark className="size-4" /> Log in to save
+              </>
+            }
           >
             <Bookmark className="size-4" /> {isSaved ? "Saved" : "Save"}
-          </button>
+          </AuthActionButton>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 border-t-2 border-zinc-100 pt-4 text-xs font-bold text-zinc-500">

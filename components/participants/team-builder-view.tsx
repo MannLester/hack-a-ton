@@ -10,6 +10,7 @@ import {
 import type { Teammate } from "@/components/shared/types";
 import type { Hackathon } from "@/lib/sample-data";
 import { teamsLooking } from "@/lib/sample-data";
+import { AuthActionButton } from "@/components/shared/auth-controls";
 import { FeaturePanel, SectionTitle } from "@/components/shared/primitives";
 import { SwipeStack } from "@/components/participants/teammate-swipe-stack";
 import { TeamSwipeStack } from "@/components/participants/team-lookup-swipe-stack";
@@ -203,13 +204,19 @@ export function TeamView({
               >
                 Cancel
               </button>
-              <button
-                onClick={() => setTeamPhase("solo_swiping")}
+              <AuthActionButton
+                action="create_lft_card"
+                onAuthorizedClick={() => setTeamPhase("solo_swiping")}
                 disabled={!lftCard.teamName || !lftCard.hackathon || !lftCard.goal}
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
+                signedOutLabel={
+                  <>
+                    <Plus className="size-4" /> Log in to create
+                  </>
+                }
               >
                 <Plus className="size-4" /> Create Card
-              </button>
+              </AuthActionButton>
             </div>
           </FeaturePanel>
         </div>

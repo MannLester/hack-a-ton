@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { hackathons, teammates } from "@/lib/sample-data";
-import { formats, themes } from "@/components/shared/config";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import { AdminView } from "@/components/admin/moderation-view";
 import {
   ConvexAdminView,
   ConvexOrganizerView,
   ConvexParticipantView,
 } from "@/components/data/convex-containers";
+import { OrganizerView } from "@/components/organizers/dashboard-view";
+import { ParticipantView } from "@/components/participants/explore-view";
+import { OrganizerAuthGate } from "@/components/shared/auth-controls";
+import { formats, themes } from "@/components/shared/config";
+import { useClerkAuthState } from "@/components/shared/convex-provider";
 import {
   demoOrganizerId,
   demoStaffUserId,
@@ -16,11 +22,8 @@ import {
   type Persona,
   type Teammate,
 } from "@/components/shared/types";
-import { AdminView } from "@/components/admin/moderation-view";
-import { OrganizerView } from "@/components/organizers/dashboard-view";
-import { ParticipantView } from "@/components/participants/explore-view";
-import Image from "next/image";
-import Link from "next/link";
+import { canAccessPersona, getDefaultPersonaAfterSignIn } from "@/lib/auth-persona";
+import { hackathons, teammates } from "@/lib/sample-data";
 
 function AppNavigation({
   persona,
@@ -75,18 +78,24 @@ function AppNavigation({
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/sign-in"
-            className="h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10 inline-flex"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/sign-up"
-            className="h-10 items-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] inline-flex"
-          >
-            Sign up
-          </Link>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
+                Log in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="inline-flex h-10 items-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]">
+                Sign up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black text-zinc-200">
+              Signed in
+            </span>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
       </div>
       <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">
@@ -108,7 +117,8 @@ function AppNavigation({
 }
 
 export function HackatonApp() {
-  const [persona, setPersona] = useState<Persona>("participant");
+  const { isAuthLoaded, isSignedIn } = useClerkAuthState();
+  const [persona, setPersonaState] = useState<Persona>("participant");
   const [participantTab, setParticipantTab] =
     useState<ParticipantTab>("explore");
   const [organizerTab, setOrganizerTab] = useState<OrganizerTab>("listings");
@@ -123,6 +133,19 @@ export function HackatonApp() {
   const [pendingReviewIds, setPendingReviewIds] = useState(
     hackathons.slice(0, 2).map((hackathon) => hackathon.id),
   );
+
+  useEffect(() => {
+    const storedPersona = window.localStorage.getItem("hackaton-persona");
+    if (storedPersona === "participant" || storedPersona === "organizer") {
+      setPersonaState(getDefaultPersonaAfterSignIn(storedPersona));
+    }
+  }, []);
+
+  const setPersona = (nextPersona: Persona) => {
+    setPersonaState(nextPersona);
+    window.localStorage.setItem("hackaton-persona", nextPersona);
+  };
+
   const fallbackHackathons = useMemo(
     () =>
       hackathons.filter((hackathon) => {
@@ -143,6 +166,7 @@ export function HackatonApp() {
       }),
     [format, query, theme],
   );
+
   const toggleSavedHackathon = (hackathonId: string) => {
     setSavedHackathonIds((currentIds) =>
       currentIds.includes(hackathonId)
@@ -173,6 +197,8 @@ export function HackatonApp() {
       currentIds.filter((id) => id !== hackathonId),
     );
   };
+
+  const canUseOrganizerMode = canAccessPersona("organizer", isSignedIn);
 
   return (
     <main className="min-h-screen bg-[#f5f3ea] text-zinc-950">
@@ -238,6 +264,8 @@ export function HackatonApp() {
               onLikeTeammate={likeTeammate}
             />
           )
+        ) : !isAuthLoaded || !canUseOrganizerMode ? (
+          <OrganizerAuthGate />
         ) : process.env.NEXT_PUBLIC_CONVEX_URL && demoOrganizerId ? (
           <ConvexOrganizerView
             activeTab={organizerTab}

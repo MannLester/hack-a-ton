@@ -1,6 +1,7 @@
-import { Trophy } from "lucide-react";
+import { Edit3, Trophy } from "lucide-react";
 import { badges, hackathons, portfolioStats } from "@/lib/sample-data";
 import type { PortfolioProfile } from "@/components/shared/types";
+import { AuthActionButton } from "@/components/shared/auth-controls";
 import { FeaturePanel, PanelCard, SectionTitle, StatCard } from "@/components/shared/primitives";
 
 export function PortfolioView({ profile }: { profile?: PortfolioProfile }) {
@@ -19,6 +20,20 @@ export function PortfolioView({ profile }: { profile?: PortfolioProfile }) {
       <SectionTitle
         eyebrow="Participant / Portfolio"
         title="Your hackathon identity"
+        action={
+          <AuthActionButton
+            action="edit_portfolio"
+            onAuthorizedClick={() => undefined}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]"
+            signedOutLabel={
+              <>
+                <Edit3 className="size-4" /> Log in to edit
+              </>
+            }
+          >
+            <Edit3 className="size-4" /> Edit portfolio
+          </AuthActionButton>
+        }
       />
       <section className="grid gap-4 lg:grid-cols-[340px_1fr]">
         <FeaturePanel className="p-5">
