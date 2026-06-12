@@ -1,17 +1,23 @@
-import { hackathons } from "@/lib/sample-data";
+import { hackathons, type Hackathon } from "@/lib/sample-data";
 import { ReviewCard } from "../cards";
 import { EmptyState, SectionTitle } from "../ui";
 
 export function AdminView({
   pendingReviewIds,
   onRemovePendingReview,
+  pendingHackathons: pendingHackathonsOverride,
+  onRequestEdits,
+  onApprove,
 }: {
   pendingReviewIds: string[];
   onRemovePendingReview: (hackathonId: string) => void;
+  pendingHackathons?: Hackathon[];
+  onRequestEdits?: (hackathonId: string) => void;
+  onApprove?: (hackathonId: string) => void;
 }) {
-  const pendingHackathons = hackathons.filter((hackathon) =>
-    pendingReviewIds.includes(hackathon.id),
-  );
+  const pendingHackathons =
+    pendingHackathonsOverride ??
+    hackathons.filter((hackathon) => pendingReviewIds.includes(hackathon.id));
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -24,6 +30,8 @@ export function AdminView({
             key={item.id}
             hackathon={item}
             onRemovePendingReview={onRemovePendingReview}
+            onRequestEdits={onRequestEdits}
+            onApprove={onApprove}
           />
         ))}
       </section>

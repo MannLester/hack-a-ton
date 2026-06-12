@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { hackathons, teammates } from "@/lib/sample-data";
 import {
   formats,
@@ -15,6 +15,8 @@ import {
 } from "./hackaton/config";
 import {
   demoUserId,
+  demoOrganizerId,
+  demoStaffUserId,
   getUiTeammate,
   getUiHackathon,
   type OrganizerTab,
@@ -39,6 +41,67 @@ type ConvexPortfolioProfile = {
   };
   entries: Doc<"portfolioEntries">[];
 };
+
+type OrganizerDashboard = {
+  stats: {
+    published: number;
+    pendingReview: number;
+    drafts: number;
+  };
+  hackathons: Doc<"hackathons">[];
+};
+
+type OrganizerInsights = {
+  totals: {
+    savedCount: number;
+    interestedCount: number;
+    lftClickCount: number;
+    externalRegistrationClickCount: number;
+  };
+  listings: {
+    hackathonId: string;
+    hackathonName: string;
+    savedCount: number;
+    interestedCount: number;
+    lftClickCount: number;
+    externalRegistrationClickCount: number;
+  }[];
+};
+
+type PendingReview = Doc<"listingReviews"> & {
+  hackathon: Doc<"hackathons"> | null;
+  organizer: Doc<"organizers"> | null;
+};
+
+function getUiOrganizerHackathon(
+  hackathon: Doc<"hackathons">,
+  interestedCount: number,
+): UiHackathon {
+  return getUiHackathon({
+    ...hackathon,
+    organizerName: "Your organizer",
+    interestedCount,
+    lftCount: 0,
+    savedCount: 0,
+  });
+}
+
+function getUiReviewHackathon(review: PendingReview): UiHackathon | null {
+  if (!review.hackathon) return null;
+
+  const hackathon = getUiHackathon({
+    ...review.hackathon,
+    organizerName: review.organizer?.name ?? "Unknown organizer",
+    interestedCount: 0,
+    lftCount: 0,
+    savedCount: 0,
+  });
+
+  return {
+    ...hackathon,
+    id: review._id,
+  };
+}
 
 function getUiPortfolioProfile(
   profile: ConvexPortfolioProfile,
@@ -229,10 +292,17 @@ export function HackatonApp() {
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
         {showAdmin ? (
-          <AdminView
-            pendingReviewIds={pendingReviewIds}
-            onRemovePendingReview={removePendingReview}
-          />
+          process.env.NEXT_PUBLIC_CONVEX_URL && demoStaffUserId ? (
+            <ConvexAdminView
+              pendingReviewIds={pendingReviewIds}
+              onRemovePendingReview={removePendingReview}
+            />
+          ) : (
+            <AdminView
+              pendingReviewIds={pendingReviewIds}
+              onRemovePendingReview={removePendingReview}
+            />
+          )
         ) : persona === "participant" ? (
           process.env.NEXT_PUBLIC_CONVEX_URL ? (
             <ConvexParticipantView
@@ -276,6 +346,11 @@ export function HackatonApp() {
               onLikeTeammate={likeTeammate}
             />
           )
+        ) : process.env.NEXT_PUBLIC_CONVEX_URL && demoOrganizerId ? (
+          <ConvexOrganizerView
+            activeTab={organizerTab}
+            setActiveTab={setOrganizerTab}
+          />
         ) : (
           <OrganizerView
             activeTab={organizerTab}
@@ -309,6 +384,106 @@ export function HackatonApp() {
         </div>
       </nav>
     </main>
+  );
+}
+
+function ConvexOrganizerView({
+  activeTab,
+  setActiveTab,
+}: {
+  activeTab: OrganizerTab;
+  setActiveTab: (tab: OrganizerTab) => void;
+}) {
+  const dashboard = useQuery(
+    api.organizers.getDashboard,
+    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
+  ) as OrganizerDashboard | undefined;
+  const insights = useQuery(
+    api.organizers.getInsights,
+    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
+  ) as OrganizerInsights | undefined;
+  const interestedByHackathonName = new Map(
+    insights?.listings.map((listing) => [
+      listing.hackathonName,
+      listing.interestedCount,
+    ]) ?? [],
+  );
+  const listings =
+    dashboard?.hackathons && dashboard.hackathons.length > 0
+      ? dashboard.hackathons.map((hackathon) =>
+          getUiOrganizerHackathon(
+            hackathon,
+            interestedByHackathonName.get(hackathon.name) ?? 0,
+          ),
+        )
+      : undefined;
+  const stats = dashboard
+    ? {
+        published: dashboard.stats.published,
+        pendingReview: dashboard.stats.pendingReview,
+        interestedParticipants: insights?.totals.interestedCount ?? 0,
+      }
+    : undefined;
+
+  return (
+    <OrganizerView
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      listings={listings}
+      stats={stats}
+      insights={insights?.totals}
+    />
+  );
+}
+
+function ConvexAdminView({
+  pendingReviewIds,
+  onRemovePendingReview,
+}: {
+  pendingReviewIds: string[];
+  onRemovePendingReview: (hackathonId: string) => void;
+}) {
+  const pendingReviews = useQuery(api.staff.listPendingReviews, {}) as
+    | PendingReview[]
+    | undefined;
+  const approveListing = useMutation(api.staff.approveListing);
+  const requestListingEdits = useMutation(api.staff.requestListingEdits);
+  const pendingHackathons = pendingReviews
+    ?.map(getUiReviewHackathon)
+    .filter((hackathon): hackathon is UiHackathon => hackathon !== null);
+  const hasPendingReviews = Boolean(pendingHackathons?.length);
+
+  const approveReview = async (reviewId: string) => {
+    onRemovePendingReview(reviewId);
+
+    if (!demoStaffUserId) return;
+
+    await approveListing({
+      staffUserId: demoStaffUserId,
+      reviewId: reviewId as Id<"listingReviews">,
+    });
+  };
+
+  const requestEdits = async (reviewId: string) => {
+    onRemovePendingReview(reviewId);
+
+    if (!demoStaffUserId) return;
+
+    await requestListingEdits({
+      staffUserId: demoStaffUserId,
+      reviewId: reviewId as Id<"listingReviews">,
+      note: "Needs edits from staff review.",
+    });
+  };
+
+  return (
+    <AdminView
+      pendingReviewIds={pendingReviewIds}
+      onRemovePendingReview={onRemovePendingReview}
+      pendingHackathons={hasPendingReviews ? pendingHackathons : undefined}
+      onRequestEdits={hasPendingReviews ? requestEdits : undefined}
+      onApprove={hasPendingReviews ? approveReview : undefined}
+    />
   );
 }
 

@@ -43,6 +43,12 @@ export type CreateListingStatus =
 export const demoUserId = process.env.NEXT_PUBLIC_DEMO_USER_ID as
   | Id<"users">
   | undefined;
+export const demoOrganizerId = process.env.NEXT_PUBLIC_DEMO_ORGANIZER_ID as
+  | Id<"organizers">
+  | undefined;
+export const demoStaffUserId = process.env.NEXT_PUBLIC_DEMO_STAFF_USER_ID as
+  | Id<"users">
+  | undefined;
 
 function getDisplayStatus(
   status: Doc<"hackathons">["status"],

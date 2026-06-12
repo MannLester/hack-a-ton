@@ -151,9 +151,13 @@ export function TeammateCard({
 export function ReviewCard({
   hackathon,
   onRemovePendingReview,
+  onRequestEdits,
+  onApprove,
 }: {
   hackathon: Hackathon;
   onRemovePendingReview: (hackathonId: string) => void;
+  onRequestEdits?: (hackathonId: string) => void;
+  onApprove?: (hackathonId: string) => void;
 }) {
   return (
     <PanelCard>
@@ -169,13 +173,15 @@ export function ReviewCard({
       </p>
       <div className="mt-5 flex gap-2">
         <button
-          onClick={() => onRemovePendingReview(hackathon.id)}
+          onClick={() =>
+            (onRequestEdits ?? onRemovePendingReview)(hackathon.id)
+          }
           className="h-10 flex-1 rounded-md border-2 border-zinc-950 text-sm font-black text-zinc-800"
         >
           Needs edits
         </button>
         <button
-          onClick={() => onRemovePendingReview(hackathon.id)}
+          onClick={() => (onApprove ?? onRemovePendingReview)(hackathon.id)}
           className="h-10 flex-1 rounded-md bg-zinc-950 text-sm font-black text-white"
         >
           Approve

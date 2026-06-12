@@ -1,7 +1,15 @@
 import { Bookmark, ChevronRight, Users } from "lucide-react";
 import { FeaturePanel, SectionTitle, StatCard } from "../ui";
 
-export function OrganizerInsightsView() {
+export function OrganizerInsightsView({
+  totals,
+}: {
+  totals?: {
+    savedCount: number;
+    lftClickCount: number;
+    externalRegistrationClickCount: number;
+  };
+}) {
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -9,11 +17,23 @@ export function OrganizerInsightsView() {
         title="Lightweight listing interest signals"
       />
       <section className="grid gap-4 lg:grid-cols-3">
-        <StatCard label="Saved listings" value="418" icon={Bookmark} />
-        <StatCard label="LFT clicks" value="185" icon={Users} />
+        <StatCard
+          label="Saved listings"
+          value={totals ? String(totals.savedCount) : "418"}
+          icon={Bookmark}
+        />
+        <StatCard
+          label="LFT clicks"
+          value={totals ? String(totals.lftClickCount) : "185"}
+          icon={Users}
+        />
         <StatCard
           label="External registrations"
-          value="Not tracked"
+          value={
+            totals
+              ? String(totals.externalRegistrationClickCount)
+              : "Not tracked"
+          }
           icon={ChevronRight}
         />
       </section>

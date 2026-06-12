@@ -1,5 +1,5 @@
 import { CheckCircle2, ClipboardCheck, Edit3, Plus, Users } from "lucide-react";
-import { hackathons } from "@/lib/sample-data";
+import { hackathons, type Hackathon } from "@/lib/sample-data";
 import type { OrganizerTab } from "../types";
 import { SectionTitle, StatCard, statusClass } from "../ui";
 import { CreateListingView } from "./create-listing-view";
@@ -8,12 +8,27 @@ import { OrganizerInsightsView } from "./organizer-insights-view";
 export function OrganizerView({
   activeTab,
   setActiveTab,
+  listings = hackathons,
+  stats,
+  insights,
 }: {
   activeTab: OrganizerTab;
   setActiveTab: (tab: OrganizerTab) => void;
+  listings?: Hackathon[];
+  stats?: {
+    published: number;
+    pendingReview: number;
+    interestedParticipants: number;
+  };
+  insights?: {
+    savedCount: number;
+    lftClickCount: number;
+    externalRegistrationClickCount: number;
+  };
 }) {
   if (activeTab === "create") return <CreateListingView />;
-  if (activeTab === "insights") return <OrganizerInsightsView />;
+  if (activeTab === "insights")
+    return <OrganizerInsightsView totals={insights} />;
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -29,12 +44,24 @@ export function OrganizerView({
         }
       />
       <section className="grid gap-4 lg:grid-cols-3">
-        <StatCard label="Published" value="3" icon={CheckCircle2} />
-        <StatCard label="Pending review" value="1" icon={ClipboardCheck} />
-        <StatCard label="Interested participants" value="705" icon={Users} />
+        <StatCard
+          label="Published"
+          value={stats ? String(stats.published) : "3"}
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Pending review"
+          value={stats ? String(stats.pendingReview) : "1"}
+          icon={ClipboardCheck}
+        />
+        <StatCard
+          label="Interested participants"
+          value={stats ? String(stats.interestedParticipants) : "705"}
+          icon={Users}
+        />
       </section>
       <section className="rounded-lg border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#111]">
-        {hackathons.map((item) => (
+        {listings.map((item) => (
           <div
             key={item.id}
             className="flex flex-col gap-3 border-t-2 border-zinc-100 p-4 first:border-t-0 sm:flex-row sm:items-center sm:justify-between"
