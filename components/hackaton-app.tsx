@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { hackathons, teammates } from "@/lib/sample-data";
 import {
   formats,
@@ -14,16 +15,57 @@ import {
 } from "./hackaton/config";
 import {
   demoUserId,
+  getUiTeammate,
   getUiHackathon,
   type OrganizerTab,
   type ParticipantTab,
   type Persona,
+  type PortfolioProfile,
   type Teammate,
   type UiHackathon,
 } from "./hackaton/types";
 import { AdminView } from "./hackaton/views/admin-view";
 import { OrganizerView } from "./hackaton/views/organizer-view";
 import { ParticipantView } from "./hackaton/views/participant-view";
+
+type ConvexPortfolioProfile = {
+  user: Doc<"users"> | null;
+  badges: (Doc<"badges"> & { awardedAt: number })[];
+  stats: {
+    participations: number;
+    finals: number;
+    wins: number;
+    verified: number;
+  };
+  entries: Doc<"portfolioEntries">[];
+};
+
+function getUiPortfolioProfile(
+  profile: ConvexPortfolioProfile,
+): PortfolioProfile | undefined {
+  if (!profile.user) return undefined;
+
+  return {
+    displayName: profile.user.displayName,
+    initials: profile.user.initials,
+    meta: [profile.user.schoolOrCompany, profile.user.location]
+      .filter(Boolean)
+      .join(" · "),
+    bio: profile.user.bio ?? "No bio yet.",
+    badges: profile.badges.map((badge) => badge.name),
+    stats: [
+      { label: "Participations", value: String(profile.stats.participations) },
+      { label: "Finals", value: String(profile.stats.finals) },
+      { label: "Wins", value: String(profile.stats.wins) },
+      { label: "Verified", value: String(profile.stats.verified) },
+    ],
+    entries: profile.entries.map((entry) => ({
+      hackathonName: entry.hackathonName,
+      result: entry.result,
+      source: entry.source,
+    })),
+  };
+}
 
 export function HackatonApp() {
   const [persona, setPersona] = useState<Persona>("participant");
@@ -307,18 +349,40 @@ function ConvexParticipantView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
 }) {
+  const [hiddenConvexTeammateNames, setHiddenConvexTeammateNames] = useState<
+    string[]
+  >([]);
   const convexHackathons = useQuery(api.hackathons.listPublished, {
     queryText: query,
     format,
     theme,
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
+  const convexTeammates = useQuery(
+    api.teams.listActiveProfiles,
+    demoUserId ? { viewerUserId: demoUserId } : "skip",
+  );
+  const convexPortfolioProfile = useQuery(
+    api.portfolio.getProfile,
+    demoUserId ? { userId: demoUserId } : "skip",
+  );
   const saveListing = useMutation(api.hackathons.saveListing);
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
   const displayedHackathons =
     convexHackathons && convexHackathons.length > 0
       ? convexHackathons.map(getUiHackathon)
       : fallbackHackathons;
+  const displayedTeammates =
+    convexTeammates && convexTeammates.length > 0
+      ? convexTeammates
+          .map(getUiTeammate)
+          .filter(
+            (teammate) => !hiddenConvexTeammateNames.includes(teammate.name),
+          )
+      : visibleTeammates;
+  const displayedPortfolioProfile = convexPortfolioProfile
+    ? getUiPortfolioProfile(convexPortfolioProfile)
+    : undefined;
   const displayedFeaturedHackathon = featuredHackathon
     ? getUiHackathon(featuredHackathon)
     : (fallbackHackathons[0] ?? null);
@@ -346,6 +410,24 @@ function ConvexParticipantView({
     await saveListing({ userId: demoUserId, hackathonId: hackathon.convexId });
   };
 
+  const dismissTeammate = (teammateName: string) => {
+    setHiddenConvexTeammateNames((currentNames) =>
+      currentNames.includes(teammateName)
+        ? currentNames
+        : [...currentNames, teammateName],
+    );
+    onDismissTeammate(teammateName);
+  };
+
+  const likeTeammate = (teammate: Teammate) => {
+    setHiddenConvexTeammateNames((currentNames) =>
+      currentNames.includes(teammate.name)
+        ? currentNames
+        : [...currentNames, teammate.name],
+    );
+    onLikeTeammate(teammate);
+  };
+
   return (
     <ParticipantView
       activeTab={activeTab}
@@ -360,12 +442,13 @@ function ConvexParticipantView({
       featuredHackathon={displayedFeaturedHackathon}
       savedHackathonIds={savedHackathonIds}
       onToggleSave={toggleSavedHackathon}
-      visibleTeammates={visibleTeammates}
+      visibleTeammates={displayedTeammates}
       likedTeammates={likedTeammates}
       showMatches={showMatches}
       setShowMatches={setShowMatches}
-      onDismissTeammate={onDismissTeammate}
-      onLikeTeammate={onLikeTeammate}
+      onDismissTeammate={dismissTeammate}
+      onLikeTeammate={likeTeammate}
+      portfolioProfile={displayedPortfolioProfile}
     />
   );
 }

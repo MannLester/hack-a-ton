@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { formats, themes } from "../config";
 import type { Hackathon } from "@/lib/sample-data";
-import type { ParticipantTab, Teammate } from "../types";
+import type { ParticipantTab, PortfolioProfile, Teammate } from "../types";
 import { HackathonCard } from "../cards";
 import { FeaturePanel, SectionTitle, StatCard } from "../ui";
 import { PortfolioView } from "./portfolio-view";
@@ -35,6 +35,7 @@ export function ParticipantView({
   setShowMatches,
   onDismissTeammate,
   onLikeTeammate,
+  portfolioProfile,
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
@@ -54,6 +55,7 @@ export function ParticipantView({
   setShowMatches: (showMatches: boolean) => void;
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
+  portfolioProfile?: PortfolioProfile;
 }) {
   if (activeTab === "team")
     return (
@@ -66,7 +68,8 @@ export function ParticipantView({
         onLikeTeammate={onLikeTeammate}
       />
     );
-  if (activeTab === "portfolio") return <PortfolioView />;
+  if (activeTab === "portfolio")
+    return <PortfolioView profile={portfolioProfile} />;
 
   return (
     <div className="space-y-6">

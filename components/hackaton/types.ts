@@ -15,6 +15,25 @@ export type UiHackathon = Hackathon & {
   convexId?: Id<"hackathons">;
   savedCount?: number;
 };
+export type ConvexLftProfile = Doc<"lftProfiles"> & {
+  displayName: string;
+  schoolOrCompany: string | null;
+  matchPercent: number;
+};
+export type PortfolioEntry = {
+  hackathonName: string;
+  result: "participant" | "finalist" | "winner";
+  source: "self_reported" | "verified";
+};
+export type PortfolioProfile = {
+  displayName: string;
+  initials: string;
+  meta: string;
+  bio: string;
+  badges: string[];
+  stats: { label: string; value: string }[];
+  entries: PortfolioEntry[];
+};
 export type CreateListingStatus =
   | "idle"
   | "draft-saved"
@@ -53,5 +72,17 @@ export function getUiHackathon(hackathon: ConvexHackathon): UiHackathon {
     lftCount: hackathon.lftCount,
     savedCount: hackathon.savedCount,
     summary: hackathon.summary,
+  };
+}
+
+export function getUiTeammate(profile: ConvexLftProfile): Teammate {
+  return {
+    name: profile.displayName,
+    role: profile.role,
+    school: profile.schoolOrCompany ?? "Independent builder",
+    stack: profile.stack.join(", "),
+    availability: profile.availability,
+    goal: profile.goal,
+    match: `${profile.matchPercent}%`,
   };
 }
