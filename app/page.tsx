@@ -1,6 +1,6 @@
 "use client";
 
-import { HackatonApp } from "@/components/hackaton-app";
+import { HackatonApp } from "@/components/app-shell";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 

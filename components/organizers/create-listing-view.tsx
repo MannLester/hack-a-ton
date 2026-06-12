@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { CreateListingStatus } from "../types";
-import { FeaturePanel, SectionTitle } from "../ui";
+import type { CreateListingStatus } from "@/components/shared/types";
+import { FeaturePanel, SectionTitle } from "@/components/shared/ui";
 
 const statusMessages: Record<CreateListingStatus, string> = {
   idle: "",

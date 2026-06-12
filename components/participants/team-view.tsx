@@ -7,12 +7,12 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import type { Teammate } from "../types";
+import type { Teammate } from "@/components/shared/types";
 import type { Hackathon } from "@/lib/sample-data";
 import { teamsLooking } from "@/lib/sample-data";
-import { FeaturePanel, SectionTitle } from "../ui";
-import { SwipeStack } from "@/components/swipe-stack";
-import { TeamSwipeStack } from "@/components/team-swipe-stack";
+import { FeaturePanel, SectionTitle } from "@/components/shared/ui";
+import { SwipeStack } from "@/components/participants/swipe-stack";
+import { TeamSwipeStack } from "@/components/participants/team-swipe-stack";
 
 const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch"];
 

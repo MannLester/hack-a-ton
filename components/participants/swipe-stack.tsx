@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { Heart, X } from "lucide-react";
-import type { Teammate } from "./hackaton/types";
+import type { Teammate } from "@/components/shared/types";
 
 const SWIPE_THRESHOLD = 100;
 const EXIT_X = 1000;

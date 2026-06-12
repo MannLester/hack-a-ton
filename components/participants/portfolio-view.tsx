@@ -1,7 +1,7 @@
 import { Trophy } from "lucide-react";
 import { badges, hackathons, portfolioStats } from "@/lib/sample-data";
-import type { PortfolioProfile } from "../types";
-import { FeaturePanel, PanelCard, SectionTitle, StatCard } from "../ui";
+import type { PortfolioProfile } from "@/components/shared/types";
+import { FeaturePanel, PanelCard, SectionTitle, StatCard } from "@/components/shared/ui";
 
 export function PortfolioView({ profile }: { profile?: PortfolioProfile }) {
   const displayBadges = profile?.badges ?? badges;

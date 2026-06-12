@@ -3,14 +3,11 @@ import {
   Bookmark,
   CalendarDays,
   ChevronRight,
-  Heart,
   MapPin,
   Users,
-  X,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
-import type { Teammate } from "./types";
-import { PanelCard, StatusPill, statusClass } from "./ui";
+import { PanelCard, StatusPill, statusClass } from "@/components/shared/ui";
 
 export function HackathonCard({
   hackathon,
@@ -97,95 +94,6 @@ export function HackathonCard({
         <span>{hackathon.interested} interested</span>
         <span className="h-1 w-1 rounded-full bg-zinc-300" />
         <span>{hackathon.lftCount} looking for teammates</span>
-      </div>
-    </PanelCard>
-  );
-}
-
-export function TeammateCard({
-  teammate,
-  onDismiss,
-  onLike,
-}: {
-  teammate: Teammate;
-  onDismiss: (teammateName: string) => void;
-  onLike: (teammate: Teammate) => void;
-}) {
-  return (
-    <PanelCard>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-lg font-black text-zinc-950">{teammate.name}</p>
-          <p className="text-sm font-bold text-zinc-500">{teammate.school}</p>
-        </div>
-        <span className="rounded-full bg-[#00a7e8]/15 px-3 py-1 text-xs font-black text-[#006c9c]">
-          {teammate.match} match
-        </span>
-      </div>
-      <p className="mt-4 text-sm font-black text-zinc-800">{teammate.role}</p>
-      <p className="mt-2 text-sm font-medium leading-6 text-zinc-600">
-        {teammate.goal}
-      </p>
-      <div className="mt-4 grid gap-2 text-sm font-bold text-zinc-600 sm:grid-cols-2">
-        <span>{teammate.stack}</span>
-        <span>{teammate.availability}</span>
-      </div>
-      <div className="mt-5 flex gap-2">
-        <button
-          onClick={() => onDismiss(teammate.name)}
-          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
-        >
-          <X className="size-4" /> Pass
-        </button>
-        <button
-          onClick={() => onLike(teammate)}
-          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
-        >
-          <Heart className="size-4" /> Like
-        </button>
-      </div>
-    </PanelCard>
-  );
-}
-
-export function ReviewCard({
-  hackathon,
-  onRemovePendingReview,
-  onRequestEdits,
-  onApprove,
-}: {
-  hackathon: Hackathon;
-  onRemovePendingReview: (hackathonId: string) => void;
-  onRequestEdits?: (hackathonId: string) => void;
-  onApprove?: (hackathonId: string) => void;
-}) {
-  return (
-    <PanelCard>
-      <span className="rounded-full bg-[#ffd21f]/25 px-3 py-1 text-xs font-black text-[#7a5700]">
-        Pending first listing review
-      </span>
-      <h3 className="mt-4 text-lg font-black">{hackathon.name}</h3>
-      <p className="mt-2 text-sm font-bold text-zinc-500">
-        {hackathon.organizer} · {hackathon.location}
-      </p>
-      <p className="mt-3 text-sm font-medium leading-6 text-zinc-600">
-        {hackathon.summary}
-      </p>
-      <div className="mt-5 flex gap-2">
-        <button
-          onClick={() =>
-            (onRequestEdits ?? onRemovePendingReview)(hackathon.id)
-          }
-          className="h-10 flex-1 rounded-md border-2 border-zinc-950 text-sm font-black text-zinc-800"
-        >
-          Needs edits
-        </button>
-        <button
-          onClick={() => (onApprove ?? onRemovePendingReview)(hackathon.id)}
-          className="h-10 flex-1 rounded-md bg-zinc-950 text-sm font-black text-white"
-        >
-          Approve
-        </button>
       </div>
     </PanelCard>
   );

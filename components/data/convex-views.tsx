@@ -11,8 +11,8 @@ import {
   type OrganizerDashboard,
   type OrganizerInsights,
   type PendingReview,
-} from "./adapters";
-import { formats, themes } from "./config";
+} from "@/components/data/adapters";
+import { formats, themes } from "@/components/shared/config";
 import {
   demoOrganizerId,
   demoStaffUserId,
@@ -23,10 +23,10 @@ import {
   type ParticipantTab,
   type Teammate,
   type UiHackathon,
-} from "./types";
-import { AdminView } from "./views/admin-view";
-import { OrganizerView } from "./views/organizer-view";
-import { ParticipantView } from "./views/participant-view";
+} from "@/components/shared/types";
+import { AdminView } from "@/components/admin/admin-view";
+import { OrganizerView } from "@/components/organizers/organizer-view";
+import { ParticipantView } from "@/components/participants/participant-view";
 
 export function ConvexOrganizerView({
   activeTab,

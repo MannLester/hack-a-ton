@@ -1,6 +1,6 @@
 import { hackathons, type Hackathon } from "@/lib/sample-data";
-import { ReviewCard } from "../cards";
-import { EmptyState, SectionTitle } from "../ui";
+import { ReviewCard } from "@/components/admin/review-card";
+import { EmptyState, SectionTitle } from "@/components/shared/ui";
 
 export function AdminView({
   pendingReviewIds,

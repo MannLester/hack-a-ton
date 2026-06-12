@@ -9,13 +9,13 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { formats, themes } from "../config";
+import { formats, themes } from "@/components/shared/config";
 import type { Hackathon } from "@/lib/sample-data";
-import type { ParticipantTab, PortfolioProfile, Teammate } from "../types";
-import { HackathonCard } from "../cards";
-import { FeaturePanel, SectionTitle, StatCard } from "../ui";
-import { PortfolioView } from "./portfolio-view";
-import { TeamView } from "./team-view";
+import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
+import { HackathonCard } from "@/components/participants/hackathon-card";
+import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/ui";
+import { PortfolioView } from "@/components/participants/portfolio-view";
+import { TeamView } from "@/components/participants/team-view";
 
 export function ParticipantView({
   activeTab,

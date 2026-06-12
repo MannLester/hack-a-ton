@@ -3,7 +3,7 @@ import {
   getUiHackathon,
   type PortfolioProfile,
   type UiHackathon,
-} from "./types";
+} from "@/components/shared/types";
 
 export type ConvexPortfolioProfile = {
   user: Doc<"users"> | null;

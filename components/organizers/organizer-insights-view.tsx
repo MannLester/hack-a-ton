@@ -1,5 +1,5 @@
 import { Bookmark, ChevronRight, Users } from "lucide-react";
-import { FeaturePanel, SectionTitle, StatCard } from "../ui";
+import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/ui";
 
 export function OrganizerInsightsView({
   totals,
