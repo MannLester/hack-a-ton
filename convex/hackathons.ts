@@ -237,3 +237,31 @@ export const markInterested = mutation({
     });
   },
 });
+
+export const recordLftClick = mutation({
+  args: {
+    userId: v.id("users"),
+    hackathonId: v.id("hackathons"),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("listingSignals", {
+      userId: args.userId,
+      hackathonId: args.hackathonId,
+      type: "lft_click",
+    });
+  },
+});
+
+export const recordExternalRegistrationClick = mutation({
+  args: {
+    userId: v.id("users"),
+    hackathonId: v.id("hackathons"),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("listingSignals", {
+      userId: args.userId,
+      hackathonId: args.hackathonId,
+      type: "external_registration_click",
+    });
+  },
+});
