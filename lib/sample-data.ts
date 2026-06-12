@@ -96,6 +96,40 @@ export const hackathons: Hackathon[] = [
   },
 ];
 
+export type TeamLooking = {
+  teamName: string;
+  missingRoles: string[];
+  hackathonName: string;
+  hackathonLocation: string;
+};
+
+export const teamsLooking: TeamLooking[] = [
+  {
+    teamName: "AI Public Servants",
+    missingRoles: ["AI/ML", "Backend"],
+    hackathonName: "PH AI Build Weekend",
+    hackathonLocation: "BGC, Taguig",
+  },
+  {
+    teamName: "PayItForward",
+    missingRoles: ["Backend", "Pitch"],
+    hackathonName: "Fintech Campus Cup",
+    hackathonLocation: "Philippines-wide",
+  },
+  {
+    teamName: "Green Circuit",
+    missingRoles: ["Frontend", "Data"],
+    hackathonName: "Climate Hack Cebu",
+    hackathonLocation: "Cebu City",
+  },
+  {
+    teamName: "Indie Pixels",
+    missingRoles: ["UI/UX", "Frontend"],
+    hackathonName: "Mindanao Game Jam",
+    hackathonLocation: "Davao City",
+  },
+];
+
 export const teammates = [
   {
     name: "Mika Reyes",

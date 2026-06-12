@@ -4,15 +4,15 @@ import {
   Check,
   FileText,
   Plus,
-  Sparkles,
   UserPlus,
   Users,
-  X,
 } from "lucide-react";
 import type { Teammate } from "../types";
 import type { Hackathon } from "@/lib/sample-data";
-import { TeammateCard } from "../cards";
-import { EmptyState, FeaturePanel, SectionTitle } from "../ui";
+import { teamsLooking } from "@/lib/sample-data";
+import { FeaturePanel, SectionTitle } from "../ui";
+import { SwipeStack } from "@/components/swipe-stack";
+import { TeamSwipeStack } from "@/components/team-swipe-stack";
 
 const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch"];
 
@@ -52,14 +52,6 @@ export function TeamView({
     goal: "",
     missingRoles: [] as string[],
   });
-  const [hasCreatedCard, setHasCreatedCard] = useState(false);
-
-  const toggleRole = (role: string) => {
-    setSelectedMissingRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
-    );
-  };
-
   const toggleLftMissingRole = (role: string) => {
     setLftCard((prev) => ({
       ...prev,
@@ -69,10 +61,13 @@ export function TeamView({
     }));
   };
 
+  const toggleRole = (role: string) => {
+    setSelectedMissingRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+    );
+  };
+
   const listedTeammates = showMatches ? likedTeammates : visibleTeammates;
-  const emptyMessage = showMatches
-    ? "No liked teammates yet."
-    : "No more teammate cards right now.";
 
   const soloOnly =
     teamPhase === "team_recruiting"
@@ -86,11 +81,6 @@ export function TeamView({
               ),
         )
       : listedTeammates;
-
-  const handleCreateCard = () => {
-    setHasCreatedCard(true);
-    setTeamPhase("solo_swiping");
-  };
 
   if (teamPhase === "creating_card") {
     return (
@@ -212,7 +202,7 @@ export function TeamView({
                 Cancel
               </button>
               <button
-                onClick={handleCreateCard}
+                onClick={() => setTeamPhase("solo_swiping")}
                 disabled={!lftCard.teamName || !lftCard.hackathon || !lftCard.goal}
                 className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
               >
@@ -281,19 +271,12 @@ export function TeamView({
           title="Build your squad"
         />
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <section className="grid gap-4">
-            {soloOnly.map((person) => (
-              <TeammateCard
-                key={person.name}
-                teammate={person}
-                onDismiss={onDismissTeammate}
-                onLike={onLikeTeammate}
-              />
-            ))}
-            {soloOnly.length === 0 ? (
-              <EmptyState message="No solo players match your missing roles." />
-            ) : null}
-          </section>
+          <SwipeStack
+            teammates={soloOnly}
+            onDismiss={onDismissTeammate}
+            onLike={onLikeTeammate}
+            emptyMessage="No solo players match your missing roles."
+          />
 
           <div className="space-y-4">
             <FeaturePanel className="p-5">
@@ -381,73 +364,12 @@ export function TeamView({
         eyebrow="Participant / Team Up"
         title="Find teammates for a specific hackathon"
       />
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <section className="grid gap-4">
-          {listedTeammates.map((person) => (
-            <TeammateCard
-              key={person.name}
-              teammate={person}
-              onDismiss={onDismissTeammate}
-              onLike={onLikeTeammate}
-            />
-          ))}
-          {listedTeammates.length === 0 ? (
-            <EmptyState message={emptyMessage} />
-          ) : null}
-        </section>
-        <FeaturePanel className="p-5">
-          <h3 className="text-lg font-black">Your LFT card</h3>
-          {hasCreatedCard ? (
-            <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-block rounded-full bg-[#ffd21f]/20 px-2.5 py-1 text-xs font-black text-[#7a5700]">
-                  {lftCard.teamName}
-                </span>
-                <span className="inline-block rounded-full bg-[#00a7e8]/15 px-2.5 py-1 text-xs font-black text-[#006c9c]">
-                  {hackathons.find((h) => h.id === lftCard.hackathon)?.name}
-                </span>
-              </div>
-              <p className="text-sm font-medium leading-6 text-zinc-600">
-                {lftCard.goal}
-              </p>
-              {lftCard.missingRoles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {lftCard.missingRoles.map((role) => (
-                    <span
-                      key={role}
-                      className="rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-600"
-                    >
-                      Needs: {role}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm font-medium leading-6 text-zinc-600">
-              Frontend developer · React · available weekends · looking for
-              backend and pitch support.
-            </p>
-          )}
-          <div className="mt-5 space-y-3">
-            <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 text-sm font-black text-white">
-              Edit card
-            </button>
-            <button
-              onClick={() => setShowMatches(!showMatches)}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border-2 border-zinc-950 text-sm font-black text-zinc-800"
-            >
-              {showMatches ? "View cards" : "View matches"}
-            </button>
-            <button
-              onClick={() => setTeamPhase("matched_duo")}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
-            >
-              <Sparkles className="size-4" /> Match Found
-            </button>
-          </div>
-        </FeaturePanel>
-      </div>
+      <TeamSwipeStack
+        teams={teamsLooking}
+        onDismiss={() => {}}
+        onLike={() => {}}
+        emptyMessage="No teams looking for teammates right now."
+      />
     </div>
   );
 }
