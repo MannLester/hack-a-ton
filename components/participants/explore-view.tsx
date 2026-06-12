@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   CalendarDays,
-  ChevronRight,
   Filter,
   Heart,
   Medal,
@@ -99,40 +98,41 @@ export function ParticipantView({
             <StatCard label="Verified wins" value="73" icon={Medal} />
           </div>
         </FeaturePanel>
-        <FeaturePanel className="bg-zinc-950 p-5 text-white sm:p-6">
+        <FeaturePanel className="bg-zinc-950 p-4 text-white sm:p-5">
           <p className="text-sm font-black text-[#ffd21f]">
-            Featured closing soon
+            Start building together
           </p>
-          <h2 className="mt-3 text-2xl font-black">
-            {featuredHackathon?.name ?? "No featured listing yet"}
-          </h2>
-          <p className="mt-3 text-sm font-medium leading-6 text-zinc-300">
-            {featuredHackathon
-              ? `${featuredHackathon.lftCount} people are looking for teammates. ${featuredHackathon.deadline}.`
-              : "No featured listing yet."}
+          <h2 className="mt-2 text-2xl font-black">Team Up Now</h2>
+          <p className="mt-1.5 text-sm font-medium leading-6 text-zinc-300">
+            Connect with builders and form your dream team.
           </p>
-          <div className="mt-6 space-y-3">
-            {[
-              ["Create teammate card", Users],
-              ["Swipe for mutual matches", Heart],
-              ["Register externally", ChevronRight],
-            ].map(([item, Icon]) => (
-              <button
-                key={item as string}
-                onClick={() => {
-                  if (item === "Create teammate card") {
-                    setInitialTeamPhase("creating_card");
-                    setActiveTab("team");
-                  } else if (item === "Swipe for mutual matches") {
-                    setInitialTeamPhase("solo_swiping");
-                    setActiveTab("team");
-                  }
-                }}
-                className="flex w-full items-center gap-3 rounded-md bg-white/10 px-3 py-2 text-left text-sm font-bold hover:bg-white/15"
-              >
-                <Icon className="size-4 text-[#00a7e8]" /> {item as string}
-              </button>
-            ))}
+          <div className="mt-5 space-y-2.5">
+            <button
+              onClick={() => {
+                setInitialTeamPhase("creating_card");
+                setActiveTab("team");
+              }}
+              className="flex w-full items-center gap-3 rounded-lg bg-gradient-to-r from-[#00a7e8] to-[#0090c8] px-4 py-5 text-left shadow-lg shadow-[#00a7e8]/30 transition-all duration-200 hover:from-[#0090c8] hover:to-[#007ab0] hover:shadow-xl hover:shadow-[#00a7e8]/40"
+            >
+              <Users className="size-5 shrink-0 text-white" />
+              <div>
+                <span className="block text-base font-bold text-white">Create Card</span>
+                <span className="block text-xs font-medium text-white/80">Build your LFT profile</span>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setInitialTeamPhase("solo_swiping");
+                setActiveTab("team");
+              }}
+              className="flex w-full items-center gap-3 rounded-lg border-2 border-[#00a7e8] px-4 py-5 text-left shadow-lg shadow-[#00a7e8]/20 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#00a7e8]/10 hover:to-[#00a7e8]/5 hover:shadow-xl hover:shadow-[#00a7e8]/30"
+            >
+              <Heart className="size-5 shrink-0 text-[#00a7e8]" />
+              <div>
+                <span className="block text-base font-bold text-[#00a7e8]">Find Team</span>
+                <span className="block text-xs font-medium text-[#00a7e8]/80">Swipe to match with teams</span>
+              </div>
+            </button>
           </div>
         </FeaturePanel>
       </div>
