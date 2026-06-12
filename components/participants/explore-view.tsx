@@ -8,7 +8,6 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { formats, themes } from "@/components/shared/config";
 import type { Hackathon } from "@/lib/sample-data";
 import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
@@ -21,10 +20,6 @@ export function ParticipantView({
   setActiveTab,
   query,
   setQuery,
-  format,
-  setFormat,
-  theme,
-  setTheme,
   filteredHackathons,
   featuredHackathon,
   savedHackathonIds,
@@ -41,10 +36,6 @@ export function ParticipantView({
   setActiveTab: (tab: ParticipantTab) => void;
   query: string;
   setQuery: (query: string) => void;
-  format: (typeof formats)[number];
-  setFormat: (format: (typeof formats)[number]) => void;
-  theme: (typeof themes)[number];
-  setTheme: (theme: (typeof themes)[number]) => void;
   filteredHackathons: Hackathon[];
   featuredHackathon: Hackathon | null;
   savedHackathonIds: string[];
@@ -136,9 +127,13 @@ export function ParticipantView({
         </FeaturePanel>
       </div>
 
+      <SectionTitle
+        eyebrow="Explore"
+        title={`${filteredHackathons.length} hackathons match your filters`}
+      />
       <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
-        <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px]">
-          <label className="relative block">
+        <div className="flex gap-3">
+          <label className="relative block flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
             <input
               value={query}
@@ -147,36 +142,14 @@ export function ParticipantView({
               className="h-11 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8]"
             />
           </label>
-          <select
-            value={format}
-            onChange={(event) => setFormat(event.target.value as typeof format)}
-            className="h-11 rounded-md border-2 border-zinc-200 bg-white px-3 text-sm font-bold outline-none focus:border-[#00a7e8]"
+          <button
+            type="button"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
           >
-            {formats.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-          <select
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as typeof theme)}
-            className="h-11 rounded-md border-2 border-zinc-200 bg-white px-3 text-sm font-bold outline-none focus:border-[#00a7e8]"
-          >
-            {themes.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
+            <Filter className="size-4" />
+          </button>
         </div>
       </section>
-
-      <SectionTitle
-        eyebrow="Explore"
-        title={`${filteredHackathons.length} hackathons match your filters`}
-        action={
-          <button className="inline-flex h-10 items-center gap-2 rounded-md border-2 border-zinc-950 bg-white px-3 text-sm font-black text-zinc-800 shadow-[3px_3px_0_#111]">
-            <Filter className="size-4" /> More filters
-          </button>
-        }
-      />
       <section className="grid gap-4">
         {filteredHackathons.map((hackathon) => (
           <HackathonCard

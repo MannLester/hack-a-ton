@@ -248,10 +248,6 @@ export function HackatonApp() {
               setActiveTab={setParticipantTab}
               query={query}
               setQuery={setQuery}
-              format={format}
-              setFormat={setFormat}
-              theme={theme}
-              setTheme={setTheme}
               filteredHackathons={fallbackHackathons}
               featuredHackathon={hackathons[0] ?? null}
               savedHackathonIds={savedHackathonIds}

@@ -252,10 +252,6 @@ export function ConvexParticipantView({
       setActiveTab={setActiveTab}
       query={query}
       setQuery={setQuery}
-      format={format}
-      setFormat={setFormat}
-      theme={theme}
-      setTheme={setTheme}
       filteredHackathons={displayedHackathons}
       featuredHackathon={displayedFeaturedHackathon}
       savedHackathonIds={savedHackathonIds}
