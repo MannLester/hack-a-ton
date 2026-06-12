@@ -90,7 +90,6 @@ export function HackatonApp() {
 
   return (
     <main className="min-h-screen bg-[#f5f3ea] text-zinc-950">
-<<<<<<< Updated upstream
       <AppNavigation
         persona={persona}
         participantTab={participantTab}
@@ -100,35 +99,6 @@ export function HackatonApp() {
         setOrganizerTab={setOrganizerTab}
         toggleAdmin={() => setShowAdmin((value) => !value)}
       />
-=======
-      <header className="sticky top-0 z-30 border-b-2 border-zinc-950 bg-zinc-950 text-white shadow-[0_4px_0_#00a7e8]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <button onClick={() => { setPersona("participant"); setParticipantTab("explore"); }} className="flex items-center gap-3 text-left">
-            <Image src="/brand/hack-a-ton-logo.png" alt="Hack-A-Ton" width={48} height={48} className="size-12 rounded-md border border-white/20 object-cover" priority />
-            <span>
-              <span className="block text-lg font-black leading-5 tracking-tight">Hack-A-Ton</span>
-              <span className="block text-xs font-bold text-[#ffd21f]">Discover · Team · Flex</span>
-            </span>
-          </button>
-
-          <nav className="hidden items-center gap-1 lg:flex">
-            {activeTabs.map((tab) => {
-              const Icon = tab.icon;
-              const active = persona === "participant" ? participantTab === tab.id : organizerTab === tab.id;
-              return (
-                <button key={tab.id} onClick={() => persona === "participant" ? setParticipantTab(tab.id as ParticipantTab) : setOrganizerTab(tab.id as OrganizerTab)} className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-black ${active ? "bg-white text-zinc-950" : "text-zinc-200 hover:bg-white/10"}`}>
-                  <Icon className="size-4" /> {tab.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <button onClick={() => setShowAdmin((value) => !value)} className="hidden h-10 items-center gap-2 rounded-md border border-white/15 px-3 text-sm font-black text-white hover:bg-white/10 md:inline-flex">
-            <ShieldCheck className="size-4" /> Staff
-          </button>
-        </div>
-      </header>
->>>>>>> Stashed changes
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
         {showAdmin ? (
