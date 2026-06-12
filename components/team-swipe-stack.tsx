@@ -55,7 +55,10 @@ function TeamCard({
     >
       <div className="flex h-full flex-col rounded-lg border-2 border-zinc-950 bg-white p-5 shadow-[5px_5px_0_#111]">
         <p className="text-xl font-black text-zinc-950">{team.teamName}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <p className="mt-3 text-xs font-black uppercase tracking-wider text-zinc-400">
+          Looking for
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
           {team.missingRoles.map((role) => (
             <span
               key={role}
