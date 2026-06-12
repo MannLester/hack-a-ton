@@ -3,7 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Hack-A-Ton",
-  description: "Discover Philippine hackathons, find teammates, and build your hackathon portfolio.",
+  description:
+    "Discover Philippine hackathons, find teammates, and build your hackathon portfolio.",
+  icons: {
+    icon: "/brand/hack-a-ton-logo.svg",
+  },
 };
 
 export const viewport: Viewport = {
