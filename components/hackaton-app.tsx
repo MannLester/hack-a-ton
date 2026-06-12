@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { useMutation, useQuery } from "convex/react";
 import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
+import { api } from "@/convex/_generated/api";
 import { hackathons, teammates } from "@/lib/sample-data";
 import {
   formats,
@@ -11,10 +13,13 @@ import {
   themes,
 } from "./hackaton/config";
 import {
+  demoUserId,
+  getUiHackathon,
   type OrganizerTab,
   type ParticipantTab,
   type Persona,
   type Teammate,
+  type UiHackathon,
 } from "./hackaton/types";
 import { AdminView } from "./hackaton/views/admin-view";
 import { OrganizerView } from "./hackaton/views/organizer-view";
@@ -36,7 +41,7 @@ export function HackatonApp() {
   const [pendingReviewIds, setPendingReviewIds] = useState(
     hackathons.slice(0, 2).map((hackathon) => hackathon.id),
   );
-  const filteredHackathons = useMemo(
+  const fallbackHackathons = useMemo(
     () =>
       hackathons.filter((hackathon) => {
         const matchesQuery = [
@@ -56,7 +61,6 @@ export function HackatonApp() {
       }),
     [format, query, theme],
   );
-  const featuredHackathon = hackathons[0] ?? null;
   const activeTabs =
     persona === "participant" ? participantTabs : organizerTabs;
 
@@ -188,26 +192,48 @@ export function HackatonApp() {
             onRemovePendingReview={removePendingReview}
           />
         ) : persona === "participant" ? (
-          <ParticipantView
-            activeTab={participantTab}
-            setActiveTab={setParticipantTab}
-            query={query}
-            setQuery={setQuery}
-            format={format}
-            setFormat={setFormat}
-            theme={theme}
-            setTheme={setTheme}
-            filteredHackathons={filteredHackathons}
-            featuredHackathon={featuredHackathon}
-            savedHackathonIds={savedHackathonIds}
-            onToggleSave={toggleSavedHackathon}
-            visibleTeammates={visibleTeammates}
-            likedTeammates={likedTeammates}
-            showMatches={showMatches}
-            setShowMatches={setShowMatches}
-            onDismissTeammate={dismissTeammate}
-            onLikeTeammate={likeTeammate}
-          />
+          process.env.NEXT_PUBLIC_CONVEX_URL ? (
+            <ConvexParticipantView
+              activeTab={participantTab}
+              setActiveTab={setParticipantTab}
+              query={query}
+              setQuery={setQuery}
+              format={format}
+              setFormat={setFormat}
+              theme={theme}
+              setTheme={setTheme}
+              fallbackHackathons={fallbackHackathons}
+              savedHackathonIds={savedHackathonIds}
+              onToggleLocalSave={toggleSavedHackathon}
+              visibleTeammates={visibleTeammates}
+              likedTeammates={likedTeammates}
+              showMatches={showMatches}
+              setShowMatches={setShowMatches}
+              onDismissTeammate={dismissTeammate}
+              onLikeTeammate={likeTeammate}
+            />
+          ) : (
+            <ParticipantView
+              activeTab={participantTab}
+              setActiveTab={setParticipantTab}
+              query={query}
+              setQuery={setQuery}
+              format={format}
+              setFormat={setFormat}
+              theme={theme}
+              setTheme={setTheme}
+              filteredHackathons={fallbackHackathons}
+              featuredHackathon={hackathons[0] ?? null}
+              savedHackathonIds={savedHackathonIds}
+              onToggleSave={toggleSavedHackathon}
+              visibleTeammates={visibleTeammates}
+              likedTeammates={likedTeammates}
+              showMatches={showMatches}
+              setShowMatches={setShowMatches}
+              onDismissTeammate={dismissTeammate}
+              onLikeTeammate={likeTeammate}
+            />
+          )
         ) : (
           <OrganizerView
             activeTab={organizerTab}
@@ -241,5 +267,105 @@ export function HackatonApp() {
         </div>
       </nav>
     </main>
+  );
+}
+
+function ConvexParticipantView({
+  activeTab,
+  setActiveTab,
+  query,
+  setQuery,
+  format,
+  setFormat,
+  theme,
+  setTheme,
+  fallbackHackathons,
+  savedHackathonIds,
+  onToggleLocalSave,
+  visibleTeammates,
+  likedTeammates,
+  showMatches,
+  setShowMatches,
+  onDismissTeammate,
+  onLikeTeammate,
+}: {
+  activeTab: ParticipantTab;
+  setActiveTab: (tab: ParticipantTab) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  format: (typeof formats)[number];
+  setFormat: (format: (typeof formats)[number]) => void;
+  theme: (typeof themes)[number];
+  setTheme: (theme: (typeof themes)[number]) => void;
+  fallbackHackathons: UiHackathon[];
+  savedHackathonIds: string[];
+  onToggleLocalSave: (hackathonId: string) => void;
+  visibleTeammates: Teammate[];
+  likedTeammates: Teammate[];
+  showMatches: boolean;
+  setShowMatches: (showMatches: boolean) => void;
+  onDismissTeammate: (teammateName: string) => void;
+  onLikeTeammate: (teammate: Teammate) => void;
+}) {
+  const convexHackathons = useQuery(api.hackathons.listPublished, {
+    queryText: query,
+    format,
+    theme,
+  });
+  const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
+  const saveListing = useMutation(api.hackathons.saveListing);
+  const unsaveListing = useMutation(api.hackathons.unsaveListing);
+  const displayedHackathons =
+    convexHackathons && convexHackathons.length > 0
+      ? convexHackathons.map(getUiHackathon)
+      : fallbackHackathons;
+  const displayedFeaturedHackathon = featuredHackathon
+    ? getUiHackathon(featuredHackathon)
+    : (fallbackHackathons[0] ?? null);
+
+  const toggleSavedHackathon = async (hackathonId: string) => {
+    const isSaved = savedHackathonIds.includes(hackathonId);
+    onToggleLocalSave(hackathonId);
+
+    if (!demoUserId) return;
+
+    const hackathon = displayedHackathons.find(
+      (item) => item.id === hackathonId,
+    );
+
+    if (!hackathon?.convexId) return;
+
+    if (isSaved) {
+      await unsaveListing({
+        userId: demoUserId,
+        hackathonId: hackathon.convexId,
+      });
+      return;
+    }
+
+    await saveListing({ userId: demoUserId, hackathonId: hackathon.convexId });
+  };
+
+  return (
+    <ParticipantView
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      query={query}
+      setQuery={setQuery}
+      format={format}
+      setFormat={setFormat}
+      theme={theme}
+      setTheme={setTheme}
+      filteredHackathons={displayedHackathons}
+      featuredHackathon={displayedFeaturedHackathon}
+      savedHackathonIds={savedHackathonIds}
+      onToggleSave={toggleSavedHackathon}
+      visibleTeammates={visibleTeammates}
+      likedTeammates={likedTeammates}
+      showMatches={showMatches}
+      setShowMatches={setShowMatches}
+      onDismissTeammate={onDismissTeammate}
+      onLikeTeammate={onLikeTeammate}
+    />
   );
 }
