@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CalendarDays,
   ChevronRight,
@@ -57,6 +58,10 @@ export function ParticipantView({
   onLikeTeammate: (teammate: Teammate) => void;
   portfolioProfile?: PortfolioProfile;
 }) {
+  const [initialTeamPhase, setInitialTeamPhase] = useState<
+    "solo_swiping" | "creating_card"
+  >("solo_swiping");
+
   if (activeTab === "team")
     return (
       <TeamView
@@ -66,6 +71,8 @@ export function ParticipantView({
         setShowMatches={setShowMatches}
         onDismissTeammate={onDismissTeammate}
         onLikeTeammate={onLikeTeammate}
+        hackathons={filteredHackathons}
+        initialPhase={initialTeamPhase}
       />
     );
   if (activeTab === "portfolio")
@@ -111,11 +118,15 @@ export function ParticipantView({
             ].map(([item, Icon]) => (
               <button
                 key={item as string}
-                onClick={() =>
-                  (item === "Create teammate card" ||
-                    item === "Swipe for mutual matches") &&
-                  setActiveTab("team")
-                }
+                onClick={() => {
+                  if (item === "Create teammate card") {
+                    setInitialTeamPhase("creating_card");
+                    setActiveTab("team");
+                  } else if (item === "Swipe for mutual matches") {
+                    setInitialTeamPhase("solo_swiping");
+                    setActiveTab("team");
+                  }
+                }}
                 className="flex w-full items-center gap-3 rounded-md bg-white/10 px-3 py-2 text-left text-sm font-bold hover:bg-white/15"
               >
                 <Icon className="size-4 text-[#00a7e8]" /> {item as string}

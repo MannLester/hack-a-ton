@@ -92,12 +92,8 @@ export function HackatonApp() {
     <main className="min-h-screen bg-[#f5f3ea] text-zinc-950">
       <AppNavigation
         persona={persona}
-        participantTab={participantTab}
-        organizerTab={organizerTab}
         setPersona={setPersona}
         setParticipantTab={setParticipantTab}
-        setOrganizerTab={setOrganizerTab}
-        toggleAdmin={() => setShowAdmin((value) => !value)}
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
