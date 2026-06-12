@@ -11,6 +11,7 @@
 import type * as hackathons from "../hackathons.js";
 import type * as organizers from "../organizers.js";
 import type * as portfolio from "../portfolio.js";
+import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
 import type * as teams from "../teams.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   hackathons: typeof hackathons;
   organizers: typeof organizers;
   portfolio: typeof portfolio;
+  seed: typeof seed;
   staff: typeof staff;
   teams: typeof teams;
 }>;
