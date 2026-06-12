@@ -2,6 +2,13 @@ import { useState } from "react";
 import type { CreateListingStatus } from "../types";
 import { FeaturePanel, SectionTitle } from "../ui";
 
+const statusMessages: Record<CreateListingStatus, string> = {
+  idle: "",
+  "draft-saved": "Draft saved locally for this session.",
+  submitted: "Listing submitted for review locally.",
+  "missing-fields": "Fill in all fields before submitting.",
+};
+
 export function CreateListingView() {
   const [status, setStatus] = useState<CreateListingStatus>("idle");
   const [listingName, setListingName] = useState("");
@@ -15,14 +22,7 @@ export function CreateListingView() {
     locationFormat.trim() &&
     registrationUrl.trim() &&
     description.trim();
-  const statusMessage =
-    status === "draft-saved"
-      ? "Draft saved locally for this session."
-      : status === "submitted"
-        ? "Listing submitted for review locally."
-        : status === "missing-fields"
-          ? "Fill in all fields before submitting."
-          : "";
+  const statusMessage = statusMessages[status];
   const submitForReview = () =>
     setStatus(hasRequiredFields ? "submitted" : "missing-fields");
 
