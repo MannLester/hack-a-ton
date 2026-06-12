@@ -149,7 +149,7 @@ export function TeamSwipeStack({
   }
 
   return (
-    <div className="relative mx-auto" style={{ height: "300px", maxWidth: "480px" }}>
+    <div className="relative mx-auto w-full" style={{ height: "300px", maxWidth: "480px" }}>
       <AnimatePresence initial={false}>
         {visibleCards.map((team, index) => {
           const stackIndex = visibleCards.length - 1 - index;

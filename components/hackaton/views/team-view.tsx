@@ -24,6 +24,7 @@ export function TeamView({
   onDismissTeammate,
   onLikeTeammate,
   hackathons,
+  onBack,
   initialPhase = "solo_swiping",
 }: {
   visibleTeammates: Teammate[];
@@ -33,6 +34,7 @@ export function TeamView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
   hackathons: Hackathon[];
+  onBack: () => void;
   initialPhase?: "solo_swiping" | "creating_card";
 }) {
   const [teamPhase, setTeamPhase] = useState<
@@ -93,12 +95,12 @@ export function TeamView({
             <ArrowLeft className="size-4" />
           </button>
           <div>
-            <h2 className="text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
-              TEAM UP
-            </h2>
-            <p className="mt-1 text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
-               Create your teammate card
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
+               TEAM UP
             </p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
+              Create your LFT Card
+            </h2>
           </div>
         </div>
         <div className="mx-auto max-w-lg">
@@ -359,17 +361,27 @@ export function TeamView({
   }
 
   return (
-    <div className="space-y-6">
-      <SectionTitle
-        eyebrow="Participant / Team Up"
-        title="Find teammates for a specific hackathon"
-      />
-      <TeamSwipeStack
-        teams={teamsLooking}
-        onDismiss={() => {}}
-        onLike={() => {}}
-        emptyMessage="No teams looking for teammates right now."
-      />
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col">
+      <div className="flex items-center gap-5">
+        <button
+          onClick={onBack}
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+        >
+          <ArrowLeft className="size-4" />
+        </button>
+        <SectionTitle
+          eyebrow="JOIN A TEAM"
+          title="Swipe to find your next hackathon team"
+        />
+      </div>
+      <div className="flex flex-1 items-center justify-center py-6">
+        <TeamSwipeStack
+          teams={teamsLooking}
+          onDismiss={() => {}}
+          onLike={() => {}}
+          emptyMessage="No teams looking for teammates right now."
+        />
+      </div>
     </div>
   );
 }

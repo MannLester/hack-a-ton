@@ -72,6 +72,7 @@ export function ParticipantView({
         onDismissTeammate={onDismissTeammate}
         onLikeTeammate={onLikeTeammate}
         hackathons={filteredHackathons}
+        onBack={() => setActiveTab("explore")}
         initialPhase={initialTeamPhase}
       />
     );
