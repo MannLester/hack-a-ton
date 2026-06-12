@@ -1,5 +1,6 @@
 import { Heart, X } from "lucide-react";
 import type { Teammate } from "@/components/shared/types";
+import { AuthActionButton } from "@/components/shared/auth-controls";
 import { PanelCard } from "@/components/shared/primitives";
 
 export function TeammateCard({
@@ -37,12 +38,18 @@ export function TeammateCard({
         >
           <X className="size-4" /> Pass
         </button>
-        <button
-          onClick={() => onLike(teammate)}
+        <AuthActionButton
+          action="like_teammate"
+          onAuthorizedClick={() => onLike(teammate)}
           className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
+          signedOutLabel={
+            <>
+              <Heart className="size-4" /> Log in to like
+            </>
+          }
         >
           <Heart className="size-4" /> Like
-        </button>
+        </AuthActionButton>
       </div>
     </PanelCard>
   );
