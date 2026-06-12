@@ -1,0 +1,6 @@
+- No commits must be made unless explicitly stated. Commits must be atomic
+- One function, one responsibility
+- No nested if-else statements, or try-catch blocks
+- Descriptive names for all variables and functions
+- Always run build, lint, type check commands every after edit
+- No monolithic files. Always make the code easy to read and easily maintainable.
