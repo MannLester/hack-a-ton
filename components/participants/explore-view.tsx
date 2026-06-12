@@ -83,19 +83,18 @@ export function ParticipantView({
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <FeaturePanel className="p-5 sm:p-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-[#ffd21f] px-3 py-1 text-xs font-black text-zinc-950">
-            <Sparkles className="size-3.5" /> Participant mode
+            <Sparkles className="size-3.5" /> Discover & Connect
           </p>
-          <h1 className="mt-4 max-w-3xl text-3xl font-black tracking-tight text-zinc-950 sm:text-5xl">
-            Find hackathons without waiting for the algorithm.
+          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-zinc-950 sm:text-6xl">
+            Hack-a-Ton,<br />Win-a-Ton
           </h1>
           <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-zinc-600">
-            Explore verified Philippine hackathons, save events, find teammates,
-            and turn every build into portfolio proof.
+            Discover hackathons, find teammates, and build your portfolio.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label="Open listings" value="24" icon={CalendarDays} />
-            <StatCard label="LFT profiles" value="185" icon={Users} />
-            <StatCard label="Verified wins" value="73" icon={Medal} />
+            <StatCard label="Hackathons Listed" value="24" icon={CalendarDays} />
+            <StatCard label="Active Builders" value="185" icon={Users} />
+            <StatCard label="Teams Formed" value="73" icon={Medal} />
           </div>
         </FeaturePanel>
         <FeaturePanel className="bg-zinc-950 p-4 text-white sm:p-5">
@@ -106,18 +105,18 @@ export function ParticipantView({
           <p className="mt-1.5 text-sm font-medium leading-6 text-zinc-300">
             Connect with builders and form your dream team.
           </p>
-          <div className="mt-5 space-y-2.5">
+          <div className="mt-5 space-y-4">
             <button
               onClick={() => {
                 setInitialTeamPhase("creating_card");
                 setActiveTab("team");
               }}
-              className="flex w-full items-center gap-3 rounded-lg bg-gradient-to-r from-[#00a7e8] to-[#0090c8] px-4 py-5 text-left shadow-lg shadow-[#00a7e8]/30 transition-all duration-200 hover:from-[#0090c8] hover:to-[#007ab0] hover:shadow-xl hover:shadow-[#00a7e8]/40"
+              className="flex w-full items-center gap-3 rounded-lg bg-gradient-to-r from-[#00a7e8] to-[#0090c8] px-4 py-6 text-left shadow-lg shadow-[#00a7e8]/30 transition-all duration-200 hover:from-[#0090c8] hover:to-[#007ab0] hover:shadow-xl hover:shadow-[#00a7e8]/40"
             >
-              <Users className="size-5 shrink-0 text-white" />
+              <Users className="size-7 shrink-0 text-white" strokeWidth={2.5} />
               <div>
-                <span className="block text-base font-bold text-white">Create Card</span>
-                <span className="block text-xs font-medium text-white/80">Build your LFT profile</span>
+                <span className="block text-lg font-extrabold tracking-wide text-white">Create Card</span>
+                <span className="block text-xs font-medium uppercase tracking-wider text-white/60">Build your LFT profile</span>
               </div>
             </button>
             <button
@@ -125,12 +124,12 @@ export function ParticipantView({
                 setInitialTeamPhase("solo_swiping");
                 setActiveTab("team");
               }}
-              className="flex w-full items-center gap-3 rounded-lg border-2 border-[#00a7e8] px-4 py-5 text-left shadow-lg shadow-[#00a7e8]/20 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#00a7e8]/10 hover:to-[#00a7e8]/5 hover:shadow-xl hover:shadow-[#00a7e8]/30"
+              className="flex w-full items-center gap-3 rounded-lg border-2 border-[#ffd21f] px-4 py-6 text-left shadow-lg shadow-[#ffd21f]/20 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#ffd21f]/10 hover:to-[#ffd21f]/5 hover:shadow-xl hover:shadow-[#ffd21f]/30"
             >
-              <Heart className="size-5 shrink-0 text-[#00a7e8]" />
+              <Heart className="size-7 shrink-0 text-[#ffd21f]" strokeWidth={2.5} />
               <div>
-                <span className="block text-base font-bold text-[#00a7e8]">Find Team</span>
-                <span className="block text-xs font-medium text-[#00a7e8]/80">Swipe to match with teams</span>
+                <span className="block text-lg font-extrabold tracking-wide text-[#ffd21f]">Find Team</span>
+                <span className="block text-xs font-medium uppercase tracking-wider text-[#ffd21f]/60">Swipe to match with teams</span>
               </div>
             </button>
           </div>
