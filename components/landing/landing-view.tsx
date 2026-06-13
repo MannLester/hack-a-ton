@@ -2,11 +2,11 @@ import { useState } from "react";
 import {
   CalendarDays,
   Filter,
-  Heart,
   Medal,
   Search,
   Sparkles,
   Users,
+  UserPlus,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
 import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
@@ -92,22 +92,22 @@ export function LandingView({
           <p className="text-sm font-black text-[#ffd21f]">
             Start building together
           </p>
-          <h2 className="mt-2 text-2xl font-black">Team Up Now</h2>
-          <p className="mt-1.5 text-sm font-medium leading-6 text-zinc-300">
+          <h2 className="mt-1.5 text-3xl font-black sm:text-4xl">Team Up Now!</h2>
+          <p className="mt-1 text-sm font-medium leading-6 text-zinc-300">
             Connect with builders and form your dream team.
           </p>
-          <div className="mt-5 space-y-4">
+          <div className="mt-4 space-y-3">
             <button
               onClick={() => {
                 setInitialTeamPhase("creating_card");
                 setActiveTab("team");
               }}
-              className="flex w-full items-center gap-3 rounded-lg bg-gradient-to-r from-[#00a7e8] to-[#0090c8] px-4 py-6 text-left shadow-lg shadow-[#00a7e8]/30 transition-all duration-200 hover:from-[#0090c8] hover:to-[#007ab0] hover:shadow-xl hover:shadow-[#00a7e8]/40"
+              className="flex w-full items-center gap-3 rounded-lg border-2 border-zinc-950 bg-[#00a7e8] px-4 py-6 text-left shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
             >
-              <Users className="size-7 shrink-0 text-white" strokeWidth={2.5} />
+              <UserPlus className="size-7 shrink-0 text-zinc-950" strokeWidth={2.5} />
               <div>
-                <span className="block text-lg font-extrabold tracking-wide text-white">Create Card</span>
-                <span className="block text-xs font-medium uppercase tracking-wider text-white/60">Build your LFT profile</span>
+                <span className="block text-xl font-black text-zinc-950">Start a Team</span>
+                <span className="block text-xs font-bold text-zinc-700">Start a team and recruit your dream crew</span>
               </div>
             </button>
             <button
@@ -115,12 +115,12 @@ export function LandingView({
                 setInitialTeamPhase("solo_swiping");
                 setActiveTab("team");
               }}
-              className="flex w-full items-center gap-3 rounded-lg border-2 border-[#ffd21f] px-4 py-6 text-left shadow-lg shadow-[#ffd21f]/20 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#ffd21f]/10 hover:to-[#ffd21f]/5 hover:shadow-xl hover:shadow-[#ffd21f]/30"
+              className="flex w-full items-center gap-3 rounded-lg border-2 border-zinc-950 bg-[#ffd21f] px-4 py-6 text-left shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
             >
-              <Heart className="size-7 shrink-0 text-[#ffd21f]" strokeWidth={2.5} />
+              <Search className="size-7 shrink-0 text-zinc-950" strokeWidth={2.5} />
               <div>
-                <span className="block text-lg font-extrabold tracking-wide text-[#ffd21f]">Find Team</span>
-                <span className="block text-xs font-medium uppercase tracking-wider text-[#ffd21f]/60">Swipe to match with teams</span>
+                <span className="block text-xl font-black text-zinc-950">Discover Teams</span>
+                <span className="block text-xs font-bold text-zinc-700">Browse open teams looking for builders</span>
               </div>
             </button>
           </div>
