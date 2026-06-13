@@ -160,7 +160,6 @@ export function TeamSwipeStack({
           const isExiting = isTop && exitDirection !== null;
           const depthScale = 1 - stackIndex * 0.04;
           const depthY = stackIndex * 8;
-          const depthOpacity = 1 - stackIndex * 0.15;
 
           return (
             <TeamCard
@@ -172,7 +171,6 @@ export function TeamSwipeStack({
               style={{
                 scale: depthScale,
                 y: depthY,
-                opacity: depthOpacity,
                 zIndex: visibleCards.length - stackIndex,
                 cursor: isTop ? "grab" : "default",
                 pointerEvents: isTop ? "auto" : "none",

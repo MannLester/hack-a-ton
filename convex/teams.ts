@@ -253,3 +253,36 @@ export const listMyMatches = query({
     );
   },
 });
+
+export const getMyTeam = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const allTeams = await ctx.db.query("teams").collect();
+    return allTeams.find((team) => team.members.includes(args.userId)) ?? null;
+  },
+});
+
+export const createTeam = mutation({
+  args: {
+    userId: v.id("users"),
+    teamName: v.string(),
+    hackathonId: v.id("hackathons"),
+    goal: v.string(),
+    roles: v.array(v.string()),
+    targetSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("teams", {
+      hackathonId: args.hackathonId,
+      teamName: args.teamName,
+      goal: args.goal,
+      members: [args.userId],
+      currentSize: 1,
+      targetSize: args.targetSize,
+      missingRoles: args.roles,
+      status: "recruiting",
+    });
+  },
+});

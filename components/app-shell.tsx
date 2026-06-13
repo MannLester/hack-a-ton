@@ -40,6 +40,7 @@ export function HackatonApp() {
   const [pendingReviewIds, setPendingReviewIds] = useState(
     hackathons.slice(0, 2).map((hackathon) => hackathon.id),
   );
+  const [hasTeam, setHasTeam] = useState(false);
 
   useEffect(() => {
     const storedPersona = window.localStorage.getItem("hackaton-persona");
@@ -159,6 +160,8 @@ export function HackatonApp() {
               setShowMatches={setShowMatches}
               onDismissTeammate={dismissTeammate}
               onLikeTeammate={likeTeammate}
+              hasTeam={hasTeam}
+              onCreateTeam={async () => { setHasTeam(true); }}
             />
           )
         ) : !isAuthLoaded || !canUseOrganizerMode ? (

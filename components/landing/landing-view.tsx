@@ -8,6 +8,7 @@ import {
   Users,
   UserPlus,
 } from "lucide-react";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import type { Hackathon } from "@/lib/sample-data";
 import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
@@ -29,6 +30,9 @@ export function LandingView({
   onDismissTeammate,
   onLikeTeammate,
   portfolioProfile,
+  hasTeam,
+  onCreateTeam,
+  myTeam,
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
@@ -43,9 +47,18 @@ export function LandingView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
   portfolioProfile?: PortfolioProfile;
+  hasTeam?: boolean;
+  onCreateTeam?: (teamData: {
+    teamName: string;
+    hackathonId: string;
+    goal: string;
+    roles: string[];
+    targetSize: number;
+  }) => Promise<void>;
+  myTeam?: Doc<"teams"> | null;
 }) {
   const [initialTeamPhase, setInitialTeamPhase] = useState<
-    "solo_swiping" | "creating_card"
+    "solo_swiping" | "creating_card" | "team_recruiting"
   >("solo_swiping");
 
   if (activeTab === "team")
@@ -59,6 +72,8 @@ export function LandingView({
         onLikeTeammate={onLikeTeammate}
         hackathons={filteredHackathons}
         onBack={() => setActiveTab("explore")}
+        onCreateTeam={onCreateTeam}
+        myTeam={myTeam}
         initialPhase={initialTeamPhase}
       />
     );
@@ -95,19 +110,6 @@ export function LandingView({
           <div className="mt-4 space-y-3">
             <button
               onClick={() => {
-                setInitialTeamPhase("creating_card");
-                setActiveTab("team");
-              }}
-              className="flex w-full items-center gap-3 rounded-lg border-2 border-zinc-950 bg-[#00a7e8] px-4 py-6 text-left shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
-            >
-              <UserPlus className="size-7 shrink-0 text-zinc-950" strokeWidth={2.5} />
-              <div>
-                <span className="block text-xl font-black text-zinc-950">Start a Team</span>
-                <span className="block text-xs font-bold text-zinc-700">Start a team and recruit your dream crew</span>
-              </div>
-            </button>
-            <button
-              onClick={() => {
                 setInitialTeamPhase("solo_swiping");
                 setActiveTab("team");
               }}
@@ -119,6 +121,34 @@ export function LandingView({
                 <span className="block text-xs font-bold text-zinc-700">Browse open teams looking for builders</span>
               </div>
             </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setInitialTeamPhase("team_recruiting");
+                  setActiveTab("team");
+                }}
+                className="flex flex-col items-center gap-2 rounded-lg border-2 border-zinc-950 bg-green-500 px-4 py-4 text-center shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
+              >
+                <Users className="size-7 text-zinc-950" strokeWidth={2.5} />
+                <div>
+                  <span className="block text-lg font-black text-zinc-950">My Team</span>
+                  <span className="block text-xs font-bold text-zinc-700">View your team</span>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setInitialTeamPhase("creating_card");
+                  setActiveTab("team");
+                }}
+                className="flex flex-col items-center gap-2 rounded-lg border-2 border-zinc-950 bg-[#00a7e8] px-4 py-4 text-center shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
+              >
+                <UserPlus className="size-7 text-zinc-950" strokeWidth={2.5} />
+                <div>
+                  <span className="block text-lg font-black text-zinc-950">Create a Team</span>
+                  <span className="block text-xs font-bold text-zinc-700">Find the right builders</span>
+                </div>
+              </button>
+            </div>
           </div>
         </FeaturePanel>
       </div>

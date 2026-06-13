@@ -15,6 +15,7 @@ export {
   demoStaffUserId,
   demoUserId,
 } from "./types";
+export { Modal } from "./modal";
 export {
   EmptyState,
   FeaturePanel,

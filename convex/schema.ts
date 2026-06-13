@@ -132,6 +132,8 @@ export default defineSchema({
 
   teams: defineTable({
     hackathonId: v.id("hackathons"),
+    teamName: v.string(),
+    goal: v.optional(v.string()),
     members: v.array(v.id("users")),
     currentSize: v.number(),
     targetSize: v.number(),

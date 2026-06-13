@@ -175,12 +175,18 @@ export function ConvexParticipantView({
     api.teams.listActiveProfiles,
     demoUserId ? { viewerUserId: demoUserId } : "skip",
   );
+  const myTeam = useQuery(
+    api.teams.getMyTeam,
+    demoUserId ? { userId: demoUserId } : "skip",
+  );
+  const hasTeam = Boolean(myTeam);
   const convexPortfolioProfile = useQuery(
     api.portfolio.getProfile,
     demoUserId ? { userId: demoUserId } : "skip",
   );
   const saveListing = useMutation(api.hackathons.saveListing);
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
+  const createTeamMutation = useMutation(api.teams.createTeam);
   const displayedHackathons =
     convexHackathons && convexHackathons.length > 0
       ? convexHackathons.map(getUiHackathon)
@@ -241,6 +247,24 @@ export function ConvexParticipantView({
     onLikeTeammate(teammate);
   };
 
+  const createTeam = async (teamData: {
+    teamName: string;
+    hackathonId: string;
+    goal: string;
+    roles: string[];
+    targetSize: number;
+  }) => {
+    if (!demoUserId) return;
+    await createTeamMutation({
+      userId: demoUserId,
+      teamName: teamData.teamName,
+      hackathonId: teamData.hackathonId as Id<"hackathons">,
+      goal: teamData.goal,
+      roles: teamData.roles,
+      targetSize: teamData.targetSize,
+    });
+  };
+
   return (
     <LandingView
       activeTab={activeTab}
@@ -256,6 +280,9 @@ export function ConvexParticipantView({
       onDismissTeammate={dismissTeammate}
       onLikeTeammate={likeTeammate}
       portfolioProfile={displayedPortfolioProfile}
+      hasTeam={hasTeam}
+      onCreateTeam={createTeam}
+      myTeam={myTeam}
     />
   );
 }

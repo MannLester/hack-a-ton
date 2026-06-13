@@ -161,7 +161,6 @@ export function SwipeStack({
           const isExiting = isTop && exitDirection !== null;
           const depthScale = 1 - stackIndex * 0.04;
           const depthY = stackIndex * 8;
-          const depthOpacity = 1 - stackIndex * 0.15;
 
           return (
             <SwipeCard
@@ -173,7 +172,6 @@ export function SwipeStack({
               style={{
                 scale: depthScale,
                 y: depthY,
-                opacity: depthOpacity,
                 zIndex: visibleCards.length - stackIndex,
                 cursor: isTop ? "grab" : "default",
                 pointerEvents: isTop ? "auto" : "none",
