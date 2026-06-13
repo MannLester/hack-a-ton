@@ -129,7 +129,7 @@ export function LandingView({
 
       <SectionTitle
         eyebrow="Explore"
-        title={`${filteredHackathons.length} hackathons match your filters`}
+        title="Upcoming Hackathons"
       />
       <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
         <div className="flex gap-3">
@@ -150,13 +150,11 @@ export function LandingView({
           </button>
         </div>
       </section>
-      <section className="grid gap-4">
+      <section className="grid gap-4 sm:grid-cols-2">
         {filteredHackathons.map((hackathon) => (
           <HackathonCard
             key={hackathon.id}
             hackathon={hackathon}
-            isSaved={savedHackathonIds.includes(hackathon.id)}
-            onToggleSave={onToggleSave}
           />
         ))}
       </section>

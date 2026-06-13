@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Award,
-  Bookmark,
   CalendarDays,
   Clock,
   Heart,
@@ -9,22 +8,17 @@ import {
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
-import { AuthActionButton } from "@/components/shared/auth-controls";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 
 export function HackathonCard({
   hackathon,
-  isSaved,
-  onToggleSave,
 }: {
   hackathon: Hackathon;
-  isSaved: boolean;
-  onToggleSave: (hackathonId: string) => void;
 }) {
   return (
     <Link href={`/hackathon/${hackathon.id}`} className="block">
       <PanelCard className="cursor-pointer border-zinc-950 p-5" hover>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill className={statusClass(hackathon.status)}>
@@ -78,28 +72,6 @@ export function HackathonCard({
                   {item}
                 </span>
               ))}
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-row gap-2 lg:w-44 lg:flex-col">
-            <div
-              role="button"
-              tabIndex={-1}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              className="contents"
-            >
-              <AuthActionButton
-                action="save_hackathon"
-                onAuthorizedClick={() => onToggleSave(hackathon.id)}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white px-4 text-sm font-black text-zinc-800 shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-[#ffd21f]/20"
-                signedOutLabel={
-                  <>
-                    <Bookmark className="size-4" /> Log in to save
-                  </>
-                }
-              >
-                <Bookmark className="size-4" /> {isSaved ? "Saved" : "Save"}
-              </AuthActionButton>
             </div>
           </div>
         </div>
