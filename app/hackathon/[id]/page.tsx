@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { hackathons } from "@/lib/sample-data";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
+import { DetailPageNav } from "@/components/shared/detail-page-nav";
 
 export function generateStaticParams() {
   return hackathons.map((hackathon) => ({
@@ -30,7 +31,9 @@ export default async function HackathonDetailsPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3ef] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#f5f3ef]">
+      <DetailPageNav />
+      <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <Link
           href="/"
@@ -176,6 +179,7 @@ export default async function HackathonDetailsPage({
             </PanelCard>
           </main>
         </div>
+      </div>
       </div>
     </div>
   );
