@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   Filter,
@@ -159,6 +160,14 @@ export function LandingView({
           />
         ))}
       </section>
+      <div className="flex justify-center">
+        <Link
+          href="/explore"
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-zinc-950 bg-white px-6 py-3 text-sm font-black text-zinc-950 shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
+        >
+          Explore More
+        </Link>
+      </div>
     </div>
   );
 }

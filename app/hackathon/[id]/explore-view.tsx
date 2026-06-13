@@ -27,6 +27,8 @@ export function ExploreView({
           <nav className="flex items-center gap-2 text-sm font-bold text-zinc-600">
             <Link href="/" className="hover:text-zinc-950">Home</Link>
             <span>/</span>
+            <Link href="/explore" className="hover:text-zinc-950">Explore</Link>
+            <span>/</span>
             <span className="text-zinc-950">{hackathon.name}</span>
           </nav>
 
