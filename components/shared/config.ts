@@ -19,13 +19,7 @@ export const organizerTabs = [
   { id: "insights", label: "Insights", icon: Medal },
 ] as const;
 
-export const formats = ["All", "Online", "Onsite", "Hybrid"] as const;
-export const themes = [
-  "All",
-  "AI",
-  "Fintech",
-  "Civic Tech",
-  "Climate",
-  "Gaming",
-  "Web",
-] as const;
+export const setup = ["All", "Online", "Onsite", "Hybrid"] as const;
+export const statuses = ["All", "Open", "Closing soon", "Upcoming"] as const;
+export const difficulties = ["All", "Beginner", "Intermediate", "Open"] as const;
+export const locations = ["All", "Luzon", "Visayas", "Mindanao"] as const;

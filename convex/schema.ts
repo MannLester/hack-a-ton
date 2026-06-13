@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const hackathonFormat = v.union(
+const hackathonSetup = v.union(
   v.literal("Online"),
   v.literal("Onsite"),
   v.literal("Hybrid"),
@@ -55,10 +55,15 @@ export default defineSchema({
     name: v.string(),
     dateLabel: v.string(),
     registrationDeadlineLabel: v.string(),
-    format: hackathonFormat,
+    setup: hackathonSetup,
     location: v.string(),
+    region: v.union(
+      v.literal("Luzon"),
+      v.literal("Visayas"),
+      v.literal("Mindanao"),
+      v.literal("Philippines-wide"),
+    ),
     eligibility: v.array(v.string()),
-    themes: v.array(v.string()),
     teamSize: v.string(),
     prize: v.string(),
     status: hackathonStatus,
@@ -75,7 +80,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .searchIndex("search_listing_text", {
       searchField: "summary",
-      filterFields: ["status", "format"],
+      filterFields: ["status", "setup"],
     }),
 
   savedHackathons: defineTable({

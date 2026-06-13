@@ -140,7 +140,7 @@ export function LandingView({
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, organizer, location, or theme"
+              placeholder="Search by name, organizer, location, or eligibility"
               className="h-11 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8]"
             />
           </label>

@@ -4,10 +4,10 @@ export type Hackathon = {
   organizer: string;
   date: string;
   deadline: string;
-  format: "Online" | "Onsite" | "Hybrid";
+  setup: "Online" | "Onsite" | "Hybrid";
   location: string;
+  region: "Luzon" | "Visayas" | "Mindanao" | "Philippines-wide";
   eligibility: string[];
-  themes: string[];
   teamSize: string;
   prize: string;
   status: "Open" | "Closing soon" | "Upcoming";
@@ -24,10 +24,10 @@ export const hackathons: Hackathon[] = [
     organizer: "DevCon Manila",
     date: "Jul 19-21, 2026",
     deadline: "Closes Jul 10",
-    format: "Hybrid",
+    setup: "Hybrid",
     location: "BGC, Taguig",
+    region: "Luzon",
     eligibility: ["Students", "Professionals", "Beginner-friendly"],
-    themes: ["AI", "Civic Tech"],
     teamSize: "2-4",
     prize: "PHP 120k pool",
     status: "Closing soon",
@@ -43,10 +43,10 @@ export const hackathons: Hackathon[] = [
     organizer: "PayLab PH",
     date: "Aug 3-4, 2026",
     deadline: "Closes Jul 24",
-    format: "Online",
+    setup: "Online",
     location: "Philippines-wide",
+    region: "Philippines-wide",
     eligibility: ["Students", "Open to all schools"],
-    themes: ["Fintech", "Web"],
     teamSize: "3-5",
     prize: "Internship + grants",
     status: "Open",
@@ -62,10 +62,10 @@ export const hackathons: Hackathon[] = [
     organizer: "Cebu Tech Council",
     date: "Sep 12-13, 2026",
     deadline: "Closes Aug 29",
-    format: "Onsite",
+    setup: "Onsite",
     location: "Cebu City",
+    region: "Visayas",
     eligibility: ["Students", "Professionals"],
-    themes: ["Climate", "Data"],
     teamSize: "2-4",
     prize: "PHP 80k pool",
     status: "Upcoming",
@@ -81,10 +81,10 @@ export const hackathons: Hackathon[] = [
     organizer: "Davao Indie Collective",
     date: "Oct 2-4, 2026",
     deadline: "Closes Sep 18",
-    format: "Hybrid",
+    setup: "Hybrid",
     location: "Davao City",
+    region: "Mindanao",
     eligibility: ["Open to all", "Beginner-friendly"],
-    themes: ["Gaming", "Design"],
     teamSize: "1-4",
     prize: "Showcase slots",
     status: "Open",

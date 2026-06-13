@@ -1,5 +1,5 @@
 export { ConvexClientProvider } from "./convex-provider";
-export { formats, themes } from "./config";
+export { setup, statuses, difficulties, locations } from "./config";
 export type {
   CreateListingStatus,
   OrganizerTab,

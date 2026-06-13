@@ -12,7 +12,7 @@ import {
   type OrganizerInsights,
   type PendingReview,
 } from "@/components/data/adapters";
-import { formats, themes } from "@/components/shared/config";
+import { setup as setupOptions, statuses, difficulties } from "@/components/shared/config";
 import {
   demoOrganizerId,
   demoStaffUserId,
@@ -135,10 +135,8 @@ export function ConvexParticipantView({
   setActiveTab,
   query,
   setQuery,
-  format,
-  setFormat,
-  theme,
-  setTheme,
+  setup,
+  setSetup,
   fallbackHackathons,
   savedHackathonIds,
   onToggleLocalSave,
@@ -153,10 +151,8 @@ export function ConvexParticipantView({
   setActiveTab: (tab: ParticipantTab) => void;
   query: string;
   setQuery: (query: string) => void;
-  format: (typeof formats)[number];
-  setFormat: (format: (typeof formats)[number]) => void;
-  theme: (typeof themes)[number];
-  setTheme: (theme: (typeof themes)[number]) => void;
+  setup: (typeof setupOptions)[number];
+  setSetup: (setup: (typeof setupOptions)[number]) => void;
   fallbackHackathons: UiHackathon[];
   savedHackathonIds: string[];
   onToggleLocalSave: (hackathonId: string) => void;
@@ -172,8 +168,7 @@ export function ConvexParticipantView({
   >([]);
   const convexHackathons = useQuery(api.hackathons.listPublished, {
     queryText: query,
-    format,
-    theme,
+    setup,
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
   const convexTeammates = useQuery(

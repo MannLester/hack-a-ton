@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 
-const formatArgument = v.union(
+const setupArgument = v.union(
   v.literal("All"),
   v.literal("Online"),
   v.literal("Onsite"),
@@ -27,7 +27,6 @@ function matchesQuery(
     organizerName,
     hackathon.location,
     hackathon.summary,
-    ...hackathon.themes,
   ]
     .join(" ")
     .toLowerCase();
@@ -35,15 +34,18 @@ function matchesQuery(
   return searchableText.includes(queryText.toLowerCase());
 }
 
-function matchesFormat(
+function matchesSetup(
   hackathon: Doc<"hackathons">,
-  format: "All" | "Online" | "Onsite" | "Hybrid",
+  setup: "All" | "Online" | "Onsite" | "Hybrid",
 ) {
-  return format === "All" || hackathon.format === format;
+  return setup === "All" || hackathon.setup === setup;
 }
 
-function matchesTheme(hackathon: Doc<"hackathons">, theme: string) {
-  return theme === "All" || hackathon.themes.includes(theme);
+function matchesRegion(
+  hackathon: Doc<"hackathons">,
+  region: "All" | "Luzon" | "Visayas" | "Mindanao",
+) {
+  return region === "All" || hackathon.region === region || hackathon.region === "Philippines-wide";
 }
 
 async function getListingCounts(ctx: QueryCtx, hackathonId: Id<"hackathons">) {
@@ -92,8 +94,8 @@ async function addOrganizerAndCounts(
 function filterListings(
   listings: HackathonWithOrganizer[],
   queryText: string,
-  format: "All" | "Online" | "Onsite" | "Hybrid",
-  theme: string,
+  setup: "All" | "Online" | "Onsite" | "Hybrid",
+  region: "All" | "Luzon" | "Visayas" | "Mindanao",
 ) {
   return listings.filter((listing) => {
     const queryMatches =
@@ -101,8 +103,8 @@ function filterListings(
       matchesQuery(listing, listing.organizerName, queryText);
     return (
       queryMatches &&
-      matchesFormat(listing, format) &&
-      matchesTheme(listing, theme)
+      matchesSetup(listing, setup) &&
+      matchesRegion(listing, region)
     );
   });
 }
@@ -110,8 +112,15 @@ function filterListings(
 export const listPublished = query({
   args: {
     queryText: v.optional(v.string()),
-    format: v.optional(formatArgument),
-    theme: v.optional(v.string()),
+    setup: v.optional(setupArgument),
+    region: v.optional(
+      v.union(
+        v.literal("All"),
+        v.literal("Luzon"),
+        v.literal("Visayas"),
+        v.literal("Mindanao"),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const publishedHackathons = await ctx.db
@@ -127,8 +136,8 @@ export const listPublished = query({
     return filterListings(
       listings,
       args.queryText ?? "",
-      args.format ?? "All",
-      args.theme ?? "All",
+      args.setup ?? "All",
+      args.region ?? "All",
     );
   },
 });

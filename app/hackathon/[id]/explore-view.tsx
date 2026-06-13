@@ -79,7 +79,7 @@ export function ExploreView({
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <MapPin className="size-3 text-[#00a7e8]" />
-                          {h.format}
+                          {h.setup}
                         </span>
                       </div>
                     </Link>
@@ -117,7 +117,7 @@ export function ExploreView({
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border-2 border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-bold text-zinc-700">
                     <MapPin className="size-4 text-[#00a7e8]" />
-                    {hackathon.format} · {hackathon.location}
+                    {hackathon.setup} · {hackathon.location}
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border-2 border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-bold text-zinc-700">
                     <Users className="size-4 text-[#00a7e8]" />
@@ -130,14 +130,6 @@ export function ExploreView({
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {hackathon.themes.map((theme) => (
-                    <span
-                      key={theme}
-                      className="rounded-md border border-[#00a7e8]/20 bg-[#00a7e8]/10 px-3 py-1.5 text-sm font-black text-[#006c9c]"
-                    >
-                      {theme}
-                    </span>
-                  ))}
                   {hackathon.eligibility.map((item) => (
                     <span
                       key={item}

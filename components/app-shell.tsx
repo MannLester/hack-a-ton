@@ -10,7 +10,7 @@ import {
 import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { LandingView } from "@/components/landing/landing-view";
 import { OrganizerAuthGate } from "@/components/shared/auth-controls";
-import { formats, themes } from "@/components/shared/config";
+import { setup } from "@/components/shared/config";
 import { useClerkAuthState } from "@/components/shared/convex-provider";
 import {
   demoOrganizerId,
@@ -32,8 +32,7 @@ export function HackatonApp() {
   const [organizerTab, setOrganizerTab] = useState<OrganizerTab>("listings");
   const [showAdmin, setShowAdmin] = useState(false);
   const [query, setQuery] = useState("");
-  const [format, setFormat] = useState<(typeof formats)[number]>("All");
-  const [theme, setTheme] = useState<(typeof themes)[number]>("All");
+  const [setupFilter, setSetupFilter] = useState<(typeof setup)[number]>("All");
   const [savedHackathonIds, setSavedHackathonIds] = useState<string[]>([]);
   const [visibleTeammates, setVisibleTeammates] = useState(teammates);
   const [likedTeammates, setLikedTeammates] = useState<Teammate[]>([]);
@@ -66,13 +65,11 @@ export function HackatonApp() {
           .join(" ")
           .toLowerCase()
           .includes(query.toLowerCase());
-        const matchesFormat = format === "All" || hackathon.format === format;
-        const matchesTheme =
-          theme === "All" || hackathon.themes.includes(theme);
+        const matchesSetup = setupFilter === "All" || hackathon.setup === setupFilter;
 
-        return matchesQuery && matchesFormat && matchesTheme;
+        return matchesQuery && matchesSetup;
       }),
-    [format, query, theme],
+    [setupFilter, query],
   );
 
   const toggleSavedHackathon = (hackathonId: string) => {
@@ -136,10 +133,8 @@ export function HackatonApp() {
               setActiveTab={setParticipantTab}
               query={query}
               setQuery={setQuery}
-              format={format}
-              setFormat={setFormat}
-              theme={theme}
-              setTheme={setTheme}
+              setup={setupFilter}
+              setSetup={setSetupFilter}
               fallbackHackathons={fallbackHackathons}
               savedHackathonIds={savedHackathonIds}
               onToggleLocalSave={toggleSavedHackathon}

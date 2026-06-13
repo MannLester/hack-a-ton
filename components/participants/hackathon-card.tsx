@@ -44,7 +44,7 @@ export function HackathonCard({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
                 <MapPin className="size-3.5 text-[#00a7e8]" />
-                {hackathon.format} · {hackathon.location}
+                {hackathon.setup} · {hackathon.location}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
                 <Users className="size-3.5 text-[#00a7e8]" />
@@ -56,14 +56,6 @@ export function HackathonCard({
               </span>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 line-clamp-1">
-              {hackathon.themes.map((theme) => (
-                <span
-                  key={theme}
-                  className="rounded-md border border-[#00a7e8]/20 bg-[#00a7e8]/10 px-2 py-1 text-xs font-black text-[#006c9c]"
-                >
-                  {theme}
-                </span>
-              ))}
               {hackathon.eligibility.slice(0, 2).map((item) => (
                 <span
                   key={item}
