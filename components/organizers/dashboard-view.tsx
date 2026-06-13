@@ -26,7 +26,7 @@ export function OrganizerView({
     externalRegistrationClickCount: number;
   };
 }) {
-  if (activeTab === "create") return <CreateListingView />;
+  if (activeTab === "create") return <CreateListingView onBack={() => setActiveTab("listings")} />;
   if (activeTab === "insights")
     return <OrganizerInsightsView totals={insights} />;
   return (
