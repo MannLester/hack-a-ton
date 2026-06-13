@@ -2,7 +2,7 @@ import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { teammates, type Hackathon } from "@/lib/sample-data";
 
 export type Persona = "participant" | "organizer";
-export type ParticipantTab = "explore" | "team" | "portfolio";
+export type ParticipantTab = "explore" | "team" | "portfolio" | "leaderboard";
 export type OrganizerTab = "listings" | "create" | "insights";
 export type Teammate = (typeof teammates)[number];
 export type ConvexHackathon = Doc<"hackathons"> & {
@@ -21,10 +21,23 @@ export type ConvexLftProfile = Doc<"lftProfiles"> & {
   matchPercent: number;
 };
 export type PortfolioEntry = {
+  id?: Id<"portfolioEntries">;
   hackathonName: string;
   result: "participant" | "finalist" | "winner";
   source: "self_reported" | "verified";
 };
+export type LeaderboardRow = {
+  userId: string;
+  displayName: string;
+  initials: string;
+  score: number;
+  participations: number;
+  finals: number;
+  wins: number;
+  verified: number;
+  teamsFormed: number;
+};
+
 export type PortfolioProfile = {
   displayName: string;
   initials: string;
@@ -44,6 +57,7 @@ export type CreateListingStatus =
   | "failed";
 
 export type CreateListingFormValues = {
+  listingId?: Id<"hackathons">;
   listingName: string;
   organizerName: string;
   dateLabel: string;

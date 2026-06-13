@@ -104,6 +104,7 @@ export function ConvexOrganizerView({
     useState<OrganizerAccount | null>(null);
   const ensureOrganizerAccount = useMutation(api.users.ensureOrganizerAccount);
   const createDraftListing = useMutation(api.organizers.createDraftListing);
+  const updateDraftListing = useMutation(api.organizers.updateDraftListing);
   const submitListingForReview = useMutation(
     api.organizers.submitListingForReview,
   );
@@ -172,19 +173,39 @@ export function ConvexOrganizerView({
 
   const saveDraft = async (values: CreateListingFormValues) => {
     const organizerId = await getOrganizerIdForListing(values);
+    const listingInput = getListingMutationInput(values);
+
+    if (values.listingId) {
+      await updateDraftListing({
+        organizerId,
+        hackathonId: values.listingId,
+        ...listingInput,
+      });
+      return;
+    }
 
     await createDraftListing({
       organizerId,
-      ...getListingMutationInput(values),
+      ...listingInput,
     });
   };
 
   const submitForReview = async (values: CreateListingFormValues) => {
     const organizerId = await getOrganizerIdForListing(values);
-    const hackathonId = await createDraftListing({
-      organizerId,
-      ...getListingMutationInput(values),
-    });
+    const listingInput = getListingMutationInput(values);
+    const hackathonId = values.listingId ??
+      (await createDraftListing({
+        organizerId,
+        ...listingInput,
+      }));
+
+    if (values.listingId) {
+      await updateDraftListing({
+        organizerId,
+        hackathonId,
+        ...listingInput,
+      });
+    }
 
     await submitListingForReview({
       organizerId,
@@ -334,9 +355,17 @@ export function ConvexParticipantView({
     api.portfolio.getProfile,
     participantUserId ? { userId: participantUserId } : "skip",
   );
+  const leaderboardRows = useQuery(api.leaderboards.listTopBuilders, {});
   const saveListing = useMutation(api.hackathons.saveListing);
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
   const createTeamMutation = useMutation(api.teams.createTeam);
+  const addSelfReportedEntry = useMutation(api.portfolio.addSelfReportedEntry);
+  const updateSelfReportedEntry = useMutation(
+    api.portfolio.updateSelfReportedEntry,
+  );
+  const deleteSelfReportedEntry = useMutation(
+    api.portfolio.deleteSelfReportedEntry,
+  );
   const displayedHackathons =
     convexHackathons && convexHackathons.length > 0
       ? convexHackathons.map(getUiHackathon)
@@ -400,6 +429,39 @@ export function ConvexParticipantView({
     onLikeTeammate(teammate);
   };
 
+  const savePortfolioEntry = async (values: {
+    entryId?: Id<"portfolioEntries">;
+    hackathonName: string;
+    result: "participant" | "finalist" | "winner";
+  }) => {
+    if (!participantUserId) return;
+
+    if (values.entryId) {
+      await updateSelfReportedEntry({
+        userId: participantUserId,
+        entryId: values.entryId,
+        hackathonName: values.hackathonName,
+        result: values.result,
+      });
+      return;
+    }
+
+    await addSelfReportedEntry({
+      userId: participantUserId,
+      hackathonName: values.hackathonName,
+      result: values.result,
+    });
+  };
+
+  const deletePortfolioEntry = async (entryId: Id<"portfolioEntries">) => {
+    if (!participantUserId) return;
+
+    await deleteSelfReportedEntry({
+      userId: participantUserId,
+      entryId,
+    });
+  };
+
   const createTeam = async (teamData: {
     teamName: string;
     hackathonId: string;
@@ -433,6 +495,9 @@ export function ConvexParticipantView({
       onDismissTeammate={dismissTeammate}
       onLikeTeammate={likeTeammate}
       portfolioProfile={displayedPortfolioProfile}
+      leaderboardRows={leaderboardRows}
+      onSavePortfolioEntry={savePortfolioEntry}
+      onDeletePortfolioEntry={deletePortfolioEntry}
       hasTeam={hasTeam}
       onCreateTeam={createTeam}
       myTeam={myTeam}

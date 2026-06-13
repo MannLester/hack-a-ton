@@ -11,6 +11,7 @@ export const participantTabs = [
   { id: "explore", label: "Explore", icon: Search },
   { id: "team", label: "Team Up", icon: Users },
   { id: "portfolio", label: "Portfolio", icon: Trophy },
+  { id: "leaderboard", label: "Leaderboard", icon: Medal },
 ] as const;
 
 export const organizerTabs = [

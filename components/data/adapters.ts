@@ -12,7 +12,9 @@ function getDisplayStatus(
   status: Doc<"hackathons">["status"],
 ): Hackathon["status"] {
   if (status === "published") return "Open";
-  if (status === "needs_edits") return "Closing soon";
+  if (status === "draft") return "Draft";
+  if (status === "pending_review") return "Pending review";
+  if (status === "needs_edits") return "Needs edits";
   return "Upcoming";
 }
 
@@ -146,6 +148,7 @@ export function getUiPortfolioProfile(
       { label: "Verified", value: String(profile.stats.verified) },
     ],
     entries: profile.entries.map((entry) => ({
+      id: entry._id,
       hackathonName: entry.hackathonName,
       result: entry.result,
       source: entry.source,

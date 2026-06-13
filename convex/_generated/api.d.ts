@@ -9,6 +9,7 @@
  */
 
 import type * as hackathons from "../hackathons.js";
+import type * as leaderboards from "../leaderboards.js";
 import type * as organizers from "../organizers.js";
 import type * as portfolio from "../portfolio.js";
 import type * as seed from "../seed.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   hackathons: typeof hackathons;
+  leaderboards: typeof leaderboards;
   organizers: typeof organizers;
   portfolio: typeof portfolio;
   seed: typeof seed;

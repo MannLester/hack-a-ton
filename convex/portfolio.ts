@@ -144,3 +144,48 @@ export const awardBadge = mutation({
     });
   },
 });
+
+
+export const updateSelfReportedEntry = mutation({
+  args: {
+    userId: v.id("users"),
+    entryId: v.id("portfolioEntries"),
+    hackathonName: v.string(),
+    result: v.union(
+      v.literal("participant"),
+      v.literal("finalist"),
+      v.literal("winner"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+
+    if (!entry || entry.userId !== args.userId || entry.source !== "self_reported") {
+      throw new Error("Self-reported portfolio entry not found.");
+    }
+
+    await ctx.db.patch(args.entryId, {
+      hackathonName: args.hackathonName,
+      result: args.result,
+    });
+
+    return args.entryId;
+  },
+});
+
+export const deleteSelfReportedEntry = mutation({
+  args: {
+    userId: v.id("users"),
+    entryId: v.id("portfolioEntries"),
+  },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+
+    if (!entry || entry.userId !== args.userId || entry.source !== "self_reported") {
+      throw new Error("Self-reported portfolio entry not found.");
+    }
+
+    await ctx.db.delete(args.entryId);
+    return args.entryId;
+  },
+});

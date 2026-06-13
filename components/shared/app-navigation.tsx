@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignOutButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import type { Persona } from "@/components/shared/types";
 
@@ -43,13 +43,17 @@ export function AppNavigation({
 
         <div className="hidden rounded-lg border border-white/15 bg-white/10 p-1 sm:flex">
           <button
-            onClick={() => setPersona("participant")}
+            onClick={() => {
+              setPersona("participant");
+            }}
             className={`h-9 rounded-md px-4 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white hover:bg-white/10"}`}
           >
             Participant
           </button>
           <button
-            onClick={() => setPersona("organizer")}
+            onClick={() => {
+              setPersona("organizer");
+            }}
             className={`h-9 rounded-md px-4 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white hover:bg-white/10"}`}
           >
             Organizer
@@ -70,22 +74,28 @@ export function AppNavigation({
             </SignUpButton>
           </SignedOut>
           <SignedIn>
-            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black text-zinc-200">
-              Signed in
-            </span>
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton redirectUrl="/">
+              <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
+                Sign out
+              </button>
+            </SignOutButton>
+            <UserButton />
           </SignedIn>
         </div>
       </div>
       <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">
         <button
-          onClick={() => setPersona("participant")}
+          onClick={() => {
+            setPersona("participant");
+          }}
           className={`h-11 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white"}`}
         >
           Participant
         </button>
         <button
-          onClick={() => setPersona("organizer")}
+          onClick={() => {
+            setPersona("organizer");
+          }}
           className={`h-11 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white"}`}
         >
           Organizer

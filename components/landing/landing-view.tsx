@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Handshake,
+  Medal,
   Search,
   Sparkles,
   Trophy,
@@ -10,11 +11,12 @@ import {
 } from "lucide-react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import type { Hackathon } from "@/lib/sample-data";
-import type { ParticipantTab, PortfolioProfile, Teammate } from "@/components/shared/types";
+import type { LeaderboardRow, ParticipantTab, PortfolioEntry, PortfolioProfile, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
 import { TeamView } from "@/components/participants/team-builder-view";
+import { LeaderboardView } from "@/components/participants/leaderboard-view";
 
 export function LandingView({
   activeTab,
@@ -30,6 +32,9 @@ export function LandingView({
   onDismissTeammate,
   onLikeTeammate,
   portfolioProfile,
+  leaderboardRows,
+  onSavePortfolioEntry,
+  onDeletePortfolioEntry,
   hasTeam,
   onCreateTeam,
   myTeam,
@@ -47,6 +52,13 @@ export function LandingView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
   portfolioProfile?: PortfolioProfile;
+  leaderboardRows?: LeaderboardRow[];
+  onSavePortfolioEntry?: (values: {
+    entryId?: PortfolioEntry["id"];
+    hackathonName: string;
+    result: PortfolioEntry["result"];
+  }) => Promise<void>;
+  onDeletePortfolioEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
   hasTeam?: boolean;
   onCreateTeam?: (teamData: {
     teamName: string;
@@ -77,11 +89,47 @@ export function LandingView({
         initialPhase={initialTeamPhase}
       />
     );
-  if (activeTab === "portfolio")
-    return <PortfolioView profile={portfolioProfile} />;
+  if (activeTab === "portfolio") {
+    return (
+      <PortfolioView
+        profile={portfolioProfile}
+        onSaveEntry={onSavePortfolioEntry}
+        onDeleteEntry={onDeletePortfolioEntry}
+      />
+    );
+  }
+  if (activeTab === "leaderboard") {
+    return <LeaderboardView rows={leaderboardRows} />;
+  }
 
   return (
     <div className="space-y-8">
+      <div className="grid gap-2 rounded-lg border-2 border-zinc-950 bg-white p-2 shadow-[4px_4px_0_#111] sm:grid-cols-4">
+        <button
+          onClick={() => setActiveTab("explore")}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-3 text-sm font-black text-zinc-950"
+        >
+          <Search className="size-4" /> Explore
+        </button>
+        <button
+          onClick={() => setActiveTab("team")}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
+        >
+          <Users className="size-4" /> Team Up
+        </button>
+        <button
+          onClick={() => setActiveTab("portfolio")}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
+        >
+          <Trophy className="size-4" /> Portfolio
+        </button>
+        <button
+          onClick={() => setActiveTab("leaderboard")}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
+        >
+          <Medal className="size-4" /> Leaderboard
+        </button>
+      </div>
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <FeaturePanel className="p-5 sm:p-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-[#ffd21f] px-3 py-1 text-xs font-black text-zinc-950">

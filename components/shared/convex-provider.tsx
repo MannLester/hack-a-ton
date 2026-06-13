@@ -21,7 +21,7 @@ export function ConvexClientProvider({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <ConvexProviderMaybe>{children}</ConvexProviderMaybe>
     </ClerkProvider>
   );

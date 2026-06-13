@@ -36,6 +36,7 @@ const statusMessages: Record<CreateListingStatus, string> = {
 };
 
 type CreateListingViewProps = {
+  initialValues?: CreateListingFormValues;
   onBack: () => void;
   onSaveDraft?: (values: CreateListingFormValues) => Promise<void> | void;
   onSubmitForReview?: (values: CreateListingFormValues) => Promise<void> | void;
@@ -48,6 +49,7 @@ function getEligibilityText(selectedEligibility: string[], eligibilityText: stri
 }
 
 export function CreateListingView({
+  initialValues,
   onBack,
   onSaveDraft,
   onSubmitForReview,
@@ -55,27 +57,32 @@ export function CreateListingView({
   const [status, setStatus] = useState<CreateListingStatus>("idle");
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [listingName, setListingName] = useState("");
-  const [organizerName, setOrganizerName] = useState("");
-  const [dateLabel, setDateLabel] = useState("");
+  const [listingName, setListingName] = useState(initialValues?.listingName ?? "");
+  const [organizerName, setOrganizerName] = useState(initialValues?.organizerName ?? "");
+  const [dateLabel, setDateLabel] = useState(initialValues?.dateLabel ?? "");
   const [registrationDeadlineLabel, setRegistrationDeadlineLabel] =
-    useState("");
-  const [setup, setSetup] = useState<"Online" | "Onsite" | "Hybrid" | "">("");
-  const [location, setLocation] = useState("");
+    useState(initialValues?.registrationDeadlineLabel ?? "");
+  const [setup, setSetup] = useState<"Online" | "Onsite" | "Hybrid" | "">(initialValues?.setup ?? "");
+  const [location, setLocation] = useState(initialValues?.location ?? "");
   const [region, setRegion] = useState<
     "Luzon" | "Visayas" | "Mindanao" | "Philippines-wide" | ""
-  >("");
-  const [eligibilityText, setEligibilityText] = useState("");
-  const [teamSize, setTeamSize] = useState("");
-  const [prize, setPrize] = useState("");
+  >(initialValues?.region ?? "");
+  const [eligibilityText, setEligibilityText] = useState(initialValues?.eligibilityText ?? "");
+  const [teamSize, setTeamSize] = useState(initialValues?.teamSize ?? "");
+  const [prize, setPrize] = useState(initialValues?.prize ?? "");
   const [difficulty, setDifficulty] = useState<
     "Beginner" | "Intermediate" | "Open" | ""
-  >("");
-  const [registrationUrl, setRegistrationUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const [teamSizeMin, setTeamSizeMin] = useState("");
-  const [teamSizeMax, setTeamSizeMax] = useState("");
-  const [selectedEligibility, setSelectedEligibility] = useState<string[]>([]);
+  >(initialValues?.difficulty ?? "");
+  const [registrationUrl, setRegistrationUrl] = useState(initialValues?.registrationUrl ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const [teamSizeMin, setTeamSizeMin] = useState(initialValues?.teamSize.split("-")[0] ?? "");
+  const [teamSizeMax, setTeamSizeMax] = useState(initialValues?.teamSize.split("-")[1] ?? "");
+  const [selectedEligibility, setSelectedEligibility] = useState<string[]>(
+    initialValues?.eligibilityText
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean) ?? [],
+  );
 
   const eligibility = eligibilityText
     .split(",")
@@ -144,6 +151,11 @@ export function CreateListingView({
     description,
   });
 
+  const getPersistableValues = (): CreateListingFormValues => ({
+    ...getFormValues(),
+    listingId: initialValues?.listingId,
+  });
+
   const canPersistListing = () => [1, 2, 3, 4].every(isStepValid);
 
   const goNext = () => {
@@ -167,7 +179,7 @@ export function CreateListingView({
     }
 
     setStatus("saving");
-    Promise.resolve(onSaveDraft?.(getFormValues()))
+    Promise.resolve(onSaveDraft?.(getPersistableValues()))
       .then(() => {
         setStatus("draft-saved");
         onBack();
@@ -182,7 +194,7 @@ export function CreateListingView({
     }
 
     setStatus("submitting");
-    Promise.resolve(onSubmitForReview?.(getFormValues()))
+    Promise.resolve(onSubmitForReview?.(getPersistableValues()))
       .then(() => {
         setStatus("submitted");
         onBack();
@@ -204,7 +216,7 @@ export function CreateListingView({
             Organizer mode
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
-            Create a listing for participant discovery
+            {initialValues ? "Edit your hackathon listing" : "Create a listing for participant discovery"}
           </h2>
           <div className="mt-2 h-1 w-16 rounded-full bg-[#00a7e8]" />
         </div>

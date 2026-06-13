@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { CheckCircle2, ClipboardCheck, Edit3, FileText, Plus, Users } from "lucide-react";
-import { hackathons, type Hackathon } from "@/lib/sample-data";
+import { hackathons } from "@/lib/sample-data";
 import type {
   CreateListingFormValues,
   OrganizerTab,
+  UiHackathon,
 } from "@/components/shared/types";
 import { SectionTitle, StatCard, statusClass } from "@/components/shared/primitives";
 import { CreateListingView } from "@/components/organizers/create-listing-view";
@@ -19,7 +21,7 @@ export function OrganizerView({
 }: {
   activeTab: OrganizerTab;
   setActiveTab: (tab: OrganizerTab) => void;
-  listings?: Hackathon[];
+  listings?: UiHackathon[];
   stats?: {
     published: number;
     pendingReview: number;
@@ -36,10 +38,33 @@ export function OrganizerView({
     values: CreateListingFormValues,
   ) => Promise<void> | void;
 }) {
+  const [editingListing, setEditingListing] = useState<UiHackathon | null>(null);
+  const clearEditingListing = () => {
+    setEditingListing(null);
+    setActiveTab("listings");
+  };
+  const getInitialFormValues = (listing: UiHackathon): CreateListingFormValues => ({
+    listingId: listing.convexId,
+    listingName: listing.name,
+    organizerName: listing.organizer,
+    dateLabel: listing.date,
+    registrationDeadlineLabel: listing.deadline,
+    setup: listing.setup,
+    location: listing.location,
+    region: listing.region,
+    eligibilityText: listing.eligibility.join(", "),
+    teamSize: listing.teamSize,
+    prize: listing.prize,
+    difficulty: listing.difficulty,
+    registrationUrl: "",
+    description: listing.summary,
+  });
+
   if (activeTab === "create") {
     return (
       <CreateListingView
-        onBack={() => setActiveTab("listings")}
+        initialValues={editingListing ? getInitialFormValues(editingListing) : undefined}
+        onBack={clearEditingListing}
         onSaveDraft={onSaveDraft}
         onSubmitForReview={onSubmitForReview}
       />
@@ -54,7 +79,10 @@ export function OrganizerView({
         title="Manage your hackathon listings only"
         action={
           <button
-            onClick={() => setActiveTab("create")}
+            onClick={() => {
+              setEditingListing(null);
+              setActiveTab("create");
+            }}
             className="inline-flex h-10 items-center gap-2 rounded-md bg-[#00a7e8] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]"
           >
             <Plus className="size-4" /> New listing
@@ -101,7 +129,15 @@ export function OrganizerView({
               >
                 {item.status}
               </span>
-              <button className="grid size-8 place-items-center rounded-md border-2 border-zinc-950">
+              <button
+                onClick={() => {
+                  setEditingListing(item);
+                  setActiveTab("create");
+                }}
+                disabled={item.status !== "Draft" && item.status !== "Needs edits"}
+                className="grid size-8 place-items-center rounded-md border-2 border-zinc-950 disabled:cursor-not-allowed disabled:opacity-35"
+                title={item.status === "Draft" || item.status === "Needs edits" ? "Edit listing" : "Only drafts or listings needing edits can be changed"}
+              >
                 <Edit3 className="size-4" />
               </button>
             </div>

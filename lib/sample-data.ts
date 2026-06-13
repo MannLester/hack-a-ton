@@ -10,7 +10,7 @@ export type Hackathon = {
   eligibility: string[];
   teamSize: string;
   prize: string;
-  status: "Open" | "Closing soon" | "Upcoming";
+  status: "Open" | "Closing soon" | "Upcoming" | "Draft" | "Pending review" | "Needs edits";
   difficulty: "Beginner" | "Intermediate" | "Open";
   interested: number;
   lftCount: number;

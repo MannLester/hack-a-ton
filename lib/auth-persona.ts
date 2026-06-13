@@ -34,6 +34,13 @@ export function getActionAuthRequirement(
   return authRequiredActions.has(action) ? "auth_required" : "public";
 }
 
+export function canAccessStaffView(
+  isSignedIn: boolean,
+  hasStaffCapability: boolean,
+): boolean {
+  return isSignedIn && hasStaffCapability;
+}
+
 export function getDefaultPersonaAfterSignIn(
   preferredPersona: AuthPersona | null,
 ): AuthPersona {

@@ -6,6 +6,12 @@ export function statusClass(status: Hackathon["status"]) {
     return "border-[#ffd21f]/50 bg-[#ffd21f]/15 text-[#8a6200]";
   if (status === "Open")
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (status === "Draft")
+    return "border-zinc-200 bg-zinc-100 text-zinc-700";
+  if (status === "Pending review")
+    return "border-[#00a7e8]/30 bg-[#00a7e8]/10 text-[#006c9c]";
+  if (status === "Needs edits")
+    return "border-red-200 bg-red-50 text-red-700";
   return "border-[#00a7e8]/30 bg-[#00a7e8]/10 text-[#006c9c]";
 }
 
