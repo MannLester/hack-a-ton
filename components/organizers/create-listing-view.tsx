@@ -1,10 +1,26 @@
 import { useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  FileText,
+  Link,
+  MapPin,
+  Trophy,
+} from "lucide-react";
 import type { CreateListingStatus } from "@/components/shared/types";
 import { FeaturePanel } from "@/components/shared/primitives";
 import { CalendarPicker, DateRangePicker } from "@/components/shared/calendar";
 
 const STEP_LABELS = ["Basics", "Location", "Details", "Description", "Review"] as const;
+
+const ELIGIBILITY_OPTIONS = [
+  "Students",
+  "Professionals",
+  "Beginner-friendly",
+  "Open to all",
+  "Open to all schools",
+] as const;
 
 const statusMessages: Record<CreateListingStatus, string> = {
   idle: "",
@@ -35,11 +51,36 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
   >("");
   const [registrationUrl, setRegistrationUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [teamSizeMin, setTeamSizeMin] = useState("");
+  const [teamSizeMax, setTeamSizeMax] = useState("");
+  const [selectedEligibility, setSelectedEligibility] = useState<string[]>([]);
 
   const eligibility = eligibilityText
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+
+  const updateTeamSize = (min: string, max: string) => {
+    setTeamSizeMin(min);
+    setTeamSizeMax(max);
+    if (min && max) {
+      setTeamSize(`${min}-${max}`);
+    } else if (min) {
+      setTeamSize(min);
+    } else {
+      setTeamSize("");
+    }
+  };
+
+  const toggleEligibility = (option: string) => {
+    setSelectedEligibility((prev) => {
+      const next = prev.includes(option)
+        ? prev.filter((v) => v !== option)
+        : [...prev, option];
+      setEligibilityText(next.join(", "));
+      return next;
+    });
+  };
 
   const statusMessage = statusMessages[status];
 
@@ -130,12 +171,13 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
             <StepDetails
               difficulty={difficulty}
               setDifficulty={setDifficulty}
-              teamSize={teamSize}
-              setTeamSize={setTeamSize}
+              teamSizeMin={teamSizeMin}
+              teamSizeMax={teamSizeMax}
+              onUpdateTeamSize={updateTeamSize}
               prize={prize}
               setPrize={setPrize}
-              eligibilityText={eligibilityText}
-              setEligibilityText={setEligibilityText}
+              selectedEligibility={selectedEligibility}
+              toggleEligibility={toggleEligibility}
               registrationUrl={registrationUrl}
               setRegistrationUrl={setRegistrationUrl}
             />
@@ -171,7 +213,7 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
           </p>
         ) : null}
 
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           {currentStep > 1 && (
             <button
               onClick={goBack}
@@ -414,54 +456,115 @@ function StepLocation({
 function StepDetails({
   difficulty,
   setDifficulty,
-  teamSize,
-  setTeamSize,
+  teamSizeMin,
+  teamSizeMax,
+  onUpdateTeamSize,
   prize,
   setPrize,
-  eligibilityText,
-  setEligibilityText,
+  selectedEligibility,
+  toggleEligibility,
   registrationUrl,
   setRegistrationUrl,
 }: {
   difficulty: string;
   setDifficulty: (v: "Beginner" | "Intermediate" | "Open") => void;
-  teamSize: string;
-  setTeamSize: (v: string) => void;
+  teamSizeMin: string;
+  teamSizeMax: string;
+  onUpdateTeamSize: (min: string, max: string) => void;
   prize: string;
   setPrize: (v: string) => void;
-  eligibilityText: string;
-  setEligibilityText: (v: string) => void;
+  selectedEligibility: string[];
+  toggleEligibility: (option: string) => void;
   registrationUrl: string;
   setRegistrationUrl: (v: string) => void;
 }) {
+  const numberOptions = ["1", "2", "3", "4", "5", "6", "7", "8"];
+  const maxOptions = numberOptions.filter(
+    (n) => !teamSizeMin || Number(n) >= Number(teamSizeMin),
+  );
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Select
-        value={difficulty}
-        onChange={setDifficulty as (v: string) => void}
-        placeholder="Select difficulty"
-        options={["Beginner", "Intermediate", "Open"]}
-        label="Difficulty"
-      />
-      <Input
-        value={teamSize}
-        onChange={setTeamSize}
-        placeholder="e.g., 2-4"
-        label="Team size"
-      />
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Select
+          value={difficulty}
+          onChange={setDifficulty as (v: string) => void}
+          placeholder="Select difficulty"
+          options={["Beginner", "Intermediate", "Open"]}
+          label="Difficulty"
+        />
+        <div>
+          <label className="mb-1.5 block text-xs font-black text-zinc-700">
+            Team size
+          </label>
+          <div className="flex items-center gap-2">
+            <select
+              value={teamSizeMin}
+              onChange={(e) =>
+                onUpdateTeamSize(e.target.value, teamSizeMax)
+              }
+              className="h-11 flex-1 rounded-md border-2 border-zinc-200 bg-white px-3 text-sm font-bold focus:border-[#00a7e8] focus:outline-none"
+            >
+              <option disabled value="">
+                Min
+              </option>
+              {numberOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <span className="text-sm font-black text-zinc-400">—</span>
+            <select
+              value={teamSizeMax}
+              onChange={(e) =>
+                onUpdateTeamSize(teamSizeMin, e.target.value)
+              }
+              className="h-11 flex-1 rounded-md border-2 border-zinc-200 bg-white px-3 text-sm font-bold focus:border-[#00a7e8] focus:outline-none"
+            >
+              <option disabled value="">
+                Max
+              </option>
+              {maxOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
       <Input
         value={prize}
         onChange={setPrize}
         placeholder="e.g., PHP 120k pool"
         label="Prize"
       />
-      <Input
-        value={eligibilityText}
-        onChange={setEligibilityText}
-        placeholder="e.g., Students, Professionals"
-        label="Eligibility (comma-separated)"
-      />
-      <div className="md:col-span-2">
+      <div className="border-t-2 border-zinc-100 pt-4">
+        <label className="mb-1.5 block text-xs font-black text-zinc-700">
+          Eligibility
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {ELIGIBILITY_OPTIONS.map((option) => {
+            const isSelected = selectedEligibility.includes(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => toggleEligibility(option)}
+                className={`rounded-md px-3 py-1.5 text-xs font-black transition-colors ${
+                  isSelected
+                    ? "bg-zinc-950 text-white"
+                    : "border-2 border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="border-t-2 border-zinc-100 pt-4">
         <Input
           value={registrationUrl}
           onChange={setRegistrationUrl}
@@ -525,43 +628,88 @@ function StepReview({
   description: string;
 }) {
   return (
-    <div className="space-y-3 text-sm">
-      <p className="mb-4 text-xs font-black text-zinc-500">
-        Please confirm all details before submitting.
-      </p>
-      <ReviewRow label="Hackathon name" value={listingName} />
-      <ReviewRow label="Organizer" value={organizerName} />
-      <ReviewRow label="Date" value={dateLabel} />
-      <ReviewRow label="Registration deadline" value={registrationDeadlineLabel} />
-      <ReviewRow label="Setup" value={setup} />
-      <ReviewRow label="Location" value={location} />
-      <ReviewRow label="Region" value={region} />
-      <ReviewRow label="Team size" value={teamSize} />
-      <ReviewRow label="Prize" value={prize} />
-      <ReviewRow label="Difficulty" value={difficulty} />
-      {eligibility.length > 0 && (
-        <ReviewRow label="Eligibility" value={eligibility.join(", ")} />
-      )}
+    <div className="space-y-3">
+      <div className="rounded-lg border-2 border-zinc-950 bg-zinc-950 px-5 py-4">
+        <h3 className="text-xl font-black text-white">{listingName}</h3>
+        <p className="mt-1 text-sm font-bold text-zinc-300">{organizerName}</p>
+      </div>
+
+      <ReviewSection title="Schedule" icon={CalendarDays}>
+        <ReviewRow label="Event dates" value={dateLabel} />
+        <ReviewRow label="Registration deadline" value={registrationDeadlineLabel} />
+      </ReviewSection>
+
+      <ReviewSection title="Location" icon={MapPin}>
+        <ReviewRow label="Setup" value={setup} />
+        <ReviewRow label="Location" value={location} />
+        <ReviewRow label="Region" value={region} />
+      </ReviewSection>
+
+      <ReviewSection title="Details" icon={Trophy}>
+        <ReviewRow label="Team size" value={teamSize} />
+        <ReviewRow label="Prize" value={prize} />
+        <ReviewRow label="Difficulty" value={difficulty} />
+        {eligibility.length > 0 && (
+          <div className="py-2">
+            <p className="text-xs font-black text-zinc-500">Eligibility</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {eligibility.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border-2 border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-black text-zinc-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </ReviewSection>
+
       {registrationUrl.trim() && (
-        <ReviewRow label="Registration URL" value={registrationUrl} />
+        <ReviewSection title="External" icon={Link}>
+          <ReviewRow label="Registration URL" value={registrationUrl} />
+        </ReviewSection>
       )}
-      <div>
-        <p className="text-xs font-black text-zinc-500">Description</p>
-        <p className="mt-1 whitespace-pre-wrap font-bold text-zinc-950">
+
+      <ReviewSection title="Description" icon={FileText}>
+        <p className="whitespace-pre-wrap py-2 text-sm leading-6 text-zinc-700">
           {description}
         </p>
+      </ReviewSection>
+    </div>
+  );
+}
+
+function ReviewSection({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: typeof Trophy;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border-2 border-zinc-200 bg-white">
+      <div className="flex items-center gap-2 border-b-2 border-zinc-100 px-4 py-2.5">
+        <Icon className="size-4 text-[#00a7e8]" />
+        <p className="text-xs font-black uppercase tracking-wider text-zinc-500">
+          {title}
+        </p>
       </div>
+      <div className="divide-y-2 divide-zinc-100 px-4">{children}</div>
     </div>
   );
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex items-baseline gap-4 py-2">
       <p className="w-40 shrink-0 text-xs font-black text-zinc-500">
         {label}
       </p>
-      <p className="font-bold text-zinc-950">{value}</p>
+      <p className="text-sm font-bold text-zinc-950">{value}</p>
     </div>
   );
 }
