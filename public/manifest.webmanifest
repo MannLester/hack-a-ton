@@ -1,0 +1,26 @@
+{
+  "name": "Hack-A-Ton",
+  "short_name": "Hack-A-Ton",
+  "description": "Discover Philippine hackathons, find teammates, and build your hackathon portfolio.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f3ea",
+  "theme_color": "#0f172a",
+  "categories": ["education", "productivity", "social"],
+  "icons": [
+    {
+      "src": "/brand/hack-a-ton-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/brand/hack-a-ton-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
