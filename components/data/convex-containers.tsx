@@ -245,8 +245,6 @@ export function ConvexParticipantView({
     <LandingView
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      query={query}
-      setQuery={setQuery}
       filteredHackathons={displayedHackathons}
       featuredHackathon={displayedFeaturedHackathon}
       savedHackathonIds={savedHackathonIds}

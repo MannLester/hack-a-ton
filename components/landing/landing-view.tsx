@@ -2,7 +2,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
-  Filter,
   Medal,
   Search,
   Sparkles,
@@ -19,8 +18,6 @@ import { TeamView } from "@/components/participants/team-builder-view";
 export function LandingView({
   activeTab,
   setActiveTab,
-  query,
-  setQuery,
   filteredHackathons,
   featuredHackathon,
   savedHackathonIds,
@@ -35,8 +32,6 @@ export function LandingView({
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
-  query: string;
-  setQuery: (query: string) => void;
   filteredHackathons: Hackathon[];
   featuredHackathon: Hackathon | null;
   savedHackathonIds: string[];
@@ -133,25 +128,6 @@ export function LandingView({
         title="Upcoming Hackathons"
         size="lg"
       />
-      <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
-        <div className="flex gap-3">
-          <label className="relative block flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, organizer, location, or eligibility"
-              className="h-11 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8]"
-            />
-          </label>
-          <button
-            type="button"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
-          >
-            <Filter className="size-4" />
-          </button>
-        </div>
-      </section>
       <section className="grid gap-4 sm:grid-cols-2 sm:auto-rows-fr">
         {filteredHackathons.map((hackathon) => (
           <HackathonCard

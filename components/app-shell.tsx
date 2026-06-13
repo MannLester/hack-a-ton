@@ -149,8 +149,6 @@ export function HackatonApp() {
             <LandingView
               activeTab={participantTab}
               setActiveTab={setParticipantTab}
-              query={query}
-              setQuery={setQuery}
               filteredHackathons={fallbackHackathons}
               featuredHackathon={hackathons[0] ?? null}
               savedHackathonIds={savedHackathonIds}
