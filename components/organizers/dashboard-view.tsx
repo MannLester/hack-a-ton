@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardCheck, Edit3, Plus, Users } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Edit3, FileText, Plus, Users } from "lucide-react";
 import { hackathons, type Hackathon } from "@/lib/sample-data";
 import type {
   CreateListingFormValues,
@@ -23,6 +23,7 @@ export function OrganizerView({
   stats?: {
     published: number;
     pendingReview: number;
+    drafts?: number;
     interestedParticipants: number;
   };
   insights?: {
@@ -60,7 +61,7 @@ export function OrganizerView({
           </button>
         }
       />
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-4 lg:grid-cols-4">
         <StatCard
           label="Published"
           value={stats ? String(stats.published) : "3"}
@@ -70,6 +71,11 @@ export function OrganizerView({
           label="Pending review"
           value={stats ? String(stats.pendingReview) : "1"}
           icon={ClipboardCheck}
+        />
+        <StatCard
+          label="Drafts"
+          value={stats ? String(stats.drafts ?? 0) : "0"}
+          icon={FileText}
         />
         <StatCard
           label="Interested participants"
@@ -86,8 +92,7 @@ export function OrganizerView({
             <div>
               <p className="font-black text-zinc-950">{item.name}</p>
               <p className="text-sm font-bold text-zinc-500">
-                {item.interested} interested · {item.lftCount} LFT ·
-                registration external
+                {item.date} · {item.setup} · {item.interested} interested · {item.lftCount} LFT
               </p>
             </div>
             <div className="flex gap-2">

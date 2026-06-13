@@ -153,6 +153,7 @@ export function ConvexOrganizerView({
     ? {
         published: dashboard.stats.published,
         pendingReview: dashboard.stats.pendingReview,
+        drafts: dashboard.stats.drafts,
         interestedParticipants: insights?.totals.interestedCount ?? 0,
       }
     : undefined;

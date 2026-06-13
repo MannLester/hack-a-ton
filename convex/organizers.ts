@@ -58,6 +58,19 @@ async function requireOrganizerHackathon(
   return hackathon;
 }
 
+async function getPendingListingReview(
+  ctx: MutationCtx,
+  hackathonId: Id<"hackathons">,
+) {
+  return ctx.db
+    .query("listingReviews")
+    .withIndex("by_hackathon", (index) => index.eq("hackathonId", hackathonId))
+    .filter((queryBuilder) =>
+      queryBuilder.eq(queryBuilder.field("status"), "pending"),
+    )
+    .first();
+}
+
 async function getListingInsights(
   ctx: QueryCtx,
   hackathonId: Id<"hackathons">,
@@ -208,10 +221,14 @@ export const submitListingForReview = mutation({
       status: "pending_review",
     });
 
-    await ctx.db.insert("listingReviews", {
-      hackathonId: args.hackathonId,
-      status: "pending",
-    });
+    const pendingReview = await getPendingListingReview(ctx, args.hackathonId);
+
+    if (!pendingReview) {
+      await ctx.db.insert("listingReviews", {
+        hackathonId: args.hackathonId,
+        status: "pending",
+      });
+    }
 
     return args.hackathonId;
   },

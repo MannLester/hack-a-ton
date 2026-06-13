@@ -168,7 +168,10 @@ export function CreateListingView({
 
     setStatus("saving");
     Promise.resolve(onSaveDraft?.(getFormValues()))
-      .then(() => setStatus("draft-saved"))
+      .then(() => {
+        setStatus("draft-saved");
+        onBack();
+      })
       .catch(() => setStatus("failed"));
   };
 
@@ -180,7 +183,10 @@ export function CreateListingView({
 
     setStatus("submitting");
     Promise.resolve(onSubmitForReview?.(getFormValues()))
-      .then(() => setStatus("submitted"))
+      .then(() => {
+        setStatus("submitted");
+        onBack();
+      })
       .catch(() => setStatus("failed"));
   };
 
