@@ -14,6 +14,7 @@ import type * as portfolio from "../portfolio.js";
 import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
 import type * as teams from "../teams.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   staff: typeof staff;
   teams: typeof teams;
+  users: typeof users;
 }>;
 
 /**

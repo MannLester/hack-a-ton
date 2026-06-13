@@ -1,6 +1,9 @@
 import { CheckCircle2, ClipboardCheck, Edit3, Plus, Users } from "lucide-react";
 import { hackathons, type Hackathon } from "@/lib/sample-data";
-import type { OrganizerTab } from "@/components/shared/types";
+import type {
+  CreateListingFormValues,
+  OrganizerTab,
+} from "@/components/shared/types";
 import { SectionTitle, StatCard, statusClass } from "@/components/shared/primitives";
 import { CreateListingView } from "@/components/organizers/create-listing-view";
 import { OrganizerInsightsView } from "@/components/organizers/insights-view";
@@ -11,6 +14,8 @@ export function OrganizerView({
   listings = hackathons,
   stats,
   insights,
+  onSaveDraft,
+  onSubmitForReview,
 }: {
   activeTab: OrganizerTab;
   setActiveTab: (tab: OrganizerTab) => void;
@@ -25,8 +30,20 @@ export function OrganizerView({
     lftClickCount: number;
     externalRegistrationClickCount: number;
   };
+  onSaveDraft?: (values: CreateListingFormValues) => Promise<void> | void;
+  onSubmitForReview?: (
+    values: CreateListingFormValues,
+  ) => Promise<void> | void;
 }) {
-  if (activeTab === "create") return <CreateListingView onBack={() => setActiveTab("listings")} />;
+  if (activeTab === "create") {
+    return (
+      <CreateListingView
+        onBack={() => setActiveTab("listings")}
+        onSaveDraft={onSaveDraft}
+        onSubmitForReview={onSubmitForReview}
+      />
+    );
+  }
   if (activeTab === "insights")
     return <OrganizerInsightsView totals={insights} />;
   return (

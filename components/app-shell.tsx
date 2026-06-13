@@ -13,7 +13,6 @@ import { OrganizerAuthGate } from "@/components/shared/auth-controls";
 import { setup } from "@/components/shared/config";
 import { useClerkAuthState } from "@/components/shared/convex-provider";
 import {
-  demoOrganizerId,
   demoStaffUserId,
   type OrganizerTab,
   type ParticipantTab,
@@ -166,7 +165,7 @@ export function HackatonApp() {
           )
         ) : !isAuthLoaded || !canUseOrganizerMode ? (
           <OrganizerAuthGate />
-        ) : process.env.NEXT_PUBLIC_CONVEX_URL && demoOrganizerId ? (
+        ) : process.env.NEXT_PUBLIC_CONVEX_URL ? (
           <ConvexOrganizerView
             activeTab={organizerTab}
             setActiveTab={setOrganizerTab}

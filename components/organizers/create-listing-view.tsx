@@ -8,7 +8,10 @@ import {
   MapPin,
   Trophy,
 } from "lucide-react";
-import type { CreateListingStatus } from "@/components/shared/types";
+import type {
+  CreateListingFormValues,
+  CreateListingStatus,
+} from "@/components/shared/types";
 import { FeaturePanel } from "@/components/shared/primitives";
 import { CalendarPicker, DateRangePicker } from "@/components/shared/calendar";
 
@@ -24,12 +27,31 @@ const ELIGIBILITY_OPTIONS = [
 
 const statusMessages: Record<CreateListingStatus, string> = {
   idle: "",
-  "draft-saved": "Draft saved locally for this session.",
-  submitted: "Listing submitted for review locally.",
+  saving: "Saving draft...",
+  submitting: "Submitting listing...",
+  "draft-saved": "Draft saved to the organizer workspace.",
+  submitted: "Listing submitted for review.",
   "missing-fields": "Fill in all required fields before this step.",
+  failed: "Something went wrong. Check the listing details and try again.",
 };
 
-export function CreateListingView({ onBack }: { onBack: () => void }) {
+type CreateListingViewProps = {
+  onBack: () => void;
+  onSaveDraft?: (values: CreateListingFormValues) => Promise<void> | void;
+  onSubmitForReview?: (values: CreateListingFormValues) => Promise<void> | void;
+};
+
+function getEligibilityText(selectedEligibility: string[], eligibilityText: string) {
+  return selectedEligibility.length > 0
+    ? selectedEligibility.join(", ")
+    : eligibilityText;
+}
+
+export function CreateListingView({
+  onBack,
+  onSaveDraft,
+  onSubmitForReview,
+}: CreateListingViewProps) {
   const [status, setStatus] = useState<CreateListingStatus>("idle");
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -83,6 +105,7 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
   };
 
   const statusMessage = statusMessages[status];
+  const isBusy = status === "saving" || status === "submitting";
 
   const isStepValid = (step: number): boolean => {
     if (step === 1) {
@@ -105,6 +128,24 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
     return true;
   };
 
+  const getFormValues = (): CreateListingFormValues => ({
+    listingName,
+    organizerName,
+    dateLabel,
+    registrationDeadlineLabel,
+    setup: setup || "Hybrid",
+    location,
+    region: region || "Philippines-wide",
+    eligibilityText: getEligibilityText(selectedEligibility, eligibilityText),
+    teamSize,
+    prize,
+    difficulty: difficulty || "Open",
+    registrationUrl,
+    description,
+  });
+
+  const canPersistListing = () => [1, 2, 3, 4].every(isStepValid);
+
   const goNext = () => {
     if (!isStepValid(currentStep)) {
       setStatus("missing-fields");
@@ -119,7 +160,29 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
     setCurrentStep((s) => Math.max(s - 1, 1));
   };
 
-  const confirmSubmit = () => setStatus("submitted");
+  const saveDraft = () => {
+    if (!canPersistListing()) {
+      setStatus("missing-fields");
+      return;
+    }
+
+    setStatus("saving");
+    Promise.resolve(onSaveDraft?.(getFormValues()))
+      .then(() => setStatus("draft-saved"))
+      .catch(() => setStatus("failed"));
+  };
+
+  const confirmSubmit = () => {
+    if (!canPersistListing()) {
+      setStatus("missing-fields");
+      return;
+    }
+
+    setStatus("submitting");
+    Promise.resolve(onSubmitForReview?.(getFormValues()))
+      .then(() => setStatus("submitted"))
+      .catch(() => setStatus("failed"));
+  };
 
   return (
     <div className="space-y-6">
@@ -217,7 +280,8 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
           {currentStep > 1 && (
             <button
               onClick={goBack}
-              className="h-11 rounded-md border-2 border-zinc-950 px-5 text-sm font-black text-zinc-950"
+              disabled={isBusy}
+              className="h-11 rounded-md border-2 border-zinc-950 px-5 text-sm font-black text-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400"
             >
               Back
             </button>
@@ -225,7 +289,8 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
           {currentStep < 5 && (
             <button
               onClick={goNext}
-              className="h-11 rounded-md bg-zinc-950 px-5 text-sm font-black text-white"
+              disabled={isBusy}
+              className="h-11 rounded-md bg-zinc-950 px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
               Next
             </button>
@@ -233,14 +298,16 @@ export function CreateListingView({ onBack }: { onBack: () => void }) {
           {currentStep === 5 && (
             <button
               onClick={confirmSubmit}
-              className="h-11 rounded-md bg-zinc-950 px-5 text-sm font-black text-white"
+              disabled={isBusy}
+              className="h-11 rounded-md bg-zinc-950 px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
               Confirm submit
             </button>
           )}
           <button
-            onClick={() => setStatus("draft-saved")}
-            className="h-11 rounded-md border-2 border-zinc-950 px-5 text-sm font-black text-zinc-950"
+            onClick={saveDraft}
+            disabled={isBusy}
+            className="h-11 rounded-md border-2 border-zinc-950 px-5 text-sm font-black text-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400"
           >
             Save draft
           </button>

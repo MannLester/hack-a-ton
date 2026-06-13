@@ -1,7 +1,8 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import {
@@ -12,11 +13,10 @@ import {
   type OrganizerInsights,
   type PendingReview,
 } from "@/components/data/adapters";
-import { setup as setupOptions, statuses, difficulties } from "@/components/shared/config";
+import { setup as setupOptions } from "@/components/shared/config";
 import {
-  demoOrganizerId,
   demoStaffUserId,
-  demoUserId,
+  type CreateListingFormValues,
   type OrganizerTab,
   type ParticipantTab,
   type Teammate,
@@ -30,6 +30,67 @@ import { AdminView } from "@/components/admin/moderation-view";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { LandingView } from "@/components/landing/landing-view";
 
+type ClerkIdentity = {
+  clerkUserId: string;
+  displayName: string;
+  initials: string;
+  schoolOrCompany?: string;
+  location?: string;
+};
+
+type OrganizerAccount = {
+  userId: Id<"users">;
+  organizerId: Id<"organizers">;
+};
+
+function getCommaSeparatedValues(text: string) {
+  return text
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function getInitials(displayName: string) {
+  return displayName
+    .split(" ")
+    .map((namePart) => namePart[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getClerkIdentity(user: ReturnType<typeof useUser>["user"]) {
+  if (!user) return null;
+
+  const emailName = user.primaryEmailAddress?.emailAddress.split("@")[0];
+  const displayName = user.fullName || user.username || emailName || "Hack-A-Ton Builder";
+
+  return {
+    clerkUserId: user.id,
+    displayName,
+    initials: getInitials(displayName) || "HA",
+    schoolOrCompany: user.primaryEmailAddress?.emailAddress,
+  } satisfies ClerkIdentity;
+}
+
+function getListingMutationInput(values: CreateListingFormValues) {
+  return {
+    name: values.listingName.trim(),
+    dateLabel: values.dateLabel.trim(),
+    registrationDeadlineLabel: values.registrationDeadlineLabel.trim(),
+    setup: values.setup,
+    location: values.location.trim(),
+    region: values.region,
+    eligibility: getCommaSeparatedValues(values.eligibilityText),
+    teamSize: values.teamSize.trim(),
+    prize: values.prize.trim(),
+    difficulty: values.difficulty,
+    summary: values.description.trim(),
+    externalRegistrationUrl: values.registrationUrl.trim(),
+  };
+}
+
 export function ConvexOrganizerView({
   activeTab,
   setActiveTab,
@@ -37,14 +98,42 @@ export function ConvexOrganizerView({
   activeTab: OrganizerTab;
   setActiveTab: (tab: OrganizerTab) => void;
 }) {
+  const { user } = useUser();
+  const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
+  const [organizerAccount, setOrganizerAccount] =
+    useState<OrganizerAccount | null>(null);
+  const ensureOrganizerAccount = useMutation(api.users.ensureOrganizerAccount);
+  const createDraftListing = useMutation(api.organizers.createDraftListing);
+  const submitListingForReview = useMutation(
+    api.organizers.submitListingForReview,
+  );
   const dashboard = useQuery(
     api.organizers.getDashboard,
-    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
+    organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
   ) as OrganizerDashboard | undefined;
   const insights = useQuery(
     api.organizers.getInsights,
-    demoOrganizerId ? { organizerId: demoOrganizerId } : "skip",
+    organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
   ) as OrganizerInsights | undefined;
+  useEffect(() => {
+    if (!clerkIdentity) return;
+
+    let isActive = true;
+
+    ensureOrganizerAccount({
+      ...clerkIdentity,
+      organizerName: clerkIdentity.displayName,
+    }).then((account) => {
+      if (!isActive) return;
+
+      setOrganizerAccount(account);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [clerkIdentity, ensureOrganizerAccount]);
+
   const interestedByHackathonName = new Map(
     insights?.listings.map((listing) => [
       listing.hackathonName,
@@ -68,6 +157,40 @@ export function ConvexOrganizerView({
       }
     : undefined;
 
+  const getOrganizerIdForListing = async (values: CreateListingFormValues) => {
+    if (!clerkIdentity) throw new Error("Sign in before creating listings.");
+
+    const account = await ensureOrganizerAccount({
+      ...clerkIdentity,
+      organizerName: values.organizerName.trim(),
+    });
+    setOrganizerAccount(account);
+
+    return account.organizerId;
+  };
+
+  const saveDraft = async (values: CreateListingFormValues) => {
+    const organizerId = await getOrganizerIdForListing(values);
+
+    await createDraftListing({
+      organizerId,
+      ...getListingMutationInput(values),
+    });
+  };
+
+  const submitForReview = async (values: CreateListingFormValues) => {
+    const organizerId = await getOrganizerIdForListing(values);
+    const hackathonId = await createDraftListing({
+      organizerId,
+      ...getListingMutationInput(values),
+    });
+
+    await submitListingForReview({
+      organizerId,
+      hackathonId,
+    });
+  };
+
   return (
     <OrganizerView
       activeTab={activeTab}
@@ -75,6 +198,8 @@ export function ConvexOrganizerView({
       listings={listings}
       stats={stats}
       insights={insights?.totals}
+      onSaveDraft={saveDraft}
+      onSubmitForReview={submitForReview}
     />
   );
 }
@@ -163,26 +288,50 @@ export function ConvexParticipantView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
 }) {
+  const { user } = useUser();
+  const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
+  const [participantUserId, setParticipantUserId] =
+    useState<Id<"users"> | null>(null);
   const [hiddenConvexTeammateNames, setHiddenConvexTeammateNames] = useState<
     string[]
   >([]);
+  const ensureParticipantUser = useMutation(api.users.ensureParticipantUser);
   const convexHackathons = useQuery(api.hackathons.listPublished, {
     queryText: query,
     setup,
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
+  useEffect(() => {
+    if (!clerkIdentity) {
+      setParticipantUserId(null);
+      return;
+    }
+
+    let isActive = true;
+
+    ensureParticipantUser(clerkIdentity).then((userId) => {
+      if (!isActive) return;
+
+      setParticipantUserId(userId);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [clerkIdentity, ensureParticipantUser]);
+
   const convexTeammates = useQuery(
     api.teams.listActiveProfiles,
-    demoUserId ? { viewerUserId: demoUserId } : "skip",
+    participantUserId ? { viewerUserId: participantUserId } : "skip",
   );
   const myTeam = useQuery(
     api.teams.getMyTeam,
-    demoUserId ? { userId: demoUserId } : "skip",
+    participantUserId ? { userId: participantUserId } : "skip",
   );
   const hasTeam = Boolean(myTeam);
   const convexPortfolioProfile = useQuery(
     api.portfolio.getProfile,
-    demoUserId ? { userId: demoUserId } : "skip",
+    participantUserId ? { userId: participantUserId } : "skip",
   );
   const saveListing = useMutation(api.hackathons.saveListing);
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
@@ -210,7 +359,7 @@ export function ConvexParticipantView({
     const isSaved = savedHackathonIds.includes(hackathonId);
     onToggleLocalSave(hackathonId);
 
-    if (!demoUserId) return;
+    if (!participantUserId) return;
 
     const hackathon = displayedHackathons.find(
       (item) => item.id === hackathonId,
@@ -220,13 +369,16 @@ export function ConvexParticipantView({
 
     if (isSaved) {
       await unsaveListing({
-        userId: demoUserId,
+        userId: participantUserId,
         hackathonId: hackathon.convexId,
       });
       return;
     }
 
-    await saveListing({ userId: demoUserId, hackathonId: hackathon.convexId });
+    await saveListing({
+      userId: participantUserId,
+      hackathonId: hackathon.convexId,
+    });
   };
 
   const dismissTeammate = (teammateName: string) => {
@@ -254,9 +406,9 @@ export function ConvexParticipantView({
     roles: string[];
     targetSize: number;
   }) => {
-    if (!demoUserId) return;
+    if (!participantUserId) return;
     await createTeamMutation({
-      userId: demoUserId,
+      userId: participantUserId,
       teamName: teamData.teamName,
       hackathonId: teamData.hackathonId as Id<"hackathons">,
       goal: teamData.goal,

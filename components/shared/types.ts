@@ -36,9 +36,28 @@ export type PortfolioProfile = {
 };
 export type CreateListingStatus =
   | "idle"
+  | "saving"
+  | "submitting"
   | "draft-saved"
   | "submitted"
-  | "missing-fields";
+  | "missing-fields"
+  | "failed";
+
+export type CreateListingFormValues = {
+  listingName: string;
+  organizerName: string;
+  dateLabel: string;
+  registrationDeadlineLabel: string;
+  setup: "Online" | "Onsite" | "Hybrid";
+  location: string;
+  region: "Luzon" | "Visayas" | "Mindanao" | "Philippines-wide";
+  eligibilityText: string;
+  teamSize: string;
+  prize: string;
+  difficulty: "Beginner" | "Intermediate" | "Open";
+  registrationUrl: string;
+  description: string;
+};
 
 export const demoUserId = process.env.NEXT_PUBLIC_DEMO_USER_ID as
   | Id<"users">
