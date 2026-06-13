@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  CalendarDays,
-  Medal,
+  Handshake,
   Search,
   Sparkles,
+  Trophy,
   Users,
   UserPlus,
 } from "lucide-react";
@@ -79,9 +79,9 @@ export function LandingView({
             Discover hackathons, find teammates, and build your portfolio.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label="Hackathons Listed" value="24" icon={CalendarDays} />
+            <StatCard label="Hackathons Listed" value="24" icon={Trophy} />
             <StatCard label="Active Builders" value="185" icon={Users} />
-            <StatCard label="Teams Formed" value="73" icon={Medal} />
+            <StatCard label="Teams Formed" value="73" icon={Handshake} />
           </div>
         </FeaturePanel>
         <FeaturePanel className="bg-zinc-950 p-4 text-white sm:p-5">
