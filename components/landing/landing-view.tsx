@@ -70,7 +70,7 @@ export function LandingView({
     return <PortfolioView profile={portfolioProfile} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <FeaturePanel className="p-5 sm:p-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-[#ffd21f] px-3 py-1 text-xs font-black text-zinc-950">
@@ -130,6 +130,7 @@ export function LandingView({
       <SectionTitle
         eyebrow="Explore"
         title="Upcoming Hackathons"
+        size="lg"
       />
       <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
         <div className="flex gap-3">
@@ -150,7 +151,7 @@ export function LandingView({
           </button>
         </div>
       </section>
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 sm:auto-rows-fr">
         {filteredHackathons.map((hackathon) => (
           <HackathonCard
             key={hackathon.id}

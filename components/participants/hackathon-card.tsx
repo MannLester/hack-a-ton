@@ -16,8 +16,8 @@ export function HackathonCard({
   hackathon: Hackathon;
 }) {
   return (
-    <Link href={`/hackathon/${hackathon.id}`} className="block">
-      <PanelCard className="cursor-pointer border-zinc-950 p-5" hover>
+    <Link href={`/hackathon/${hackathon.id}`} className="block h-full">
+      <PanelCard className="flex h-full flex-col cursor-pointer border-zinc-950 p-5" hover>
         <div className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -34,7 +34,7 @@ export function HackathonCard({
             <p className="mt-1 text-sm font-bold text-zinc-500">
               {hackathon.organizer}
             </p>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 line-clamp-2">
               {hackathon.summary}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -55,7 +55,7 @@ export function HackathonCard({
                 {hackathon.prize}
               </span>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2 line-clamp-1">
               {hackathon.themes.map((theme) => (
                 <span
                   key={theme}
@@ -75,7 +75,7 @@ export function HackathonCard({
             </div>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-4 border-t-2 border-zinc-100 pt-4 text-xs font-bold text-zinc-500">
+        <div className="mt-auto flex flex-wrap items-center gap-4 border-t-2 border-zinc-100 pt-4 text-xs font-bold text-zinc-500">
           <span className="inline-flex items-center gap-1.5">
             <Clock className="size-3.5" />
             {hackathon.deadline}
