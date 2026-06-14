@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   Award,
+  ArrowLeft,
   CalendarDays,
   Clock,
   MapPin,
@@ -27,21 +28,22 @@ export function ExploreView({
       <DetailPageNav />
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          <nav className="flex items-center gap-2 text-sm font-bold text-zinc-600">
-            <Link href="/" className="hover:text-zinc-950">Home</Link>
-            <span>/</span>
-            <Link href="/explore" className="hover:text-zinc-950">Explore</Link>
-            <span>/</span>
-            <span className="text-zinc-950">{hackathon.name}</span>
-          </nav>
-
-          <div>
-            <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
-              Explore Hackathons
-            </h1>
-            <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-zinc-500">
-              Find your next hackathon, discover teammates, and build together.
-            </p>
+          <div className="flex items-center gap-5">
+            <Link
+              href="/explore"
+              aria-label="Back to Explore"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
+                Explore Hackathons
+              </h1>
+              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-zinc-500">
+                Find your next hackathon, discover teammates, and build together.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -91,7 +93,7 @@ export function ExploreView({
               </div>
             </aside>
 
-            <main className="order-1 space-y-6 lg:order-2">
+            <main className="order-1 space-y-6 lg:order-2 lg:pt-7">
               <PanelCard className="border-zinc-950 p-6">
                 <div className="flex flex-wrap items-center gap-3">
                   <StatusPill className={statusClass(hackathon.status)}>

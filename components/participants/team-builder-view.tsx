@@ -472,7 +472,7 @@ export function TeamView({
             </div>
             <div className="mt-5 flex gap-3">
               <button
-                onClick={() => setTeamPhase("solo_swiping")}
+                onClick={onBack}
                 className="h-11 flex-1 rounded-md border-2 border-zinc-950 text-sm font-black text-zinc-800"
               >
                 Cancel
