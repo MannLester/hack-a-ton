@@ -268,23 +268,22 @@ export function ExploreView({
               <PanelCard className="border-zinc-950 p-6">
                 <h2 className="text-lg font-black text-zinc-950">Stats</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 p-4 text-center">
-                    <p className="text-2xl font-black text-zinc-950">
+                  <div className="rounded-lg border-2 border-zinc-950 bg-white p-5 text-center shadow-[4px_4px_0_#111]">
+                    <p className="text-3xl font-black text-zinc-950">
                       {hackathon.interested}
                     </p>
                     <p className="mt-1 text-sm font-bold text-zinc-500">Interested</p>
                   </div>
-                  <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 p-4 text-center">
-                    <p className="text-2xl font-black text-zinc-950">
+                  <div className="rounded-lg border-2 border-zinc-950 bg-white p-5 text-center shadow-[4px_4px_0_#111]">
+                    <p className="text-3xl font-black text-zinc-950">
                       {hackathon.lftCount}
                     </p>
                     <p className="mt-1 text-sm font-bold text-zinc-500">
                       Looking for Teammates
                     </p>
                   </div>
-                  <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 p-4 text-center">
-                    <p className="inline-flex items-center gap-2 text-2xl font-black text-zinc-950">
-                      <Clock className="size-5 text-[#00a7e8]" />
+                  <div className="rounded-lg border-2 border-zinc-950 bg-white p-5 text-center shadow-[4px_4px_0_#111]">
+                    <p className="text-3xl font-black text-zinc-950">
                       {hackathon.deadline}
                     </p>
                     <p className="mt-1 text-sm font-bold text-zinc-500">Deadline</p>
