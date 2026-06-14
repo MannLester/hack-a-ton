@@ -158,8 +158,11 @@ export function OnboardingFlow() {
 
   function progressPercent() {
     if (isOrganizer) {
-      return step === 1 ? 50 : 100;
+      return step === 1 ? 50 : 90;
     }
+
+    if (step === totalSteps) return 90;
+
     return Math.round((step / totalSteps) * 100);
   }
 
