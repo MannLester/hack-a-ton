@@ -92,12 +92,12 @@ export function StatCard({
   icon: typeof Trophy;
 }) {
   return (
-    <div className="rounded-lg border-2 border-zinc-900 bg-white p-4 shadow-[4px_4px_0_#111]">
+    <div className="rounded-lg border-2 border-zinc-900 bg-white p-3 shadow-[4px_4px_0_#111] sm:p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-zinc-600">{label}</p>
-        <Icon className="size-4 text-[#00a7e8]" />
+        <p className="text-[10px] font-bold text-zinc-600 sm:text-sm">{label}</p>
+        <Icon className="size-3 text-[#00a7e8] sm:size-4" />
       </div>
-      <p className="mt-3 text-2xl font-black text-zinc-950">{value}</p>
+      <p className="mt-2 text-xl font-black text-zinc-950 sm:mt-3 sm:text-2xl">{value}</p>
     </div>
   );
 }
