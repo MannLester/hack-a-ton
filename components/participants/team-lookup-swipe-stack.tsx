@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { Heart, MapPin, X } from "lucide-react";
 import type { TeamLooking } from "@/lib/sample-data";
+import { AuthActionButton } from "@/components/shared/auth-controls";
+import { useClerkAuthState } from "@/components/shared/convex-provider";
 
 const SWIPE_THRESHOLD = 100;
 const EXIT_X = 1000;
@@ -21,6 +23,8 @@ function TeamCard({
   style?: React.CSSProperties;
   exitDirection: "left" | "right" | null;
 }) {
+  const { isSignedIn } = useClerkAuthState();
+  const canSwipe = isTop && isSignedIn;
   const exitX = exitDirection === "left" ? -EXIT_X : EXIT_X;
   const exitRotate = exitDirection === "left" ? -15 : 15;
 
@@ -28,11 +32,11 @@ function TeamCard({
     <motion.div
       className="absolute inset-0"
       style={style}
-      drag={isTop ? "x" : false}
+      drag={canSwipe ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.9}
       onDragEnd={(_: unknown, info: PanInfo) => {
-        if (!isTop) return;
+        if (!canSwipe) return;
         if (info.offset.x > SWIPE_THRESHOLD) {
           onSwipe("right");
         } else if (info.offset.x < -SWIPE_THRESHOLD) {
@@ -51,7 +55,7 @@ function TeamCard({
       }
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      whileTap={isTop ? { cursor: "grabbing" } : undefined}
+      whileTap={canSwipe ? { cursor: "grabbing" } : undefined}
     >
       <div className="flex h-full flex-col rounded-lg border-2 border-zinc-950 bg-white p-5 shadow-[5px_5px_0_#111]">
         <p className="text-xl font-black text-zinc-950">{team.teamName}</p>
@@ -78,28 +82,22 @@ function TeamCard({
             {team.hackathonLocation}
           </p>
         </div>
-        {isTop && (
-          <div className="mt-auto pt-4 flex gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwipe("left");
-              }}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
-            >
-              <X className="size-4" /> Pass
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwipe("right");
-              }}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
-            >
-              <Heart className="size-4" /> Like
-            </button>
-          </div>
-        )}
+        <div className="mt-auto flex gap-2 pt-4">
+          <AuthActionButton
+            action="like_teammate"
+            onAuthorizedClick={() => onSwipe("left")}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
+          >
+            <X className="size-4" /> Pass
+          </AuthActionButton>
+          <AuthActionButton
+            action="like_teammate"
+            onAuthorizedClick={() => onSwipe("right")}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
+          >
+            <Heart className="size-4" /> Like
+          </AuthActionButton>
+        </div>
       </div>
     </motion.div>
   );
@@ -112,7 +110,7 @@ export function TeamSwipeStack({
   emptyMessage,
 }: {
   teams: TeamLooking[];
-  onDismiss: (teamName: string) => void;
+  onDismiss: (team: TeamLooking) => void;
   onLike: (team: TeamLooking) => void;
   emptyMessage: string;
 }) {
@@ -130,7 +128,7 @@ export function TeamSwipeStack({
     if (direction === "right") {
       onLike(topCard);
     } else {
-      onDismiss(topCard.teamName);
+      onDismiss(topCard);
     }
 
     setTimeout(() => {

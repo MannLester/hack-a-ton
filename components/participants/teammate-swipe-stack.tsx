@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { Heart, X } from "lucide-react";
 import type { Teammate } from "@/components/shared/types";
+import { AuthActionButton } from "@/components/shared/auth-controls";
+import { useClerkAuthState } from "@/components/shared/convex-provider";
 
 const SWIPE_THRESHOLD = 100;
 const EXIT_X = 1000;
@@ -35,6 +37,8 @@ function SwipeCard({
   style?: React.CSSProperties;
   exitDirection: "left" | "right" | null;
 }) {
+  const { isSignedIn } = useClerkAuthState();
+  const canSwipe = isTop && isSignedIn;
   const exitX = exitDirection === "left" ? -EXIT_X : EXIT_X;
   const exitRotate = exitDirection === "left" ? -15 : 15;
 
@@ -42,11 +46,11 @@ function SwipeCard({
     <motion.div
       className="absolute inset-0"
       style={style}
-      drag={isTop ? "x" : false}
+      drag={canSwipe ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.9}
       onDragEnd={(_: unknown, info: PanInfo) => {
-        if (!isTop) return;
+        if (!canSwipe) return;
         if (info.offset.x > SWIPE_THRESHOLD) {
           onSwipe("right");
         } else if (info.offset.x < -SWIPE_THRESHOLD) {
@@ -61,7 +65,7 @@ function SwipeCard({
       }
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      whileTap={isTop ? { cursor: "grabbing" } : undefined}
+      whileTap={canSwipe ? { cursor: "grabbing" } : undefined}
     >
       <div className="flex h-full flex-col rounded-lg border-2 border-zinc-950 bg-white p-5 shadow-[5px_5px_0_#111]">
         <CardContent teammate={teammate} />
@@ -75,28 +79,22 @@ function SwipeCard({
           <span>{teammate.stack}</span>
           <span>{teammate.availability}</span>
         </div>
-        {isTop && (
-          <div className="mt-5 flex gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwipe("left");
-              }}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
-            >
-              <X className="size-4" /> Pass
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSwipe("right");
-              }}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
-            >
-              <Heart className="size-4" /> Like
-            </button>
-          </div>
-        )}
+        <div className="mt-5 flex gap-2">
+          <AuthActionButton
+            action="like_teammate"
+            onAuthorizedClick={() => onSwipe("left")}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
+          >
+            <X className="size-4" /> Pass
+          </AuthActionButton>
+          <AuthActionButton
+            action="like_teammate"
+            onAuthorizedClick={() => onSwipe("right")}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
+          >
+            <Heart className="size-4" /> Like
+          </AuthActionButton>
+        </div>
       </div>
     </motion.div>
   );

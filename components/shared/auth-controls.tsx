@@ -33,7 +33,14 @@ export function AuthActionButton({
 
   if (!requiresAuth || isSignedIn) {
     return (
-      <button onClick={onAuthorizedClick} disabled={disabled || !isAuthLoaded} className={className}>
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onAuthorizedClick?.();
+        }}
+        disabled={disabled || !isAuthLoaded}
+        className={className}
+      >
         {children}
       </button>
     );
@@ -41,7 +48,13 @@ export function AuthActionButton({
 
   if (!canShowClerkSignIn) {
     return (
-      <button disabled className={className}>
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+        disabled
+        className={className}
+      >
         {signedOutLabel ?? children}
       </button>
     );
@@ -49,7 +62,13 @@ export function AuthActionButton({
 
   return (
     <SignInButton mode="modal">
-      <button disabled={disabled || !isAuthLoaded} className={className}>
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+        disabled={disabled || !isAuthLoaded}
+        className={className}
+      >
         {signedOutLabel ?? children}
       </button>
     </SignInButton>
