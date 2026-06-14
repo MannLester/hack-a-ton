@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SignInButton, SignOutButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { ChevronDown, LogOut, Medal, Trophy } from "lucide-react";
+import { ChevronDown, LogOut, Medal, Trophy, User } from "lucide-react";
 import type { ParticipantTab, Persona } from "@/components/shared/types";
 import {
   isClerkConfigured,
@@ -64,7 +64,7 @@ function SignedInActions({ onPortfolioClick }: { onPortfolioClick?: () => void }
               }}
               className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
             >
-              <Trophy className="size-4" /> View Profile
+              <User className="size-4" /> View Profile
             </button>
             <div className="border-t-2 border-zinc-100" />
             <button
