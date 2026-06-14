@@ -11,6 +11,7 @@ import {
   Mic,
   Palette,
   Plus,
+  Search,
   Server,
   Settings,
   Shield,
@@ -98,6 +99,7 @@ export function TeamView({
     goal: "",
     roles: [] as string[],
   });
+  const [hackathonSearchQuery, setHackathonSearchQuery] = useState("");
 
   const selectedHackathon = hackathons.find(
     (h) => h.id === teamLobby.hackathon,
@@ -170,6 +172,17 @@ export function TeamView({
     return result;
   }, [teamListings, hackathons, selectedHackathonId, selectedRole]);
 
+  const filteredHackathons = useMemo(() => {
+    if (!hackathonSearchQuery.trim()) return hackathons;
+    const query = hackathonSearchQuery.toLowerCase();
+    return hackathons.filter(
+      (h) =>
+        h.name.toLowerCase().includes(query) ||
+        h.date.toLowerCase().includes(query) ||
+        h.location.toLowerCase().includes(query)
+    );
+  }, [hackathons, hackathonSearchQuery]);
+
   if (teamPhase === "onboarding_hackathon") {
     return (
       <div className="space-y-6">
@@ -189,37 +202,55 @@ export function TeamView({
             </h2>
           </div>
         </div>
-        <div className="mx-auto max-w-lg space-y-3">
-          {hackathons.map((hackathon) => {
-            const isSelected = selectedHackathonId === hackathon.id;
-            return (
-              <button
-                key={hackathon.id}
-                onClick={() => {
-                  setSelectedHackathonId(hackathon.id);
-                  setTeamPhase("onboarding_role");
-                }}
-                className={`group flex w-full items-center gap-4 rounded-lg border-2 border-zinc-950 p-4 text-left shadow-[4px_4px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#111] ${
-                  isSelected
-                    ? "border-[#00a7e8] bg-[#00a7e8]/10 shadow-[4px_4px_0_#00a7e8]"
-                    : "bg-white"
-                }`}
-              >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[#ffd21f]/20 text-[#7a5700]">
-                  <Users className="size-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-black text-zinc-950">
-                    {hackathon.name}
-                  </p>
-                  <p className="mt-0.5 text-xs font-bold text-zinc-500">
-                    {hackathon.date} · {hackathon.location}
-                  </p>
-                </div>
-                <ArrowRight className="size-4 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-[#00a7e8]" />
-              </button>
-            );
-          })}
+        <div className="mx-auto max-w-2xl space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              value={hackathonSearchQuery}
+              onChange={(e) => setHackathonSearchQuery(e.target.value)}
+              placeholder="Search by name, date, or location..."
+              className="h-11 w-full rounded-lg border-2 border-zinc-950 bg-white pl-10 pr-3 text-sm font-medium outline-none shadow-[3px_3px_0_#111] transition focus:border-[#00a7e8] focus:shadow-[5px_5px_0_#00a7e8]"
+            />
+          </div>
+          {filteredHackathons.length === 0 ? (
+            <p className="text-center text-sm font-bold text-zinc-500">
+              No hackathons found matching &quot;{hackathonSearchQuery}&quot;
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filteredHackathons.map((hackathon) => {
+                const isSelected = selectedHackathonId === hackathon.id;
+                return (
+                  <button
+                    key={hackathon.id}
+                    onClick={() => {
+                      setSelectedHackathonId(hackathon.id);
+                      setTeamPhase("onboarding_role");
+                    }}
+                    className={`group flex w-full items-center gap-3 rounded-lg border-2 border-zinc-950 p-3 text-left shadow-[4px_4px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#111] ${
+                      isSelected
+                        ? "border-[#00a7e8] bg-[#00a7e8]/10 shadow-[4px_4px_0_#00a7e8]"
+                        : "bg-white"
+                    }`}
+                  >
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[#ffd21f]/20 text-[#7a5700]">
+                      <Users className="size-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-black text-zinc-950">
+                        {hackathon.name}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs font-bold text-zinc-500">
+                        {hackathon.date} · {hackathon.location}
+                      </p>
+                    </div>
+                    <ArrowRight className="size-4 shrink-0 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-[#00a7e8]" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <button
             onClick={() => {
               setSelectedHackathonId(null);

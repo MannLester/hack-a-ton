@@ -122,7 +122,7 @@ export function AppNavigation({
 }: {
   persona: Persona;
   setPersona: (persona: Persona) => void;
-  setParticipantTab: (tab: "explore") => void;
+  setParticipantTab: (tab: ParticipantTab) => void;
   onLeaveStaffView?: () => void;
 }) {
   return (
