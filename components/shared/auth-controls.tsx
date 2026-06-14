@@ -1,10 +1,14 @@
 "use client";
 
-import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { LockKeyhole, UserPlus } from "lucide-react";
 import type { AuthAction } from "@/lib/auth-persona";
 import { getActionAuthRequirement } from "@/lib/auth-persona";
 import { FeaturePanel } from "@/components/shared/primitives";
+import {
+  isClerkConfigured,
+  useClerkAuthState,
+} from "@/components/shared/convex-provider";
 
 type ButtonProps = {
   action: AuthAction;
@@ -23,23 +27,51 @@ export function AuthActionButton({
   disabled = false,
   signedOutLabel,
 }: ButtonProps) {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isAuthLoaded, isSignedIn } = useClerkAuthState();
   const requiresAuth = getActionAuthRequirement(action) === "auth_required";
+  const canShowClerkSignIn = isClerkConfigured();
 
   if (!requiresAuth || isSignedIn) {
     return (
-      <button onClick={onAuthorizedClick} disabled={disabled || !isLoaded} className={className}>
+      <button onClick={onAuthorizedClick} disabled={disabled || !isAuthLoaded} className={className}>
         {children}
+      </button>
+    );
+  }
+
+  if (!canShowClerkSignIn) {
+    return (
+      <button disabled className={className}>
+        {signedOutLabel ?? children}
       </button>
     );
   }
 
   return (
     <SignInButton mode="modal">
-      <button disabled={disabled || !isLoaded} className={className}>
+      <button disabled={disabled || !isAuthLoaded} className={className}>
         {signedOutLabel ?? children}
       </button>
     </SignInButton>
+  );
+}
+
+function OrganizerAuthActions() {
+  if (!isClerkConfigured()) return null;
+
+  return (
+    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <SignInButton mode="modal">
+        <button className="inline-flex h-11 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-black text-white">
+          Log in as organizer
+        </button>
+      </SignInButton>
+      <SignUpButton mode="modal">
+        <button className="inline-flex h-11 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#00a7e8] px-5 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]">
+          <UserPlus className="size-4" /> Create organizer account
+        </button>
+      </SignUpButton>
+    </div>
   );
 }
 
@@ -61,18 +93,7 @@ export function OrganizerAuthGate() {
             <p className="mt-3 text-sm font-medium leading-6 text-zinc-600">
               Participants can browse hackathons without an account. Organizers need an account so listings can be reviewed, attributed, edited, and trusted over time.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <SignInButton mode="modal">
-                <button className="inline-flex h-11 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-black text-white">
-                  Log in as organizer
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="inline-flex h-11 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#00a7e8] px-5 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]">
-                  <UserPlus className="size-4" /> Create organizer account
-                </button>
-              </SignUpButton>
-            </div>
+            <OrganizerAuthActions />
           </div>
         </div>
       </FeaturePanel>

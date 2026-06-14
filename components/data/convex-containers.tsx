@@ -1,10 +1,13 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import {
+  type OptionalClerkUser,
+  useOptionalClerkUser,
+} from "@/components/shared/convex-provider";
 import {
   getUiOrganizerHackathon,
   getUiPortfolioProfile,
@@ -60,7 +63,7 @@ function getInitials(displayName: string) {
     .toUpperCase();
 }
 
-function getClerkIdentity(user: ReturnType<typeof useUser>["user"]) {
+function getClerkIdentity(user: OptionalClerkUser | null) {
   if (!user) return null;
 
   const emailName = user.primaryEmailAddress?.emailAddress.split("@")[0];
@@ -98,7 +101,7 @@ export function ConvexOrganizerView({
   activeTab: OrganizerTab;
   setActiveTab: (tab: OrganizerTab) => void;
 }) {
-  const { user } = useUser();
+  const user = useOptionalClerkUser();
   const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
   const [organizerAccount, setOrganizerAccount] =
     useState<OrganizerAccount | null>(null);
@@ -310,7 +313,7 @@ export function ConvexParticipantView({
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
 }) {
-  const { user } = useUser();
+  const user = useOptionalClerkUser();
   const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
   const [participantUserId, setParticipantUserId] =
     useState<Id<"users"> | null>(null);

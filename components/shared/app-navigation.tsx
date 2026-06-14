@@ -1,8 +1,50 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton, SignOutButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignOutButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import type { Persona } from "@/components/shared/types";
+import {
+  isClerkConfigured,
+  useClerkAuthState,
+} from "@/components/shared/convex-provider";
+
+function SignedOutActions() {
+  return (
+    <>
+      <SignInButton mode="modal">
+        <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
+          Log in
+        </button>
+      </SignInButton>
+      <SignUpButton mode="modal">
+        <button className="inline-flex h-10 items-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]">
+          Sign up
+        </button>
+      </SignUpButton>
+    </>
+  );
+}
+
+function SignedInActions() {
+  return (
+    <>
+      <SignOutButton redirectUrl="/">
+        <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
+          Sign out
+        </button>
+      </SignOutButton>
+      <UserButton />
+    </>
+  );
+}
+
+function AuthNavigationActions() {
+  const { isSignedIn } = useClerkAuthState();
+
+  if (!isClerkConfigured()) return null;
+  if (isSignedIn) return <SignedInActions />;
+  return <SignedOutActions />;
+}
 
 export function AppNavigation({
   persona,
@@ -61,26 +103,7 @@ export function AppNavigation({
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
-                Log in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button className="inline-flex h-10 items-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]">
-                Sign up
-              </button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <SignOutButton redirectUrl="/">
-              <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
-                Sign out
-              </button>
-            </SignOutButton>
-            <UserButton />
-          </SignedIn>
+          <AuthNavigationActions />
         </div>
       </div>
       <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">

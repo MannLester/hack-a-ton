@@ -1,22 +1,23 @@
 "use client";
 
 import { HackatonApp } from "@/components/app-shell";
-import { useRouter } from "next/navigation";
+import { OnboardingFlow } from "@/components/landing/onboarding-flow";
 import { useEffect, useState } from "react";
 
+function hasCompletedOnboarding() {
+  return window.localStorage.getItem("hackaton-onboarding-v2") === "true";
+}
+
 export default function Home() {
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
 
   useEffect(() => {
-    const done = localStorage.getItem("hackaton-onboarding-v2") === "true";
-    if (!done) {
-      router.replace("/onboarding");
-    } else {
-      setReady(true);
-    }
-  }, [router]);
+    setIsOnboardingComplete(hasCompletedOnboarding());
+    setIsCheckingOnboarding(false);
+  }, []);
 
-  if (!ready) return null;
+  if (isCheckingOnboarding) return null;
+  if (!isOnboardingComplete) return <OnboardingFlow />;
   return <HackatonApp />;
 }
