@@ -21,17 +21,17 @@ function FilterChips<T extends string>({
   onSelect: (value: T) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
       <span className="text-xs font-black uppercase tracking-wider text-zinc-500">
         {label}
       </span>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1 sm:gap-1.5">
         {options.map((option) => (
           <button
             key={option}
             type="button"
             onClick={() => onSelect(option)}
-            className={`rounded-full border-2 px-3 py-1 text-xs font-black transition-all ${
+            className={`rounded-full border-2 px-2.5 py-0.5 text-[11px] font-black transition-all sm:px-3 sm:py-1 sm:text-xs ${
               selected === option
                 ? "border-zinc-950 bg-zinc-950 text-white"
                 : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950"
@@ -85,16 +85,16 @@ export function AllHackathonsView() {
       />
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <Link
               href="/"
               aria-label="Back to home"
-              className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+              className="hidden shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] sm:inline-flex sm:size-10"
             >
               <ArrowLeft className="size-4" />
             </Link>
             <div>
-              <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
+              <h1 className="text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl lg:text-5xl">
                 Explore Hackathons
               </h1>
               <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-zinc-500">
@@ -104,7 +104,7 @@ export function AllHackathonsView() {
             </div>
           </div>
 
-          <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
+          <section className="rounded-lg border-2 border-zinc-950 bg-white p-3 shadow-[5px_5px_0_#111] sm:p-4">
             <div className="flex gap-3">
               <label className="relative block flex-1">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
@@ -112,13 +112,13 @@ export function AllHackathonsView() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search by name, organizer, location, or eligibility"
-                  className="h-11 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8]"
+                  className="h-10 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8] sm:h-11"
                 />
               </label>
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
-                className={`inline-flex size-11 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] ${
+                className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] sm:size-11 ${
                   showFilters ? "bg-zinc-950 text-white" : "bg-white"
                 }`}
               >
@@ -126,7 +126,7 @@ export function AllHackathonsView() {
               </button>
             </div>
             {showFilters && (
-              <div className="mt-4 space-y-3 border-t-2 border-zinc-100 pt-4">
+              <div className="mt-3 space-y-1.5 border-t-2 border-zinc-100 pt-3 sm:mt-4 sm:space-y-2 sm:pt-4">
                 <FilterChips
                   label="Setup"
                   options={setup}
@@ -155,7 +155,7 @@ export function AllHackathonsView() {
             )}
           </section>
 
-          <section className="grid gap-4 sm:grid-cols-2">
+          <section className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             {filteredHackathons.map((hackathon) => (
               <HackathonCard key={hackathon.id} hackathon={hackathon} />
             ))}
