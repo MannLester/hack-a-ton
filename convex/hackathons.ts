@@ -159,6 +159,26 @@ export const featuredPublished = query({
   },
 });
 
+export const getPlatformStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const [publishedHackathons, users, teams] = await Promise.all([
+      ctx.db
+        .query("hackathons")
+        .withIndex("by_status", (index) => index.eq("status", "published"))
+        .collect(),
+      ctx.db.query("users").collect(),
+      ctx.db.query("teams").collect(),
+    ]);
+
+    return {
+      hackathonsListed: publishedHackathons.length,
+      activeBuilders: users.filter((user) => user.role === "participant").length,
+      teamsFormed: teams.length,
+    };
+  },
+});
+
 export const listByOrganizer = query({
   args: {
     organizerId: v.id("organizers"),

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Hackathon, TeamLooking } from "@/lib/sample-data";
-import type { LeaderboardRow, MyTeam, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
+import type { LandingStats, LeaderboardRow, MyTeam, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
@@ -33,6 +33,7 @@ export function LandingView({
   onLikeTeammate,
   portfolioProfile,
   leaderboardRows,
+  landingStats,
   onSavePortfolioEntry,
   onDeletePortfolioEntry,
   onSaveBio,
@@ -59,6 +60,7 @@ export function LandingView({
   onLikeTeammate: (teammate: Teammate) => void;
   portfolioProfile?: PortfolioProfile;
   leaderboardRows?: LeaderboardRow[];
+  landingStats?: LandingStats;
   onSavePortfolioEntry?: (values: {
     entryId?: PortfolioEntry["id"];
     hackathonName: string;
@@ -173,9 +175,21 @@ export function LandingView({
             Discover hackathons, find teammates, and build your portfolio.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label="Hackathons Listed" value="24" icon={Trophy} />
-            <StatCard label="Active Builders" value="185" icon={Users} />
-            <StatCard label="Teams Formed" value="73" icon={Handshake} />
+            <StatCard
+              label="Hackathons Listed"
+              value={String(landingStats?.hackathonsListed ?? filteredHackathons.length)}
+              icon={Trophy}
+            />
+            <StatCard
+              label="Active Builders"
+              value={String(landingStats?.activeBuilders ?? 0)}
+              icon={Users}
+            />
+            <StatCard
+              label="Teams Formed"
+              value={String(landingStats?.teamsFormed ?? 0)}
+              icon={Handshake}
+            />
           </div>
         </FeaturePanel>
         <FeaturePanel className="bg-zinc-950 p-4 text-white sm:p-5">

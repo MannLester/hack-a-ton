@@ -74,6 +74,11 @@ export type PortfolioProfile = {
   stats: { label: string; value: string }[];
   entries: PortfolioEntry[];
 };
+export type LandingStats = {
+  hackathonsListed: number;
+  activeBuilders: number;
+  teamsFormed: number;
+};
 export type CreateListingStatus =
   | "idle"
   | "saving"

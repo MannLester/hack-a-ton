@@ -329,6 +329,7 @@ export function ConvexParticipantView({
     setup,
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
+  const landingStats = useQuery(api.hackathons.getPlatformStats, {});
   useEffect(() => {
     if (!clerkIdentity) {
       setParticipantUserId(null);
@@ -584,6 +585,7 @@ export function ConvexParticipantView({
       onLikeTeammate={likeTeammate}
       portfolioProfile={displayedPortfolioProfile}
       leaderboardRows={leaderboardRows}
+      landingStats={landingStats}
       onSaveBio={saveBio}
       onSavePortfolioEntry={savePortfolioEntry}
       onDeletePortfolioEntry={deletePortfolioEntry}
