@@ -20,6 +20,14 @@ type InterestedUser = Doc<"users"> & {
   hackathonId: Id<"hackathons"> | undefined;
 };
 
+type TeamMemberProfile = {
+  userId: Id<"users">;
+  displayName: string;
+  initials: string;
+  meta: string | null;
+  isLead: boolean;
+};
+
 function getPairKey(firstUserId: Id<"users">, secondUserId: Id<"users">) {
   return [firstUserId, secondUserId].sort().join(":");
 }
@@ -89,6 +97,22 @@ async function getRecruitingTeamWithHackathon(
     hackathonName: hackathon.name,
     hackathonLocation: hackathon.location,
   } satisfies RecruitingTeam;
+}
+
+async function getTeamMemberProfile(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  leadUserId: Id<"users">,
+) {
+  const user = await ctx.db.get(userId);
+
+  return {
+    userId,
+    displayName: user?.displayName ?? "Unknown builder",
+    initials: user?.initials ?? "HA",
+    meta: [user?.schoolOrCompany, user?.location].filter(Boolean).join(" · ") || null,
+    isLead: userId === leadUserId,
+  } satisfies TeamMemberProfile;
 }
 
 async function findReverseLike(
@@ -398,7 +422,21 @@ export const getMyTeam = query({
   },
   handler: async (ctx, args) => {
     const allTeams = await ctx.db.query("teams").collect();
-    return allTeams.find((team) => team.members.includes(args.userId)) ?? null;
+    const team = allTeams.find((item) => item.members.includes(args.userId));
+
+    if (!team) return null;
+
+    const leadUserId = team.members[0];
+    const memberProfiles = await Promise.all(
+      team.members.map((memberId) =>
+        getTeamMemberProfile(ctx, memberId, leadUserId),
+      ),
+    );
+
+    return {
+      ...team,
+      memberProfiles,
+    };
   },
 });
 

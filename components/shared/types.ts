@@ -37,6 +37,16 @@ export type TeamInterestedUser = {
   meta: string;
   bio: string;
 };
+export type TeamMemberProfile = {
+  userId: Id<"users">;
+  displayName: string;
+  initials: string;
+  meta: string | null;
+  isLead: boolean;
+};
+export type MyTeam = Doc<"teams"> & {
+  memberProfiles: TeamMemberProfile[];
+};
 export type PortfolioEntry = {
   id?: Id<"portfolioEntries">;
   hackathonName: string;

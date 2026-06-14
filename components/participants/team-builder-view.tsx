@@ -7,8 +7,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import type { TeamInterestedUser, Teammate } from "@/components/shared/types";
+import type { Id } from "@/convex/_generated/dataModel";
+import type { MyTeam, TeamInterestedUser, Teammate } from "@/components/shared/types";
 import type { Hackathon, TeamLooking } from "@/lib/sample-data";
 import { teamsLooking } from "@/lib/sample-data";
 import { AuthActionButton } from "@/components/shared/auth-controls";
@@ -51,7 +51,7 @@ export function TeamView({
     roles: string[];
     targetSize: number;
   }) => Promise<void>;
-  myTeam?: Doc<"teams"> | null;
+  myTeam?: MyTeam | null;
   initialPhase?: "solo_swiping" | "creating_card" | "team_recruiting";
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;
@@ -71,9 +71,6 @@ export function TeamView({
     role: "Frontend + pitch deck",
     school: "UP Diliman",
   });
-  const [selectedMissingRoles, setSelectedMissingRoles] = useState<string[]>(
-    [],
-  );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [teamLobby, setTeamLobby] = useState({
@@ -103,12 +100,6 @@ export function TeamView({
       ...prev,
       roles: prev.roles.filter((r) => r !== role),
     }));
-  };
-
-  const toggleRole = (role: string) => {
-    setSelectedMissingRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
-    );
   };
 
   if (teamPhase === "creating_card") {
@@ -437,10 +428,10 @@ export function TeamView({
       );
     }
 
-    const displayRoles = myTeam.missingRoles ?? teamLobby.roles;
     const displayTeamName = myTeam.teamName ?? teamLobby.teamName;
     const displayTargetSize = myTeam.targetSize ?? (1 + teamLobby.roles.length);
     const displayMembers = myTeam.members?.length ?? 1;
+    const displayMemberProfiles = myTeam.memberProfiles ?? [];
     const selectedHackathonForTeam = hackathons.find(
       (h) => h.id === myTeam.hackathonId,
     );
@@ -530,60 +521,31 @@ export function TeamView({
               </span>
             </div>
             <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-3 rounded-md border-2 border-zinc-950 bg-white p-3 shadow-[3px_3px_0_#111]">
-                <div className="flex size-10 items-center justify-center rounded-full bg-[#ffd21f] text-sm font-black text-zinc-950">
-                  Y
-                </div>
-                <div>
-                  <p className="text-sm font-black text-zinc-950">You</p>
-                  <p className="text-xs font-bold text-zinc-500">
-                    Team Lead
-                  </p>
-                </div>
-              </div>
-              {displayRoles.map((role) => (
+              {displayMemberProfiles.map((member) => (
                 <div
-                  key={role}
-                  className="flex items-center gap-3 rounded-md border-2 border-dashed border-zinc-300 bg-white p-3"
+                  key={member.userId}
+                  className="flex items-center gap-3 rounded-md border-2 border-zinc-950 bg-white p-3 shadow-[3px_3px_0_#111]"
                 >
-                  <div className="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-sm font-black text-zinc-400">
-                    <Users className="size-4" />
+                  <div
+                    className={`flex size-10 items-center justify-center rounded-full text-sm font-black ${
+                      member.isLead
+                        ? "bg-[#ffd21f] text-zinc-950"
+                        : "bg-[#00a7e8]/15 text-[#006c9c]"
+                    }`}
+                  >
+                    {member.initials}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-zinc-400">
-                      {role}
+                    <p className="text-sm font-black text-zinc-950">
+                      {member.displayName}
                     </p>
-                    <p className="text-xs font-bold text-zinc-400">
-                      Open slot
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-zinc-500">
+                      <span>{member.isLead ? "Team Lead" : "Member"}</span>
+                      {member.meta && <span>{member.meta}</span>}
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </FeaturePanel>
-
-          <FeaturePanel className="p-5">
-            <h3 className="text-sm font-black text-zinc-950">
-              What roles are you missing?
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {displayRoles.map((role) => {
-                const active = selectedMissingRoles.includes(role);
-                return (
-                  <button
-                    key={role}
-                    onClick={() => toggleRole(role)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black transition ${
-                      active
-                        ? "border-[#00a7e8] bg-[#00a7e8] text-white"
-                        : "border-zinc-950 bg-white text-zinc-800 hover:bg-zinc-100"
-                    }`}
-                  >
-                    {active && <Check className="size-3" />}
-                    {role}
-                  </button>
-                );
-              })}
             </div>
           </FeaturePanel>
         </div>

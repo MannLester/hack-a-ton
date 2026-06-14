@@ -9,9 +9,9 @@ import {
   Users,
   UserPlus,
 } from "lucide-react";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
+import type { Id } from "@/convex/_generated/dataModel";
 import type { Hackathon, TeamLooking } from "@/lib/sample-data";
-import type { LeaderboardRow, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
+import type { LeaderboardRow, MyTeam, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
@@ -74,7 +74,7 @@ export function LandingView({
     roles: string[];
     targetSize: number;
   }) => Promise<void>;
-  myTeam?: Doc<"teams"> | null;
+  myTeam?: MyTeam | null;
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;
   onLikeTeam?: (team: TeamLooking) => void;
