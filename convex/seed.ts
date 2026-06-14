@@ -3,6 +3,21 @@ import { mutation } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
+const resettableTables = [
+  "organizers",
+  "hackathons",
+  "savedHackathons",
+  "listingSignals",
+  "lftProfiles",
+  "teamDecisions",
+  "teamMatches",
+  "teams",
+  "badges",
+  "userBadges",
+  "portfolioEntries",
+  "listingReviews",
+] as const;
+
 const demoHackathons = [
   {
     name: "PH AI Build Weekend",
@@ -111,6 +126,39 @@ const demoParticipants = [
   },
 ] as const;
 
+const demoTeams = [
+  {
+    teamName: "AI Public Servants",
+    leadDisplayName: "Mika Reyes",
+    hackathonName: "PH AI Build Weekend",
+    goal: "Build a barangay request triage assistant for common citizen services.",
+    missingRoles: ["AI/ML", "Backend"],
+    currentSize: 2,
+    targetSize: 4,
+    status: "recruiting",
+  },
+  {
+    teamName: "PayItForward",
+    leadDisplayName: "Andre Santos",
+    hackathonName: "Fintech Campus Cup",
+    goal: "Prototype a student budgeting app with transparent savings nudges.",
+    missingRoles: ["Frontend", "Pitch"],
+    currentSize: 2,
+    targetSize: 5,
+    status: "recruiting",
+  },
+  {
+    teamName: "Research Relay",
+    leadDisplayName: "Gia Lim",
+    hackathonName: "Climate Hack Cebu",
+    goal: "Turn community climate reports into clear responder dashboards.",
+    missingRoles: ["Data", "Backend"],
+    currentSize: 1,
+    targetSize: 4,
+    status: "recruiting",
+  },
+] as const;
+
 const demoBadges = [
   "First Hackathon",
   "Team Builder",
@@ -153,12 +201,64 @@ const demoPortfolioEntries = [
   },
 ] as const;
 
+const demoReviewListings = [
+  {
+    name: "Campus Health Sprint",
+    organizer: "Student Builders PH",
+    dateLabel: "Nov 7-8, 2026",
+    registrationDeadlineLabel: "Closes Oct 25",
+    setup: "Hybrid",
+    location: "Quezon City",
+    region: "Luzon",
+    eligibility: ["Students", "Health-tech builders"],
+    teamSize: "2-5",
+    prize: "Mentorship + grants",
+    difficulty: "Intermediate",
+    summary:
+      "Build practical tools for student health access, clinic queues, and wellness follow-ups.",
+    status: "pending_review",
+  },
+  {
+    name: "Open Gov Data Jam",
+    organizer: "Civic Data Lab",
+    dateLabel: "Dec 5-6, 2026",
+    registrationDeadlineLabel: "Closes Nov 20",
+    setup: "Online",
+    location: "Philippines-wide",
+    region: "Philippines-wide",
+    eligibility: ["Open to all", "Data teams"],
+    teamSize: "1-4",
+    prize: "PHP 60k pool",
+    difficulty: "Open",
+    summary:
+      "Create searchable public-service datasets, maps, and accountability dashboards.",
+    status: "pending_review",
+  },
+] as const;
+
 function getInitials(name: string) {
   return name
     .split(" ")
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+}
+
+async function clearTable(
+  ctx: MutationCtx,
+  tableName: (typeof resettableTables)[number],
+) {
+  const documents = await ctx.db.query(tableName).collect();
+
+  for (const document of documents) {
+    await ctx.db.delete(document._id);
+  }
+}
+
+async function clearDemoData(ctx: MutationCtx) {
+  for (const tableName of resettableTables) {
+    await clearTable(ctx, tableName);
+  }
 }
 
 async function getUserByDisplayName(ctx: MutationCtx, displayName: string) {
@@ -286,6 +386,7 @@ async function upsertLftProfile(
   ctx: MutationCtx,
   userId: Id<"users">,
   participant: (typeof demoParticipants)[number],
+  hackathonId?: Id<"hackathons">,
 ) {
   if (!("role" in participant)) return;
 
@@ -294,6 +395,7 @@ async function upsertLftProfile(
     .withIndex("by_user", (index) => index.eq("userId", userId))
     .first();
   const profileFields = {
+    hackathonId,
     role: participant.role,
     stack: [...participant.stack],
     availability: participant.availability,
@@ -307,6 +409,90 @@ async function upsertLftProfile(
   }
 
   await ctx.db.patch(existingProfile._id, profileFields);
+}
+
+async function seedTeam(
+  ctx: MutationCtx,
+  team: (typeof demoTeams)[number],
+  userIdsByName: Map<string, Id<"users">>,
+  hackathonIdsByName: Map<string, Id<"hackathons">>,
+) {
+  const leadUserId = userIdsByName.get(team.leadDisplayName);
+  const hackathonId = hackathonIdsByName.get(team.hackathonName);
+
+  if (!leadUserId) throw new Error(`Missing team lead ${team.leadDisplayName}`);
+  if (!hackathonId) throw new Error(`Missing hackathon ${team.hackathonName}`);
+
+  await ctx.db.insert("teams", {
+    hackathonId,
+    teamName: team.teamName,
+    goal: team.goal,
+    members: [leadUserId],
+    currentSize: team.currentSize,
+    targetSize: team.targetSize,
+    missingRoles: [...team.missingRoles],
+    status: team.status,
+  });
+}
+
+async function seedSavedHackathon(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  hackathonId: Id<"hackathons">,
+) {
+  await ctx.db.insert("savedHackathons", {
+    userId,
+    hackathonId,
+  });
+}
+
+async function seedListingSignal(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  hackathonId: Id<"hackathons">,
+  type: "interest" | "lft_click" | "external_registration_click",
+) {
+  await ctx.db.insert("listingSignals", {
+    userId,
+    hackathonId,
+    type,
+  });
+}
+
+async function seedPendingReview(
+  ctx: MutationCtx,
+  listing: (typeof demoReviewListings)[number],
+) {
+  const ownerUserId = await getOrCreateUser(ctx, {
+    displayName: `${listing.organizer} Owner`,
+    initials: getInitials(listing.organizer),
+    schoolOrCompany: listing.organizer,
+  });
+  const organizerId = await getOrCreateOrganizer(
+    ctx,
+    listing.organizer,
+    ownerUserId,
+  );
+  const hackathonId = await ctx.db.insert("hackathons", {
+    organizerId,
+    name: listing.name,
+    dateLabel: listing.dateLabel,
+    registrationDeadlineLabel: listing.registrationDeadlineLabel,
+    setup: listing.setup,
+    location: listing.location,
+    region: listing.region,
+    eligibility: [...listing.eligibility],
+    teamSize: listing.teamSize,
+    prize: listing.prize,
+    status: listing.status,
+    difficulty: listing.difficulty,
+    summary: listing.summary,
+  });
+
+  await ctx.db.insert("listingReviews", {
+    hackathonId,
+    status: "pending",
+  });
 }
 
 async function seedPortfolioEntry(
@@ -362,19 +548,24 @@ async function seedInterestSignals(
   }
 }
 
-export const seedDemoData = mutation({
+async function seedDemoDataHandler(
+  ctx: MutationCtx,
   args: {
-    includeLargeInterestCounts: v.optional(v.boolean()),
+    includeLargeInterestCounts?: boolean;
+    reset?: boolean;
   },
-  handler: async (ctx, args) => {
+) {
     const createdUserIds = new Map<string, Id<"users">>();
     const createdOrganizerIds = new Map<string, Id<"organizers">>();
     const createdHackathonIds = new Map<string, Id<"hackathons">>();
 
+    if (args.reset) {
+      await clearDemoData(ctx);
+    }
+
     for (const participant of demoParticipants) {
       const userId = await getOrCreateUser(ctx, participant);
       createdUserIds.set(participant.displayName, userId);
-      await upsertLftProfile(ctx, userId, participant);
     }
 
     const juanUserId = createdUserIds.get("Juan Ramos");
@@ -406,6 +597,19 @@ export const seedDemoData = mutation({
       }
     }
 
+    for (const participant of demoParticipants) {
+      const userId = createdUserIds.get(participant.displayName);
+      const hackathonId = createdHackathonIds.get("PH AI Build Weekend");
+
+      if (!userId) throw new Error(`Missing participant ${participant.displayName}`);
+
+      await upsertLftProfile(ctx, userId, participant, hackathonId);
+    }
+
+    for (const team of demoTeams) {
+      await seedTeam(ctx, team, createdUserIds, createdHackathonIds);
+    }
+
     for (const badgeName of demoBadges) {
       const badgeId = await getOrCreateBadge(ctx, badgeName);
       await awardBadgeIfMissing(ctx, juanUserId, badgeId);
@@ -415,12 +619,49 @@ export const seedDemoData = mutation({
       await seedPortfolioEntry(ctx, juanUserId, entry);
     }
 
-    return {
-      users: createdUserIds.size,
-      organizers: createdOrganizerIds.size,
-      hackathons: createdHackathonIds.size,
-      badges: demoBadges.length,
-      portfolioEntries: demoPortfolioEntries.length,
-    };
+    const savedHackathonId = createdHackathonIds.get("PH AI Build Weekend");
+    const interestedHackathonId = createdHackathonIds.get("Fintech Campus Cup");
+    const lftHackathonId = createdHackathonIds.get("Climate Hack Cebu");
+
+    if (savedHackathonId) await seedSavedHackathon(ctx, juanUserId, savedHackathonId);
+    if (interestedHackathonId)
+      await seedListingSignal(ctx, juanUserId, interestedHackathonId, "interest");
+    if (lftHackathonId)
+      await seedListingSignal(ctx, juanUserId, lftHackathonId, "lft_click");
+
+    for (const listing of demoReviewListings) {
+      await seedPendingReview(ctx, listing);
+    }
+
+  return {
+    users: createdUserIds.size,
+    organizers: createdOrganizerIds.size,
+    hackathons: createdHackathonIds.size,
+    teams: demoTeams.length,
+    badges: demoBadges.length,
+    portfolioEntries: demoPortfolioEntries.length,
+    reviewListings: demoReviewListings.length,
+  };
+}
+
+export const seedDemoData = mutation({
+  args: {
+    includeLargeInterestCounts: v.optional(v.boolean()),
+    reset: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    return seedDemoDataHandler(ctx, args);
+  },
+});
+
+export const resetAndSeedDemoData = mutation({
+  args: {
+    includeLargeInterestCounts: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    return seedDemoDataHandler(ctx, {
+      includeLargeInterestCounts: args.includeLargeInterestCounts,
+      reset: true,
+    });
   },
 });
