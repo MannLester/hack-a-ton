@@ -2,7 +2,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Handshake,
-  Medal,
   Search,
   Sparkles,
   Trophy,
@@ -135,35 +134,6 @@ export function LandingView({
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-2 rounded-lg border-2 border-zinc-950 bg-white p-2 shadow-[4px_4px_0_#111] sm:grid-cols-4">
-        <button
-          onClick={() => setActiveTab("explore")}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-3 text-sm font-black text-zinc-950"
-        >
-          <Search className="size-4" /> Explore
-        </button>
-        <button
-          onClick={() => {
-            setInitialTeamPhase("solo_swiping");
-            setActiveTab("team");
-          }}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-        >
-          <Users className="size-4" /> Team Up
-        </button>
-        <button
-          onClick={() => setActiveTab("portfolio")}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-        >
-          <Trophy className="size-4" /> Portfolio
-        </button>
-        <button
-          onClick={() => setActiveTab("leaderboard")}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-        >
-          <Medal className="size-4" /> Leaderboard
-        </button>
-      </div>
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <FeaturePanel className="p-5 sm:p-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-[#ffd21f] px-3 py-1 text-xs font-black text-zinc-950">

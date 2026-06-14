@@ -112,6 +112,7 @@ export function HackatonApp() {
         persona={persona}
         setPersona={setPersona}
         setParticipantTab={setParticipantTab}
+        activeTab={participantTab}
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">

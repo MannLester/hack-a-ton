@@ -1,12 +1,15 @@
 "use client";
 
-import { SignInButton, SignOutButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useState } from "react";
+import { SignInButton, SignOutButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import type { Persona } from "@/components/shared/types";
+import { ChevronDown, LogOut, Medal, Trophy } from "lucide-react";
+import type { ParticipantTab, Persona } from "@/components/shared/types";
 import {
   isClerkConfigured,
   useClerkAuthState,
 } from "@/components/shared/convex-provider";
+import { Modal } from "@/components/shared/modal";
 
 function SignedOutActions() {
   return (
@@ -25,24 +28,89 @@ function SignedOutActions() {
   );
 }
 
-function SignedInActions() {
+function SignedInActions({ onPortfolioClick }: { onPortfolioClick?: () => void }) {
+  const { user } = useUser();
+  const [open, setOpen] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+
   return (
-    <>
-      <SignOutButton redirectUrl="/">
-        <button className="inline-flex h-10 items-center rounded-md px-4 text-sm font-black text-zinc-200 hover:bg-white/10">
-          Sign out
-        </button>
-      </SignOutButton>
-      <UserButton />
-    </>
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-md p-1 hover:bg-white/10 transition"
+      >
+        {user?.imageUrl ? (
+          <img
+            src={user.imageUrl}
+            alt="Profile"
+            className="size-9 rounded-full object-cover"
+          />
+        ) : (
+          <div className="grid size-9 place-items-center rounded-full bg-[#ffd21f] text-sm font-black text-zinc-950">
+            {user?.firstName?.[0] ?? "U"}
+          </div>
+        )}
+        <ChevronDown className={`size-4 text-zinc-400 transition ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-lg border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#111]">
+            <button
+              onClick={() => {
+                setOpen(false);
+                onPortfolioClick?.();
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
+            >
+              <Trophy className="size-4" /> View Profile
+            </button>
+            <div className="border-t-2 border-zinc-100" />
+            <button
+              onClick={() => {
+                setOpen(false);
+                setShowSignOutModal(true);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
+            >
+              <LogOut className="size-4" /> Sign out
+            </button>
+          </div>
+        </>
+      )}
+
+      <Modal
+        open={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        title="Sign out?"
+      >
+        <p className="text-sm font-medium text-zinc-600">
+          Are you sure you want to sign out of your account?
+        </p>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={() => setShowSignOutModal(false)}
+            className="h-11 flex-1 rounded-md border-2 border-zinc-950 text-sm font-black text-zinc-800"
+          >
+            Cancel
+          </button>
+          <SignOutButton redirectUrl="/">
+            <button className="h-11 flex-1 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]">
+              Sign out
+            </button>
+          </SignOutButton>
+        </div>
+      </Modal>
+    </div>
   );
 }
 
-function AuthNavigationActions() {
+function AuthNavigationActions({ onPortfolioClick }: { onPortfolioClick?: () => void }) {
   const { isSignedIn } = useClerkAuthState();
 
   if (!isClerkConfigured()) return null;
-  if (isSignedIn) return <SignedInActions />;
+  if (isSignedIn) return <SignedInActions onPortfolioClick={onPortfolioClick} />;
   return <SignedOutActions />;
 }
 
@@ -50,10 +118,12 @@ export function AppNavigation({
   persona,
   setPersona,
   setParticipantTab,
+  activeTab,
 }: {
   persona: Persona;
   setPersona: (persona: Persona) => void;
-  setParticipantTab: (tab: "explore") => void;
+  setParticipantTab: (tab: ParticipantTab) => void;
+  activeTab?: ParticipantTab;
 }) {
   return (
     <header className="sticky top-0 z-30 border-b-2 border-zinc-950 bg-zinc-950 text-white shadow-[0_4px_0_#00a7e8]">
@@ -102,8 +172,17 @@ export function AppNavigation({
           </button>
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <AuthNavigationActions />
+        <div className="hidden items-center gap-3 md:flex">
+          {persona === "participant" && (
+            <button
+              onClick={() => setParticipantTab("leaderboard")}
+              className="inline-flex items-center gap-2 rounded-full bg-[#ffd21f] px-4 py-2 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+            >
+              <Medal className="size-4" />
+              Leaderboard
+            </button>
+          )}
+          <AuthNavigationActions onPortfolioClick={() => setParticipantTab("portfolio")} />
         </div>
       </div>
       <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">
