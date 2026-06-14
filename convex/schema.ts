@@ -41,6 +41,23 @@ export default defineSchema({
     schoolOrCompany: v.optional(v.string()),
     location: v.optional(v.string()),
     bio: v.optional(v.string()),
+    onboardingCompletedAt: v.optional(v.number()),
+    onboardingPersona: v.optional(v.union(v.literal("participant"), v.literal("organizer"))),
+    onboardingDomains: v.optional(v.array(v.string())),
+    onboardingTechStack: v.optional(v.array(v.string())),
+    onboardingLocationStrategy: v.optional(
+      v.union(v.literal("local"), v.literal("global")),
+    ),
+    onboardingExperienceLevel: v.optional(
+      v.union(
+        v.literal("first-timer"),
+        v.literal("frequent-hacker"),
+        v.literal("veteran"),
+      ),
+    ),
+    githubUrl: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    portfolioUrl: v.optional(v.string()),
   }).index("by_clerk_user_id", ["clerkUserId"]),
 
   organizers: defineTable({

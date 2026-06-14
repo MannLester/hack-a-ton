@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 const userIdentityFields = {
   clerkUserId: v.string(),
@@ -9,6 +9,25 @@ const userIdentityFields = {
   initials: v.string(),
   schoolOrCompany: v.optional(v.string()),
   location: v.optional(v.string()),
+};
+
+const onboardingDataFields = {
+  persona: v.union(v.literal("participant"), v.literal("organizer")),
+  domains: v.array(v.string()),
+  techStack: v.array(v.string()),
+  locationStrategy: v.optional(v.union(v.literal("local"), v.literal("global"))),
+  experienceLevel: v.optional(
+    v.union(
+      v.literal("first-timer"),
+      v.literal("frequent-hacker"),
+      v.literal("veteran"),
+    ),
+  ),
+  githubUrl: v.optional(v.string()),
+  linkedinUrl: v.optional(v.string()),
+  portfolioUrl: v.optional(v.string()),
+  orgName: v.optional(v.string()),
+  orgBio: v.optional(v.string()),
 };
 
 function getInitials(displayName: string) {
@@ -30,6 +49,15 @@ function getResolvedInitials(displayName: string, initials?: string) {
 }
 
 async function getUserByClerkId(ctx: MutationCtx, clerkUserId: string) {
+  return ctx.db
+    .query("users")
+    .withIndex("by_clerk_user_id", (index) =>
+      index.eq("clerkUserId", clerkUserId),
+    )
+    .unique();
+}
+
+async function getExistingUserByClerkId(ctx: QueryCtx, clerkUserId: string) {
   return ctx.db
     .query("users")
     .withIndex("by_clerk_user_id", (index) =>
@@ -112,5 +140,67 @@ export const ensureOrganizerAccount = mutation({
 
     await ctx.db.patch(existingOrganizer._id, organizerFields);
     return { userId: ownerUserId, organizerId: existingOrganizer._id };
+  },
+});
+
+export const getOnboardingStatus = query({
+  args: {
+    clerkUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getExistingUserByClerkId(ctx, args.clerkUserId);
+
+    return {
+      isComplete: Boolean(user?.onboardingCompletedAt),
+      userId: user?._id ?? null,
+    };
+  },
+});
+
+export const saveOnboardingProfile = mutation({
+  args: {
+    ...userIdentityFields,
+    ...onboardingDataFields,
+  },
+  handler: async (ctx, args) => {
+    const userId = await upsertUser(ctx, {
+      clerkUserId: args.clerkUserId,
+      displayName: args.displayName,
+      initials: args.initials,
+      role: args.persona,
+      schoolOrCompany: args.schoolOrCompany,
+      location: args.location,
+    });
+    const userPatch = {
+      onboardingCompletedAt: Date.now(),
+      onboardingPersona: args.persona,
+      onboardingDomains: args.domains,
+      onboardingTechStack: args.techStack,
+      onboardingLocationStrategy: args.locationStrategy,
+      onboardingExperienceLevel: args.experienceLevel,
+      githubUrl: args.githubUrl,
+      linkedinUrl: args.linkedinUrl,
+      portfolioUrl: args.portfolioUrl,
+      bio: args.persona === "organizer" ? args.orgBio : undefined,
+    };
+
+    await ctx.db.patch(userId, userPatch);
+
+    if (args.persona !== "organizer") return { userId };
+
+    const existingOrganizer = await getOrganizerByOwnerId(ctx, userId);
+    const organizerFields = {
+      ownerUserId: userId,
+      name: args.orgName?.trim() || args.displayName,
+      websiteUrl: args.portfolioUrl,
+    };
+
+    if (!existingOrganizer) {
+      const organizerId = await ctx.db.insert("organizers", organizerFields);
+      return { userId, organizerId };
+    }
+
+    await ctx.db.patch(existingOrganizer._id, organizerFields);
+    return { userId, organizerId: existingOrganizer._id };
   },
 });
