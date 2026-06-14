@@ -31,10 +31,10 @@ export function SectionTitle({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className={`${size === "lg" ? "text-sm" : "text-xs"} font-black uppercase tracking-[0.22em] text-[#00a7e8]`}>
+        <p className={`${size === "lg" ? "text-xs sm:text-sm" : "text-xs"} font-black uppercase tracking-[0.22em] text-[#00a7e8]`}>
           {eyebrow}
         </p>
-        <h2 className={`mt-1 font-black tracking-tight text-zinc-950 ${size === "lg" ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"}`}>
+        <h2 className={`mt-1 font-black tracking-tight text-zinc-950 ${size === "lg" ? "text-2xl sm:text-4xl" : "text-2xl sm:text-3xl"}`}>
           {title}
         </h2>
       </div>

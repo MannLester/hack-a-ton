@@ -24,7 +24,7 @@ export function HackathonCard({
 
   return (
     <Link href={`/hackathon/${hackathon.id}`} className="block h-full">
-      <PanelCard className="flex h-full flex-col cursor-pointer border-zinc-950 p-5" hover>
+      <PanelCard className="flex h-full flex-col cursor-pointer border-zinc-950 p-4 sm:p-5" hover>
         {hackathon.coverImageUrl ? (
           <div
             aria-label={`${hackathon.name} cover`}
@@ -32,7 +32,7 @@ export function HackathonCard({
             style={{ backgroundImage: `url(${hackathon.coverImageUrl})` }}
           />
         ) : null}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill className={statusClass(hackathon.status)}>
@@ -47,7 +47,7 @@ export function HackathonCard({
                 </span>
               ) : null}
             </div>
-            <h3 className="mt-3 text-xl font-black tracking-tight text-zinc-950">
+            <h3 className="mt-3 text-lg font-black tracking-tight text-zinc-950 sm:text-xl">
               {hackathon.name}
             </h3>
             <p className="mt-1 text-sm font-bold text-zinc-500">
@@ -66,19 +66,19 @@ export function HackathonCard({
               </p>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-bold text-zinc-700 sm:px-3 sm:py-1.5">
                 <CalendarDays className="size-3.5 text-[#00a7e8]" />
                 {hackathon.date}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-bold text-zinc-700 sm:px-3 sm:py-1.5">
                 <MapPin className="size-3.5 text-[#00a7e8]" />
                 {hackathon.setup} · {hackathon.location}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-bold text-zinc-700 sm:px-3 sm:py-1.5">
                 <Users className="size-3.5 text-[#00a7e8]" />
                 Team {hackathon.teamSize}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-bold text-zinc-700 sm:px-3 sm:py-1.5">
                 <Award className="size-3.5 text-[#00a7e8]" />
                 {hackathon.prize}
               </span>
@@ -95,7 +95,7 @@ export function HackathonCard({
             </div>
           </div>
         </div>
-        <div className="mt-auto flex flex-wrap items-center gap-4 border-t-2 border-zinc-100 pt-4 text-xs font-bold text-zinc-500">
+        <div className="mt-auto flex flex-wrap items-center gap-3 border-t-2 border-zinc-100 pt-4 text-[10px] font-bold text-zinc-500 sm:gap-4 sm:text-xs">
           <span className="inline-flex items-center gap-1.5">
             <Clock className="size-3.5" />
             {hackathon.deadline}

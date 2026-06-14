@@ -145,12 +145,14 @@ export function LandingView({
           <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-zinc-600">
             Discover hackathons, find teammates, and build your portfolio.
           </p>
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatCard
-              label="Hackathons Listed"
-              value={String(landingStats?.hackathonsListed ?? filteredHackathons.length)}
-              icon={Trophy}
-            />
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="col-span-2 sm:col-span-1">
+              <StatCard
+                label="Hackathons Listed"
+                value={String(landingStats?.hackathonsListed ?? filteredHackathons.length)}
+                icon={Trophy}
+              />
+            </div>
             <StatCard
               label="Active Builders"
               value={String(landingStats?.activeBuilders ?? 0)}
@@ -222,7 +224,7 @@ export function LandingView({
         title="Upcoming Hackathons"
         size="lg"
       />
-      <section className="grid gap-4 sm:grid-cols-2 sm:auto-rows-fr">
+      <section className="grid gap-3 sm:grid-cols-2 sm:auto-rows-fr sm:gap-4">
         {filteredHackathons.map((hackathon) => (
           <HackathonCard
             key={hackathon.id}
