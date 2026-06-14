@@ -17,6 +17,7 @@ type RecruitingTeam = Doc<"teams"> & {
 
 type InterestedUser = Doc<"users"> & {
   decisionId: Id<"teamDecisions">;
+  teamId: Id<"teams"> | undefined;
   hackathonId: Id<"hackathons"> | undefined;
 };
 
@@ -63,13 +64,20 @@ async function findExistingDecision(
   ctx: MutationCtx | QueryCtx,
   fromUserId: Id<"users">,
   toUserId: Id<"users">,
+  teamId: Id<"teams"> | undefined,
 ) {
   return ctx.db
     .query("teamDecisions")
-    .withIndex("by_pair", (index) =>
-      index.eq("fromUserId", fromUserId).eq("toUserId", toUserId),
+    .withIndex("by_from_user", (index) =>
+      index.eq("fromUserId", fromUserId),
     )
-    .unique();
+    .filter((queryBuilder) =>
+      queryBuilder.and(
+        queryBuilder.eq(queryBuilder.field("toUserId"), toUserId),
+        queryBuilder.eq(queryBuilder.field("teamId"), teamId),
+      ),
+    )
+    .first();
 }
 
 async function getDecidedProfileUserIds(ctx: QueryCtx, userId: Id<"users">) {
@@ -78,7 +86,11 @@ async function getDecidedProfileUserIds(ctx: QueryCtx, userId: Id<"users">) {
     .withIndex("by_from_user", (index) => index.eq("fromUserId", userId))
     .collect();
 
-  return new Set(decisions.map((decision) => decision.toUserId));
+  return new Set(
+    decisions
+      .filter((decision) => !decision.teamId)
+      .map((decision) => decision.toUserId),
+  );
 }
 
 async function getRecruitingTeamWithHackathon(
@@ -119,16 +131,21 @@ async function findReverseLike(
   ctx: MutationCtx,
   fromUserId: Id<"users">,
   toUserId: Id<"users">,
+  teamId: Id<"teams"> | undefined,
 ) {
   return ctx.db
     .query("teamDecisions")
-    .withIndex("by_pair", (index) =>
-      index.eq("fromUserId", toUserId).eq("toUserId", fromUserId),
+    .withIndex("by_from_user", (index) =>
+      index.eq("fromUserId", toUserId),
     )
     .filter((queryBuilder) =>
-      queryBuilder.eq(queryBuilder.field("decision"), "like"),
+      queryBuilder.and(
+        queryBuilder.eq(queryBuilder.field("toUserId"), fromUserId),
+        queryBuilder.eq(queryBuilder.field("teamId"), teamId),
+        queryBuilder.eq(queryBuilder.field("decision"), "like"),
+      ),
     )
-    .unique();
+    .first();
 }
 
 async function findExistingMatch(
@@ -197,7 +214,18 @@ async function addMutualLikeUserToLeadTeam(
   fromUserId: Id<"users">,
   toUserId: Id<"users">,
   hackathonId: Id<"hackathons"> | undefined,
+  teamId: Id<"teams"> | undefined,
 ) {
+  const selectedTeam = teamId ? await ctx.db.get(teamId) : null;
+
+  if (selectedTeam) {
+    const selectedLeadUserId = selectedTeam.members[0];
+    const joiningUserId =
+      selectedLeadUserId === fromUserId ? toUserId : fromUserId;
+
+    return addUserToTeamIfPossible(ctx, selectedTeam, joiningUserId);
+  }
+
   const fromUserTeam = await findRecruitingTeamLedByUser(
     ctx,
     fromUserId,
@@ -224,13 +252,19 @@ async function createMatchIfMutualLike(
   toUserId: Id<"users">,
   hackathonId: Id<"hackathons"> | undefined,
 ) {
-  const reverseLike = await findReverseLike(ctx, fromUserId, toUserId);
+  const reverseLike = await findReverseLike(ctx, fromUserId, toUserId, undefined);
 
   if (!reverseLike) return null;
 
   const existingMatch = await findExistingMatch(ctx, fromUserId, toUserId);
 
-  await addMutualLikeUserToLeadTeam(ctx, fromUserId, toUserId, hackathonId);
+  await addMutualLikeUserToLeadTeam(
+    ctx,
+    fromUserId,
+    toUserId,
+    hackathonId,
+    undefined,
+  );
 
   if (existingMatch) return existingMatch._id;
 
@@ -245,6 +279,23 @@ async function createMatchIfMutualLike(
     hackathonId,
     status: "active",
   });
+}
+
+async function respondToTeamApplication(
+  ctx: MutationCtx,
+  fromUserId: Id<"users">,
+  applicantUserId: Id<"users">,
+  teamId: Id<"teams">,
+  decision: "like" | "pass",
+) {
+  if (decision === "pass") return null;
+
+  const team = await ctx.db.get(teamId);
+
+  if (!team) return null;
+  if (team.members[0] !== fromUserId) return null;
+
+  return addUserToTeamIfPossible(ctx, team, applicantUserId);
 }
 
 export const listActiveProfiles = query({
@@ -278,20 +329,24 @@ export const listRecruitingTeams = query({
     viewerUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const decidedProfileUserIds = await getDecidedProfileUserIds(
-      ctx,
-      args.viewerUserId,
+    const decisions = await ctx.db
+      .query("teamDecisions")
+      .withIndex("by_from_user", (index) =>
+        index.eq("fromUserId", args.viewerUserId),
+      )
+      .collect();
+    const decidedTeamIds = new Set(
+      decisions
+        .map((decision) => decision.teamId)
+        .filter((teamId): teamId is Id<"teams"> => Boolean(teamId)),
     );
     const recruitingTeams = await ctx.db
       .query("teams")
       .withIndex("by_status", (index) => index.eq("status", "recruiting"))
       .collect();
     const visibleTeams = recruitingTeams.filter((team) => {
-      const leadUserId = team.members[0];
       const isNotMember = !team.members.includes(args.viewerUserId);
-      const hasLeadUser = Boolean(leadUserId);
-      const isUndecided =
-        hasLeadUser && !decidedProfileUserIds.has(leadUserId);
+      const isUndecided = !decidedTeamIds.has(team._id);
 
       return isNotMember && isUndecided;
     });
@@ -355,6 +410,7 @@ export const decideOnProfile = mutation({
   args: {
     fromUserId: v.id("users"),
     toUserId: v.id("users"),
+    teamId: v.optional(v.id("teams")),
     hackathonId: v.optional(v.id("hackathons")),
     decision: v.union(v.literal("like"), v.literal("pass")),
   },
@@ -363,8 +419,10 @@ export const decideOnProfile = mutation({
       ctx,
       args.fromUserId,
       args.toUserId,
+      args.teamId,
     );
     const decisionFields = {
+      teamId: args.teamId,
       hackathonId: args.hackathonId,
       decision: args.decision,
     };
@@ -378,6 +436,15 @@ export const decideOnProfile = mutation({
         ...decisionFields,
       });
     }
+
+    if (args.teamId)
+      return respondToTeamApplication(
+        ctx,
+        args.fromUserId,
+        args.toUserId,
+        args.teamId,
+        args.decision,
+      );
 
     if (args.decision === "pass") return null;
 
@@ -440,15 +507,74 @@ export const getMyTeam = query({
   },
 });
 
+export const listMyTeams = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const allTeams = await ctx.db.query("teams").collect();
+    const joinedTeams = allTeams.filter((team) =>
+      team.members.includes(args.userId),
+    );
+
+    return Promise.all(
+      joinedTeams.map(async (team) => {
+        const leadUserId = team.members[0];
+        const memberProfiles = await Promise.all(
+          team.members.map((memberId) =>
+            getTeamMemberProfile(ctx, memberId, leadUserId),
+          ),
+        );
+
+        return {
+          ...team,
+          memberProfiles,
+        };
+      }),
+    );
+  },
+});
+
+export const listByHackathon = query({
+  args: {
+    hackathonId: v.id("hackathons"),
+  },
+  handler: async (ctx, args) => {
+    const hackathonTeams = await ctx.db
+      .query("teams")
+      .withIndex("by_hackathon", (index) =>
+        index.eq("hackathonId", args.hackathonId),
+      )
+      .collect();
+
+    return Promise.all(
+      hackathonTeams.map(async (team) => {
+        const leadUserId = team.members[0];
+        const memberProfiles = await Promise.all(
+          team.members.map((memberId) =>
+            getTeamMemberProfile(ctx, memberId, leadUserId),
+          ),
+        );
+
+        return {
+          ...team,
+          memberProfiles,
+        };
+      }),
+    );
+  },
+});
+
 export const listInterestedUsersForMyTeam = query({
   args: {
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     const allTeams = await ctx.db.query("teams").collect();
-    const team = allTeams.find((item) => item.members[0] === args.userId);
+    const ledTeams = allTeams.filter((item) => item.members[0] === args.userId);
+    const ledTeamIds = new Set(ledTeams.map((team) => team._id));
 
-    if (!team) return [];
+    if (ledTeams.length === 0) return [];
 
     const inboundLikes = await ctx.db
       .query("teamDecisions")
@@ -456,16 +582,19 @@ export const listInterestedUsersForMyTeam = query({
         queryBuilder.and(
           queryBuilder.eq(queryBuilder.field("toUserId"), args.userId),
           queryBuilder.eq(queryBuilder.field("decision"), "like"),
-          queryBuilder.eq(queryBuilder.field("hackathonId"), team.hackathonId),
         ),
       )
       .collect();
+    const teamInboundLikes = inboundLikes.filter(
+      (decision) => decision.teamId && ledTeamIds.has(decision.teamId),
+    );
     const undecidedLikes = await Promise.all(
-      inboundLikes.map(async (decision) => {
+      teamInboundLikes.map(async (decision) => {
         const existingResponse = await findExistingDecision(
           ctx,
           args.userId,
           decision.fromUserId,
+          decision.teamId,
         );
         const user = await ctx.db.get(decision.fromUserId);
 
@@ -475,6 +604,7 @@ export const listInterestedUsersForMyTeam = query({
         return {
           ...user,
           decisionId: decision._id,
+          teamId: decision.teamId,
           hackathonId: decision.hackathonId,
         } satisfies InterestedUser;
       }),

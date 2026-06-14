@@ -357,15 +357,15 @@ export function ConvexParticipantView({
     api.teams.listRecruitingTeams,
     participantUserId ? { viewerUserId: participantUserId } : "skip",
   );
-  const myTeam = useQuery(
-    api.teams.getMyTeam,
+  const myTeams = useQuery(
+    api.teams.listMyTeams,
     participantUserId ? { userId: participantUserId } : "skip",
   );
   const interestedUsersForMyTeam = useQuery(
     api.teams.listInterestedUsersForMyTeam,
     participantUserId ? { userId: participantUserId } : "skip",
   );
-  const hasTeam = Boolean(myTeam);
+  const hasTeam = Boolean(myTeams?.length);
   const convexPortfolioProfile = useQuery(
     api.portfolio.getProfile,
     participantUserId ? { userId: participantUserId } : "skip",
@@ -459,6 +459,7 @@ export function ConvexParticipantView({
     await decideOnProfile({
       fromUserId: participantUserId,
       toUserId: team.leadUserId,
+      teamId: team.convexTeamId,
       hackathonId: team.convexHackathonId,
       decision,
     });
@@ -496,6 +497,7 @@ export function ConvexParticipantView({
 
   const respondToInterestedUser = async (
     userId: Id<"users">,
+    teamId: Id<"teams"> | undefined,
     hackathonId: Id<"hackathons"> | undefined,
     decision: "like" | "pass",
   ) => {
@@ -504,6 +506,7 @@ export function ConvexParticipantView({
     await decideOnProfile({
       fromUserId: participantUserId,
       toUserId: userId,
+      teamId,
       hackathonId,
       decision,
     });
@@ -591,7 +594,7 @@ export function ConvexParticipantView({
       onDeletePortfolioEntry={deletePortfolioEntry}
       hasTeam={hasTeam}
       onCreateTeam={createTeam}
-      myTeam={myTeam}
+      myTeams={myTeams}
       teamListings={displayedTeamListings}
       onDismissTeam={dismissTeam}
       onLikeTeam={likeTeam}

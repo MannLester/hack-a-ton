@@ -132,11 +132,13 @@ export default defineSchema({
   teamDecisions: defineTable({
     fromUserId: v.id("users"),
     toUserId: v.id("users"),
+    teamId: v.optional(v.id("teams")),
     hackathonId: v.optional(v.id("hackathons")),
     decision: teamDecision,
   })
     .index("by_from_user", ["fromUserId"])
-    .index("by_pair", ["fromUserId", "toUserId"]),
+    .index("by_pair", ["fromUserId", "toUserId"])
+    .index("by_team", ["teamId"]),
 
   teamMatches: defineTable({
     firstUserId: v.id("users"),

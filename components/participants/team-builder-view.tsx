@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -28,7 +28,7 @@ export function TeamView({
   hackathons,
   onBack,
   onCreateTeam,
-  myTeam,
+  myTeams,
   initialPhase = "solo_swiping",
   teamListings,
   onDismissTeam,
@@ -51,7 +51,7 @@ export function TeamView({
     roles: string[];
     targetSize: number;
   }) => Promise<void>;
-  myTeam?: MyTeam | null;
+  myTeams?: MyTeam[] | null;
   initialPhase?: "solo_swiping" | "creating_card" | "team_recruiting";
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;
@@ -59,6 +59,7 @@ export function TeamView({
   interestedUsers?: TeamInterestedUser[];
   onRespondToInterestedUser?: (
     userId: TeamInterestedUser["userId"],
+    teamId: TeamInterestedUser["teamId"],
     hackathonId: TeamInterestedUser["hackathonId"],
     decision: "like" | "pass",
   ) => Promise<void>;
@@ -73,6 +74,9 @@ export function TeamView({
   });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<Id<"teams"> | null>(
+    null,
+  );
   const [teamLobby, setTeamLobby] = useState({
     teamName: "",
     hackathon: "",
@@ -89,6 +93,26 @@ export function TeamView({
   const maxMembers = parseInt(maxStr, 10);
   const atCapacity = teamLobby.roles.length >= maxMembers;
   const belowMin = teamLobby.roles.length < minMembers;
+  const joinedTeams = useMemo(() => myTeams ?? [], [myTeams]);
+  const selectedTeam =
+    joinedTeams.find((team) => team._id === selectedTeamId) ??
+    joinedTeams[0] ??
+    null;
+
+  useEffect(() => {
+    if (joinedTeams.length === 0) {
+      setSelectedTeamId(null);
+      return;
+    }
+
+    const hasSelectedTeam = joinedTeams.some(
+      (team) => team._id === selectedTeamId,
+    );
+
+    if (hasSelectedTeam) return;
+
+    setSelectedTeamId(joinedTeams[0]._id);
+  }, [joinedTeams, selectedTeamId]);
 
   const addRole = (role: string) => {
     if (atCapacity || teamLobby.roles.includes(role)) return;
@@ -405,7 +429,7 @@ export function TeamView({
       </div>
     );
 
-    if (!myTeam) {
+    if (!selectedTeam) {
       return (
         <div className="space-y-6">
           {teamHeader}
@@ -428,12 +452,16 @@ export function TeamView({
       );
     }
 
-    const displayTeamName = myTeam.teamName ?? teamLobby.teamName;
-    const displayTargetSize = myTeam.targetSize ?? (1 + teamLobby.roles.length);
-    const displayMembers = myTeam.members?.length ?? 1;
-    const displayMemberProfiles = myTeam.memberProfiles ?? [];
+    const displayTeamName = selectedTeam.teamName ?? teamLobby.teamName;
+    const displayTargetSize =
+      selectedTeam.targetSize ?? (1 + teamLobby.roles.length);
+    const displayMembers = selectedTeam.members?.length ?? 1;
+    const displayMemberProfiles = selectedTeam.memberProfiles ?? [];
+    const selectedTeamInterestedUsers = interestedUsers.filter(
+      (user) => user.teamId === selectedTeam._id,
+    );
     const selectedHackathonForTeam = hackathons.find(
-      (h) => h.id === myTeam.hackathonId,
+      (h) => h.id === selectedTeam.hackathonId,
     );
     return (
       <div className="space-y-6">
@@ -448,17 +476,49 @@ export function TeamView({
             {selectedHackathonForTeam.name} · {selectedHackathonForTeam.date}
           </p>
         )}
+        {joinedTeams.length > 1 && (
+          <FeaturePanel className="p-4">
+            <h3 className="text-sm font-black text-zinc-950">Your Teams</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {joinedTeams.map((team) => {
+                const isSelected = team._id === selectedTeam._id;
+                const hackathon = hackathons.find(
+                  (item) => item.id === team.hackathonId,
+                );
+
+                return (
+                  <button
+                    key={team._id}
+                    onClick={() => setSelectedTeamId(team._id)}
+                    className={`rounded-md border-2 p-3 text-left transition ${
+                      isSelected
+                        ? "border-[#00a7e8] bg-[#00a7e8]/10 shadow-[3px_3px_0_#00a7e8]"
+                        : "border-zinc-200 bg-white hover:border-zinc-950"
+                    }`}
+                  >
+                    <p className="text-sm font-black text-zinc-950">
+                      {team.teamName}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-zinc-500">
+                      {hackathon?.name ?? "Hackathon"} · {team.members.length}/{team.targetSize}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </FeaturePanel>
+        )}
         <div className="space-y-4">
-          {interestedUsers.length > 0 && (
+          {selectedTeamInterestedUsers.length > 0 && (
             <FeaturePanel className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-black">Interested Builders</h3>
                 <span className="rounded-full bg-[#ffd21f]/25 px-2.5 py-1 text-xs font-black text-[#7a5700]">
-                  {interestedUsers.length} pending
+                  {selectedTeamInterestedUsers.length} pending
                 </span>
               </div>
               <div className="mt-4 space-y-3">
-                {interestedUsers.map((user) => (
+                {selectedTeamInterestedUsers.map((user) => (
                   <div
                     key={user.userId}
                     className="grid gap-3 rounded-md border-2 border-zinc-950 bg-white p-3 shadow-[3px_3px_0_#111] sm:grid-cols-[1fr_auto]"
@@ -486,6 +546,7 @@ export function TeamView({
                         onClick={() =>
                           void onRespondToInterestedUser?.(
                             user.userId,
+                            user.teamId,
                             user.hackathonId,
                             "pass",
                           )
@@ -498,6 +559,7 @@ export function TeamView({
                         onClick={() =>
                           void onRespondToInterestedUser?.(
                             user.userId,
+                            user.teamId,
                             user.hackathonId,
                             "like",
                           )

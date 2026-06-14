@@ -31,6 +31,7 @@ export type ConvexRecruitingTeam = Doc<"teams"> & {
 export type UiTeamLooking = TeamLooking;
 export type TeamInterestedUser = {
   userId: Id<"users">;
+  teamId?: Id<"teams">;
   hackathonId?: Id<"hackathons">;
   displayName: string;
   initials: string;
@@ -47,6 +48,7 @@ export type TeamMemberProfile = {
 export type MyTeam = Doc<"teams"> & {
   memberProfiles: TeamMemberProfile[];
 };
+export type HackathonTeam = MyTeam;
 export type PortfolioEntry = {
   id?: Id<"portfolioEntries">;
   hackathonName: string;

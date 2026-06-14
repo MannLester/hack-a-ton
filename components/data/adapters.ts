@@ -72,11 +72,13 @@ export function getUiTeamLooking(team: ConvexRecruitingTeam): UiTeamLooking {
 
 export function getUiTeamInterestedUser(
   user: Doc<"users"> & {
+    teamId?: Doc<"teamDecisions">["teamId"];
     hackathonId?: Doc<"teamDecisions">["hackathonId"];
   },
 ): TeamInterestedUser {
   return {
     userId: user._id,
+    teamId: user.teamId,
     hackathonId: user.hackathonId,
     displayName: user.displayName,
     initials: user.initials,

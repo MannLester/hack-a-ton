@@ -39,7 +39,7 @@ export function LandingView({
   onSaveBio,
   hasTeam,
   onCreateTeam,
-  myTeam,
+  myTeams,
   teamListings,
   onDismissTeam,
   onLikeTeam,
@@ -76,13 +76,14 @@ export function LandingView({
     roles: string[];
     targetSize: number;
   }) => Promise<void>;
-  myTeam?: MyTeam | null;
+  myTeams?: MyTeam[] | null;
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;
   onLikeTeam?: (team: TeamLooking) => void;
   interestedUsers?: TeamInterestedUser[];
   onRespondToInterestedUser?: (
     userId: TeamInterestedUser["userId"],
+    teamId: TeamInterestedUser["teamId"],
     hackathonId: TeamInterestedUser["hackathonId"],
     decision: "like" | "pass",
   ) => Promise<void>;
@@ -103,7 +104,7 @@ export function LandingView({
         hackathons={filteredHackathons}
         onBack={() => setActiveTab("explore")}
         onCreateTeam={onCreateTeam}
-        myTeam={myTeam}
+        myTeams={myTeams}
         initialPhase={initialTeamPhase}
         teamListings={teamListings}
         onDismissTeam={onDismissTeam}
