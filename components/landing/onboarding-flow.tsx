@@ -179,7 +179,7 @@ export function OnboardingFlow() {
                     Find hackathons, join teams, and grow your portfolio as a
                     participant.
                   </p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-[#00a7e8]">
+                  <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-black text-[#00a7e8]">
                     Join as Participant{" "}
                     <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                   </span>
@@ -199,7 +199,7 @@ export function OnboardingFlow() {
                     Post hackathons, attract participants, and manage your
                     events.
                   </p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-[#00a7e8]">
+                  <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-black text-[#00a7e8]">
                     Join as Organizer{" "}
                     <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                   </span>
