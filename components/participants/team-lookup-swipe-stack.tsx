@@ -112,11 +112,13 @@ export function TeamSwipeStack({
   onDismiss,
   onLike,
   emptyMessage,
+  emptyElement,
 }: {
   teams: TeamLooking[];
   onDismiss: (team: TeamLooking) => void;
   onLike: (team: TeamLooking) => void;
   emptyMessage: string;
+  emptyElement?: React.ReactNode;
 }) {
   const [cardStack, setCardStack] = useState(teams);
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(
@@ -137,7 +139,7 @@ export function TeamSwipeStack({
     if (swipingTeamId) return;
 
     setCardStack(latestTeams.current);
-  }, [swipingTeamId, teamIds]);
+  }, [teamIds]);
 
   const handleSwipe = (team: TeamLooking, direction: "left" | "right") => {
     const teamId = team.convexTeamId ?? team.teamName;
@@ -169,6 +171,7 @@ export function TeamSwipeStack({
   const visibleCards = cardStack.slice(-3);
 
   if (visibleCards.length === 0) {
+    if (emptyElement) return emptyElement;
     return (
       <div className="relative flex items-center justify-center rounded-lg border-2 border-zinc-950 bg-white p-10 shadow-[5px_5px_0_#111]">
         <p className="text-center text-sm font-black text-zinc-500">

@@ -111,25 +111,25 @@ export type TeamLooking = {
 export const teamsLooking: TeamLooking[] = [
   {
     teamName: "AI Public Servants",
-    missingRoles: ["AI/ML", "Backend"],
+    missingRoles: ["AI/ML", "Back-End"],
     hackathonName: "PH AI Build Weekend",
     hackathonLocation: "BGC, Taguig",
   },
   {
     teamName: "PayItForward",
-    missingRoles: ["Backend", "Pitch"],
+    missingRoles: ["Back-End", "Pitch"],
     hackathonName: "Fintech Campus Cup",
     hackathonLocation: "Philippines-wide",
   },
   {
     teamName: "Green Circuit",
-    missingRoles: ["Frontend", "Data"],
+    missingRoles: ["Front-End", "Data"],
     hackathonName: "Climate Hack Cebu",
     hackathonLocation: "Cebu City",
   },
   {
     teamName: "Indie Pixels",
-    missingRoles: ["UI/UX", "Frontend"],
+    missingRoles: ["UI/UX", "Front-End"],
     hackathonName: "Mindanao Game Jam",
     hackathonLocation: "Davao City",
   },

@@ -1,10 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
+  ClipboardList,
+  Code2,
+  Cpu,
+  Database,
+  FileText,
+  Mic,
+  Palette,
   Plus,
+  Server,
+  Settings,
+  Shield,
+  Smartphone,
   UserPlus,
   Users,
+  Wrench,
   X,
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -16,7 +29,7 @@ import { Modal } from "@/components/shared/modal";
 import { FeaturePanel, SectionTitle } from "@/components/shared/primitives";
 import { TeamSwipeStack } from "@/components/participants/team-lookup-swipe-stack";
 
-const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch"];
+const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch", "Mobile", "Data", "Project Mgmt", "Content", "Security", "Hardware/IoT"];
 
 export function TeamView({
   visibleTeammates: _visibleTeammates,
@@ -52,7 +65,7 @@ export function TeamView({
     targetSize: number;
   }) => Promise<void>;
   myTeams?: MyTeam[] | null;
-  initialPhase?: "solo_swiping" | "creating_card" | "team_recruiting";
+  initialPhase?: "solo_swiping" | "creating_card" | "team_recruiting" | "onboarding_hackathon" | "onboarding_role";
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;
   onLikeTeam?: (team: TeamLooking) => void;
@@ -65,8 +78,10 @@ export function TeamView({
   ) => Promise<void>;
 }) {
   const [teamPhase, setTeamPhase] = useState<
-    "creating_card" | "solo_swiping" | "matched_duo" | "team_recruiting"
+    "creating_card" | "solo_swiping" | "matched_duo" | "team_recruiting" | "onboarding_hackathon" | "onboarding_role"
   >(initialPhase);
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [matchedUser] = useState({
     name: "Mika Reyes",
     role: "Frontend + pitch deck",
@@ -125,6 +140,170 @@ export function TeamView({
       roles: prev.roles.filter((r) => r !== role),
     }));
   };
+
+  const ROLE_OPTIONS = [
+    { id: "Front-End", label: "Front-End", icon: Code2 },
+    { id: "Back-End", label: "Back-End", icon: Server },
+    { id: "UI/UX", label: "UI/UX", icon: Palette },
+    { id: "AI/ML", label: "AI/ML", icon: Cpu },
+    { id: "DevOps", label: "DevOps", icon: Settings },
+    { id: "Pitch", label: "Pitch", icon: Mic },
+    { id: "Mobile", label: "Mobile", icon: Smartphone },
+    { id: "Data", label: "Data", icon: Database },
+    { id: "Project Mgmt", label: "Project Mgmt", icon: ClipboardList },
+    { id: "Content", label: "Content", icon: FileText },
+    { id: "Security", label: "Security", icon: Shield },
+    { id: "Hardware/IoT", label: "Hardware/IoT", icon: Wrench },
+  ] as const;
+
+  const filteredTeams = useMemo(() => {
+    let result = teamListings ?? teamsLooking;
+    if (selectedHackathonId) {
+      const selected = hackathons.find((h) => h.id === selectedHackathonId);
+      if (selected) {
+        result = result.filter((t) => t.hackathonName === selected.name);
+      }
+    }
+    if (selectedRole) {
+      result = result.filter((t) => t.missingRoles.includes(selectedRole));
+    }
+    return result;
+  }, [teamListings, hackathons, selectedHackathonId, selectedRole]);
+
+  if (teamPhase === "onboarding_hackathon") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-5">
+          <button
+            onClick={onBack}
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
+              Step 1 of 2
+            </p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
+              Which hackathon are you targeting?
+            </h2>
+          </div>
+        </div>
+        <div className="mx-auto max-w-lg space-y-3">
+          {hackathons.map((hackathon) => {
+            const isSelected = selectedHackathonId === hackathon.id;
+            return (
+              <button
+                key={hackathon.id}
+                onClick={() => {
+                  setSelectedHackathonId(hackathon.id);
+                  setTeamPhase("onboarding_role");
+                }}
+                className={`group flex w-full items-center gap-4 rounded-lg border-2 border-zinc-950 p-4 text-left shadow-[4px_4px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#111] ${
+                  isSelected
+                    ? "border-[#00a7e8] bg-[#00a7e8]/10 shadow-[4px_4px_0_#00a7e8]"
+                    : "bg-white"
+                }`}
+              >
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[#ffd21f]/20 text-[#7a5700]">
+                  <Users className="size-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-zinc-950">
+                    {hackathon.name}
+                  </p>
+                  <p className="mt-0.5 text-xs font-bold text-zinc-500">
+                    {hackathon.date} · {hackathon.location}
+                  </p>
+                </div>
+                <ArrowRight className="size-4 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-[#00a7e8]" />
+              </button>
+            );
+          })}
+          <button
+            onClick={() => {
+              setSelectedHackathonId(null);
+              setTeamPhase("onboarding_role");
+            }}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111]"
+          >
+            Any hackathon
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (teamPhase === "onboarding_role") {
+    return (
+      <div className="space-y-6 px-4">
+        <div className="flex items-center gap-5">
+          <button
+            onClick={() => setTeamPhase("onboarding_hackathon")}
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
+              Step 2 of 2
+            </p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
+              What role do you want to fill?
+            </h2>
+          </div>
+        </div>
+        <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center">
+          <div className="w-full max-w-2xl space-y-6">
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
+              {ROLE_OPTIONS.map((role) => {
+                const Icon = role.icon;
+                const isSelected = selectedRole === role.id;
+                return (
+                  <button
+                    key={role.id}
+                    onClick={() => {
+                      setSelectedRole(role.id);
+                      setTeamPhase("solo_swiping");
+                    }}
+                    className={`group flex flex-col items-center gap-3 rounded-lg border-2 border-zinc-950 p-6 text-center shadow-[4px_4px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#111] ${
+                      isSelected
+                        ? "border-[#00a7e8] bg-[#00a7e8]/10 shadow-[4px_4px_0_#00a7e8]"
+                        : "bg-white"
+                    }`}
+                  >
+                    <div
+                      className={`grid size-14 place-items-center rounded-lg transition ${
+                        isSelected
+                          ? "bg-[#00a7e8] text-white"
+                          : "bg-zinc-100 text-zinc-600 group-hover:bg-[#ffd21f] group-hover:text-zinc-950"
+                      }`}
+                    >
+                      <Icon className="size-7" />
+                    </div>
+                    <span className="text-sm font-black text-zinc-950">
+                      {role.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={() => {
+                  setSelectedRole(null);
+                  setTeamPhase("solo_swiping");
+                }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-zinc-950 bg-[#ffd21f]/20 px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:bg-[#ffd21f] hover:shadow-[5px_5px_0_#111]"
+              >
+                Any role — show all teams
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (teamPhase === "creating_card") {
     return (
@@ -619,7 +798,7 @@ export function TeamView({
     <div className="flex min-h-[calc(100vh-8rem)] flex-col">
       <div className="flex items-center gap-5">
         <button
-          onClick={onBack}
+          onClick={() => setTeamPhase("onboarding_role")}
           className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
         >
           <ArrowLeft className="size-4" />
@@ -629,12 +808,60 @@ export function TeamView({
           title="Swipe to find your next hackathon team"
         />
       </div>
+      {selectedRole && (
+        <p className="mt-2 text-sm font-bold text-zinc-500">
+          Showing teams looking for{" "}
+          <span className="font-black text-[#00a7e8]">{selectedRole}</span>
+          {selectedHackathonId && (
+            <>
+              {" "}at{" "}
+              <span className="font-black text-[#00a7e8]">
+                {hackathons.find((h) => h.id === selectedHackathonId)?.name}
+              </span>
+            </>
+          )}
+        </p>
+      )}
       <div className="flex flex-1 items-center justify-center py-6">
         <TeamSwipeStack
-          teams={teamListings ?? teamsLooking}
+          teams={filteredTeams}
           onDismiss={onDismissTeam ?? (() => {})}
           onLike={onLikeTeam ?? (() => {})}
           emptyMessage="No teams looking for teammates right now."
+          emptyElement={
+            <div className="relative flex flex-col items-center rounded-lg border-2 border-zinc-950 bg-white p-10 text-center shadow-[5px_5px_0_#111]">
+              <Users className="size-12 text-zinc-300" />
+              <p className="mt-4 text-sm font-black text-zinc-950">
+                No teams looking for{" "}
+                {selectedRole ? (
+                  <span className="text-[#00a7e8]">{selectedRole}</span>
+                ) : (
+                  "this role"
+                )}{" "}
+                right now.
+              </p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">
+                Try a different role or browse all teams.
+              </p>
+              <div className="mt-5 flex gap-3">
+                <button
+                  onClick={() => setTeamPhase("onboarding_role")}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white px-4 text-xs font-black text-zinc-800 shadow-[3px_3px_0_#111]"
+                >
+                  Try a different role
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedRole(null);
+                    setSelectedHackathonId(null);
+                  }}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-4 text-xs font-black text-zinc-950 shadow-[3px_3px_0_#111]"
+                >
+                  Show all teams
+                </button>
+              </div>
+            </div>
+          }
         />
       </div>
     </div>

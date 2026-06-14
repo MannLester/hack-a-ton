@@ -89,7 +89,7 @@ export function LandingView({
   ) => Promise<void>;
 }) {
   const [initialTeamPhase, setInitialTeamPhase] = useState<
-    "solo_swiping" | "creating_card" | "team_recruiting"
+    "solo_swiping" | "creating_card" | "team_recruiting" | "onboarding_hackathon" | "onboarding_role"
   >("solo_swiping");
 
   if (activeTab === "team")
@@ -204,7 +204,7 @@ export function LandingView({
           <div className="mt-4 space-y-3">
             <button
               onClick={() => {
-                setInitialTeamPhase("solo_swiping");
+                setInitialTeamPhase("onboarding_hackathon");
                 setActiveTab("team");
               }}
               className="flex w-full items-center gap-3 rounded-lg border-2 border-zinc-950 bg-[#ffd21f] px-4 py-6 text-left shadow-[5px_5px_0_#111] transition-all duration-150 hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
