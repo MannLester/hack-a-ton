@@ -50,16 +50,19 @@ export function AppNavigation({
   persona,
   setPersona,
   setParticipantTab,
+  onLeaveStaffView,
 }: {
   persona: Persona;
   setPersona: (persona: Persona) => void;
   setParticipantTab: (tab: "explore") => void;
+  onLeaveStaffView?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-30 border-b-2 border-zinc-950 bg-zinc-950 text-white shadow-[0_4px_0_#00a7e8]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <button
           onClick={() => {
+            onLeaveStaffView?.();
             setPersona("participant");
             setParticipantTab("explore");
           }}
@@ -86,6 +89,7 @@ export function AppNavigation({
         <div className="hidden rounded-lg border border-white/15 bg-white/10 p-1 sm:flex">
           <button
             onClick={() => {
+              onLeaveStaffView?.();
               setPersona("participant");
             }}
             className={`h-9 rounded-md px-4 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white hover:bg-white/10"}`}
@@ -94,6 +98,7 @@ export function AppNavigation({
           </button>
           <button
             onClick={() => {
+              onLeaveStaffView?.();
               setPersona("organizer");
             }}
             className={`h-9 rounded-md px-4 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white hover:bg-white/10"}`}
@@ -109,6 +114,7 @@ export function AppNavigation({
       <div className="grid grid-cols-2 border-t border-white/10 sm:hidden">
         <button
           onClick={() => {
+            onLeaveStaffView?.();
             setPersona("participant");
           }}
           className={`h-11 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white"}`}
@@ -117,6 +123,7 @@ export function AppNavigation({
         </button>
         <button
           onClick={() => {
+            onLeaveStaffView?.();
             setPersona("organizer");
           }}
           className={`h-11 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white"}`}

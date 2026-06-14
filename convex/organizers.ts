@@ -3,6 +3,8 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 
+const cancellationVisibilityWindowMs = 3 * 24 * 60 * 60 * 1000;
+
 const listingFields = {
   name: v.string(),
   dateLabel: v.string(),
@@ -29,6 +31,7 @@ const listingFields = {
   ),
   summary: v.string(),
   externalRegistrationUrl: v.optional(v.string()),
+  coverImageUrl: v.optional(v.string()),
 };
 
 function getOrganizerStats(hackathons: Doc<"hackathons">[]) {
@@ -117,6 +120,26 @@ async function getListingInsights(
   };
 }
 
+
+
+async function getLatestListingReviewNote(
+  ctx: QueryCtx,
+  hackathonId: Id<"hackathons">,
+) {
+  const reviews = await ctx.db
+    .query("listingReviews")
+    .withIndex("by_hackathon", (index) => index.eq("hackathonId", hackathonId))
+    .collect();
+  const meaningfulReviews = reviews.filter((review) =>
+    Boolean(review.note?.trim()),
+  );
+  const latestReview = meaningfulReviews.sort(
+    (firstReview, secondReview) =>
+      (secondReview.reviewedAt ?? 0) - (firstReview.reviewedAt ?? 0),
+  )[0];
+
+  return latestReview?.note?.trim();
+}
 export const getDashboard = query({
   args: {
     organizerId: v.id("organizers"),
@@ -129,9 +152,16 @@ export const getDashboard = query({
       )
       .collect();
 
+    const listingsWithReviewNotes = await Promise.all(
+      hackathons.map(async (hackathon) => ({
+        ...hackathon,
+        reviewNote: await getLatestListingReviewNote(ctx, hackathon._id),
+      })),
+    );
+
     return {
       stats: getOrganizerStats(hackathons),
-      hackathons,
+      hackathons: listingsWithReviewNotes,
     };
   },
 });
@@ -156,7 +186,9 @@ export const createDraftListing = mutation({
       difficulty: args.difficulty,
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
+      coverImageUrl: args.coverImageUrl,
       status: "draft",
+      updatedAt: Date.now(),
     });
   },
 });
@@ -174,9 +206,14 @@ export const updateDraftListing = mutation({
       args.hackathonId,
     );
 
-    if (hackathon.status !== "draft" && hackathon.status !== "needs_edits") {
+    const canUpdateListing =
+      hackathon.status === "draft" ||
+      hackathon.status === "needs_edits" ||
+      hackathon.status === "published";
+
+    if (!canUpdateListing) {
       throw new Error(
-        "Only drafts or listings needing edits can be updated here.",
+        "Only drafts, listings needing edits, or active listings can be updated here.",
       );
     }
 
@@ -193,6 +230,8 @@ export const updateDraftListing = mutation({
       difficulty: args.difficulty,
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
+      coverImageUrl: args.coverImageUrl,
+      updatedAt: Date.now(),
     });
 
     return args.hackathonId;
@@ -210,6 +249,10 @@ export const submitListingForReview = mutation({
       args.organizerId,
       args.hackathonId,
     );
+
+    if (hackathon.status === "pending_review") {
+      return args.hackathonId;
+    }
 
     if (hackathon.status !== "draft" && hackathon.status !== "needs_edits") {
       throw new Error(
@@ -229,6 +272,70 @@ export const submitListingForReview = mutation({
         status: "pending",
       });
     }
+
+    return args.hackathonId;
+  },
+});
+
+
+export const cancelListing = mutation({
+  args: {
+    organizerId: v.id("organizers"),
+    hackathonId: v.id("hackathons"),
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const reason = args.reason.trim();
+
+    if (reason.length < 20) {
+      throw new Error("Cancellation reason must explain what happened.");
+    }
+
+    const hackathon = await requireOrganizerHackathon(
+      ctx,
+      args.organizerId,
+      args.hackathonId,
+    );
+    const canCancelListing = hackathon.status === "published";
+
+    if (!canCancelListing) {
+      throw new Error("Only active participant-visible listings can be cancelled.");
+    }
+
+    const now = Date.now();
+
+    await ctx.db.patch(args.hackathonId, {
+      status: "cancelled",
+      cancellationReason: reason,
+      cancelledAt: now,
+      cancellationVisibleUntil: now + cancellationVisibilityWindowMs,
+      updatedAt: now,
+    });
+
+    return args.hackathonId;
+  },
+});
+
+
+export const archiveListing = mutation({
+  args: {
+    organizerId: v.id("organizers"),
+    hackathonId: v.id("hackathons"),
+  },
+  handler: async (ctx, args) => {
+    const hackathon = await requireOrganizerHackathon(
+      ctx,
+      args.organizerId,
+      args.hackathonId,
+    );
+
+    if (hackathon.status === "archived") {
+      return args.hackathonId;
+    }
+
+    await ctx.db.patch(args.hackathonId, {
+      status: "archived",
+    });
 
     return args.hackathonId;
   },

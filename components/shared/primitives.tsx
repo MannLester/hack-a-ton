@@ -12,6 +12,8 @@ export function statusClass(status: Hackathon["status"]) {
     return "border-[#00a7e8]/30 bg-[#00a7e8]/10 text-[#006c9c]";
   if (status === "Needs edits")
     return "border-red-200 bg-red-50 text-red-700";
+  if (status === "Cancelled")
+    return "border-red-300 bg-red-100 text-red-900";
   return "border-[#00a7e8]/30 bg-[#00a7e8]/10 text-[#006c9c]";
 }
 

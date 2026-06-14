@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  AlertTriangle,
   Award,
   ArrowLeft,
   CalendarDays,
@@ -8,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
+import { getListingUpdateLabel } from "@/lib/organizer-workflow";
 import type { HackathonTeam } from "@/components/shared/types";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 import { DetailPageNav } from "@/components/shared/detail-page-nav";
@@ -23,6 +25,11 @@ export function ExploreView({
   allHackathons: Hackathon[];
   teams?: HackathonTeam[];
 }) {
+  const updateLabel = getListingUpdateLabel({
+    updatedAt: hackathon.updatedAt,
+    now: Date.now(),
+  });
+
   return (
     <div className="min-h-screen bg-[#f5f3ef]">
       <DetailPageNav />
@@ -102,6 +109,11 @@ export function ExploreView({
                   <span className="rounded-md border-2 border-zinc-950 bg-zinc-100 px-2.5 py-1 text-xs font-black text-zinc-700">
                     {hackathon.difficulty}
                   </span>
+                  {updateLabel && hackathon.status !== "Cancelled" ? (
+                    <span className="rounded-md border-2 border-[#00a7e8]/30 bg-[#00a7e8]/10 px-2.5 py-1 text-xs font-black text-[#006c9c]">
+                      {updateLabel}
+                    </span>
+                  ) : null}
                 </div>
 
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">
@@ -110,6 +122,17 @@ export function ExploreView({
                 <p className="mt-2 text-lg font-bold text-zinc-500">
                   {hackathon.organizer}
                 </p>
+
+                {hackathon.status === "Cancelled" && hackathon.cancellationReason ? (
+                  <div className="mt-5 rounded-lg border-2 border-red-300 bg-red-50 p-4 text-red-900">
+                    <p className="inline-flex items-center gap-2 font-black">
+                      <AlertTriangle className="size-5" /> Cancelled by organizer
+                    </p>
+                    <p className="mt-2 text-sm font-bold leading-6">
+                      {hackathon.cancellationReason}
+                    </p>
+                  </div>
+                ) : null}
 
                 <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600">
                   {hackathon.summary}

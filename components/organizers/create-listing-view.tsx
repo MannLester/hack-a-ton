@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -12,8 +12,15 @@ import type {
   CreateListingFormValues,
   CreateListingStatus,
 } from "@/components/shared/types";
-import { FeaturePanel } from "@/components/shared/primitives";
+import { FeaturePanel, statusClass } from "@/components/shared/primitives";
 import { CalendarPicker, DateRangePicker } from "@/components/shared/calendar";
+import {
+  canSaveOrganizerDraft,
+  canSubmitOrganizerListing,
+  getListingDateValidationMessage,
+  getListingQualityChecks,
+} from "@/lib/organizer-workflow";
+import { useListingAutosave } from "@/components/organizers/use-listing-autosave";
 
 const STEP_LABELS = ["Basics", "Location", "Details", "Description", "Review"] as const;
 
@@ -48,6 +55,18 @@ function getEligibilityText(selectedEligibility: string[], eligibilityText: stri
     : eligibilityText;
 }
 
+function getStatusMessageClass(status: CreateListingStatus) {
+  if (status === "failed" || status === "missing-fields") {
+    return "text-red-600";
+  }
+
+  if (status === "draft-saved" || status === "submitted") {
+    return "text-emerald-700";
+  }
+
+  return "text-zinc-600";
+}
+
 export function CreateListingView({
   initialValues,
   onBack,
@@ -74,6 +93,7 @@ export function CreateListingView({
     "Beginner" | "Intermediate" | "Open" | ""
   >(initialValues?.difficulty ?? "");
   const [registrationUrl, setRegistrationUrl] = useState(initialValues?.registrationUrl ?? "");
+  const [coverImageUrl, setCoverImageUrl] = useState(initialValues?.coverImageUrl ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [teamSizeMin, setTeamSizeMin] = useState(initialValues?.teamSize.split("-")[0] ?? "");
   const [teamSizeMax, setTeamSizeMax] = useState(initialValues?.teamSize.split("-")[1] ?? "");
@@ -111,8 +131,15 @@ export function CreateListingView({
     });
   };
 
+  const isActiveListingEdit =
+    initialValues?.listingStatus === "Open" ||
+    initialValues?.listingStatus === "Upcoming" ||
+    initialValues?.listingStatus === "Happening now";
+  const formValues = getFormValues();
+  const dateValidationMessage = getListingDateValidationMessage(formValues);
   const statusMessage = statusMessages[status];
   const isBusy = status === "saving" || status === "submitting";
+  const isSubmitted = status === "submitted";
 
   const isStepValid = (step: number): boolean => {
     if (step === 1) {
@@ -135,28 +162,62 @@ export function CreateListingView({
     return true;
   };
 
-  const getFormValues = (): CreateListingFormValues => ({
-    listingName,
-    organizerName,
-    dateLabel,
-    registrationDeadlineLabel,
-    setup: setup || "Hybrid",
-    location,
-    region: region || "Philippines-wide",
-    eligibilityText: getEligibilityText(selectedEligibility, eligibilityText),
-    teamSize,
-    prize,
-    difficulty: difficulty || "Open",
-    registrationUrl,
-    description,
-  });
+  function getFormValues(): CreateListingFormValues {
+    return {
+      listingName,
+      organizerName,
+      dateLabel,
+      registrationDeadlineLabel,
+      setup: setup || "Hybrid",
+      location,
+      region: region || "Philippines-wide",
+      eligibilityText: getEligibilityText(selectedEligibility, eligibilityText),
+      teamSize,
+      prize,
+      difficulty: difficulty || "Open",
+      registrationUrl,
+      coverImageUrl,
+      description,
+    };
+  }
 
   const getPersistableValues = (): CreateListingFormValues => ({
     ...getFormValues(),
     listingId: initialValues?.listingId,
   });
 
-  const canPersistListing = () => [1, 2, 3, 4].every(isStepValid);
+  const restoreAutosavedValues = useCallback((values: CreateListingFormValues) => {
+    setListingName(values.listingName);
+    setOrganizerName(values.organizerName);
+    setDateLabel(values.dateLabel);
+    setRegistrationDeadlineLabel(values.registrationDeadlineLabel);
+    setSetup(values.setup);
+    setLocation(values.location);
+    setRegion(values.region);
+    setEligibilityText(values.eligibilityText);
+    setTeamSize(values.teamSize);
+    setPrize(values.prize);
+    setDifficulty(values.difficulty);
+    setRegistrationUrl(values.registrationUrl);
+    setCoverImageUrl(values.coverImageUrl);
+    setDescription(values.description);
+    setTeamSizeMin(values.teamSize.split("-")[0] ?? "");
+    setTeamSizeMax(values.teamSize.split("-")[1] ?? "");
+    setSelectedEligibility(
+      values.eligibilityText
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    );
+  }, []);
+
+  const { autosaveLabel, clearAutosave } = useListingAutosave({
+    listingId: initialValues?.listingId,
+    values: getPersistableValues(),
+    onRestore: restoreAutosavedValues,
+  });
+
+  const canPersistListing = () => canSubmitOrganizerListing(getFormValues());
 
   const goNext = () => {
     if (!isStepValid(currentStep)) {
@@ -173,31 +234,46 @@ export function CreateListingView({
   };
 
   const saveDraft = () => {
-    if (!canPersistListing()) {
+    if (isSubmitted) return;
+
+    const values = getPersistableValues();
+
+    if (!canSaveOrganizerDraft(values)) {
       setStatus("missing-fields");
       return;
     }
 
     setStatus("saving");
-    Promise.resolve(onSaveDraft?.(getPersistableValues()))
+    Promise.resolve(onSaveDraft?.(values))
       .then(() => {
+        clearAutosave();
         setStatus("draft-saved");
-        onBack();
       })
       .catch(() => setStatus("failed"));
   };
 
   const confirmSubmit = () => {
-    if (!canPersistListing()) {
+    if (isSubmitted) return;
+
+    const values = getPersistableValues();
+
+    if (!canSubmitOrganizerListing(values)) {
+      setStatus("missing-fields");
+      return;
+    }
+
+    const dateValidationMessage = getListingDateValidationMessage(values);
+
+    if (dateValidationMessage) {
       setStatus("missing-fields");
       return;
     }
 
     setStatus("submitting");
-    Promise.resolve(onSubmitForReview?.(getPersistableValues()))
+    Promise.resolve(onSubmitForReview?.(values))
       .then(() => {
+        clearAutosave();
         setStatus("submitted");
-        onBack();
       })
       .catch(() => setStatus("failed"));
   };
@@ -261,12 +337,15 @@ export function CreateListingView({
               toggleEligibility={toggleEligibility}
               registrationUrl={registrationUrl}
               setRegistrationUrl={setRegistrationUrl}
+              coverImageUrl={coverImageUrl}
+              setCoverImageUrl={setCoverImageUrl}
             />
           )}
           {currentStep === 4 && (
             <StepDescription
               description={description}
               setDescription={setDescription}
+              qualityChecks={getListingQualityChecks(getFormValues())}
             />
           )}
           {currentStep === 5 && (
@@ -283,15 +362,50 @@ export function CreateListingView({
               difficulty={difficulty}
               eligibility={eligibility}
               registrationUrl={registrationUrl}
+              coverImageUrl={coverImageUrl}
               description={description}
             />
           )}
         </div>
 
-        {statusMessage ? (
+        {autosaveLabel ? (
+          <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+            {autosaveLabel}
+          </p>
+        ) : null}
+
+        {dateValidationMessage ? (
           <p className="mb-3 text-sm font-black text-red-600">
+            {dateValidationMessage}
+          </p>
+        ) : null}
+
+        {statusMessage ? (
+          <p className={`mb-3 text-sm font-black ${getStatusMessageClass(status)}`}>
             {statusMessage}
           </p>
+        ) : null}
+
+        {status === "draft-saved" ? (
+          <ConfirmationPanel
+            title={isActiveListingEdit ? "Changes saved" : "Draft saved"}
+            body={
+              isActiveListingEdit
+                ? "Participants will see that this listing was updated by the organizer."
+                : "You can keep editing now or return to your organizer listings."
+            }
+            actionLabel="Back to listings"
+            onAction={onBack}
+          />
+        ) : null}
+
+        {status === "submitted" ? (
+          <ConfirmationPanel
+            title="Submitted for review"
+            body="Your listing is now pending review. If staff requests edits, the note will appear beside the listing in your organizer dashboard."
+            actionLabel="Back to listings"
+            onAction={onBack}
+          />
         ) : null}
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -313,7 +427,7 @@ export function CreateListingView({
               Next
             </button>
           )}
-          {currentStep === 5 && (
+          {currentStep === 5 && !isActiveListingEdit && !isSubmitted && (
             <button
               onClick={confirmSubmit}
               disabled={isBusy}
@@ -322,13 +436,15 @@ export function CreateListingView({
               Confirm submit
             </button>
           )}
+          {!isSubmitted ? (
           <button
             onClick={saveDraft}
             disabled={isBusy}
             className="h-11 rounded-md border-2 border-zinc-950 px-5 text-sm font-black text-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400"
           >
-            Save draft
+            {isActiveListingEdit ? "Save changes" : "Save draft"}
           </button>
+          ) : null}
         </div>
       </FeaturePanel>
     </div>
@@ -550,6 +666,8 @@ function StepDetails({
   toggleEligibility,
   registrationUrl,
   setRegistrationUrl,
+  coverImageUrl,
+  setCoverImageUrl,
 }: {
   difficulty: string;
   setDifficulty: (v: "Beginner" | "Intermediate" | "Open") => void;
@@ -562,6 +680,8 @@ function StepDetails({
   toggleEligibility: (option: string) => void;
   registrationUrl: string;
   setRegistrationUrl: (v: string) => void;
+  coverImageUrl: string;
+  setCoverImageUrl: (v: string) => void;
 }) {
   const numberOptions = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const maxOptions = numberOptions.filter(
@@ -650,12 +770,27 @@ function StepDetails({
         </div>
       </div>
       <div className="border-t-2 border-zinc-100 pt-4">
-        <Input
-          value={registrationUrl}
-          onChange={setRegistrationUrl}
-          placeholder="https://..."
-          label="External registration URL (optional)"
-        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input
+            value={registrationUrl}
+            onChange={setRegistrationUrl}
+            placeholder="https://..."
+            label="External registration URL (optional)"
+          />
+          <Input
+            value={coverImageUrl}
+            onChange={setCoverImageUrl}
+            placeholder="https://..."
+            label="Cover or logo image URL (optional)"
+          />
+        </div>
+        {coverImageUrl.trim() ? (
+          <div
+            aria-label="Listing cover preview"
+            className="mt-3 h-36 overflow-hidden rounded-lg border-2 border-zinc-200 bg-zinc-50 bg-cover bg-center"
+            style={{ backgroundImage: `url(${coverImageUrl})` }}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -664,21 +799,73 @@ function StepDetails({
 function StepDescription({
   description,
   setDescription,
+  qualityChecks,
 }: {
   description: string;
   setDescription: (v: string) => void;
+  qualityChecks: { label: string; isComplete: boolean }[];
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block text-xs font-black text-zinc-700">
-        Description
-      </label>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="min-h-40 w-full rounded-md border-2 border-zinc-200 p-3 text-sm font-bold focus:border-[#00a7e8] focus:outline-none"
-        placeholder="Describe the hackathon, eligibility, team size, prizes, and schedule"
-      />
+    <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+      <div>
+        <label className="mb-1.5 block text-xs font-black text-zinc-700">
+          Listing description
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="min-h-56 w-full rounded-md border-2 border-zinc-200 p-3 text-sm font-bold leading-6 focus:border-[#00a7e8] focus:outline-none"
+          placeholder="Explain the theme, who should join, schedule, judging criteria, deliverables, and contact channel."
+        />
+      </div>
+      <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+          Quality checklist
+        </p>
+        <div className="mt-3 space-y-2">
+          {qualityChecks.map((check) => (
+            <div key={check.label} className="flex items-center gap-2 text-sm font-bold">
+              <span
+                className={`grid size-5 place-items-center rounded-full border text-[10px] ${
+                  check.isComplete
+                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    : "border-zinc-300 bg-white text-zinc-400"
+                }`}
+              >
+                {check.isComplete ? "✓" : ""}
+              </span>
+              <span className={check.isComplete ? "text-zinc-800" : "text-zinc-500"}>
+                {check.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmationPanel({
+  title,
+  body,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  body: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="mb-4 rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4">
+      <p className="font-black text-emerald-900">{title}</p>
+      <p className="mt-1 text-sm font-bold leading-6 text-emerald-800">{body}</p>
+      <button
+        onClick={onAction}
+        className="mt-3 h-10 rounded-md bg-emerald-700 px-4 text-sm font-black text-white"
+      >
+        {actionLabel}
+      </button>
     </div>
   );
 }
@@ -696,6 +883,7 @@ function StepReview({
   difficulty,
   eligibility,
   registrationUrl,
+  coverImageUrl,
   description,
 }: {
   listingName: string;
@@ -710,14 +898,18 @@ function StepReview({
   difficulty: string;
   eligibility: string[];
   registrationUrl: string;
+  coverImageUrl: string;
   description: string;
 }) {
+  const previewTags = [setup, region, difficulty].filter(Boolean);
+
   return (
-    <div className="space-y-3">
-      <div className="rounded-lg border-2 border-zinc-950 bg-zinc-950 px-5 py-4">
-        <h3 className="text-xl font-black text-white">{listingName}</h3>
-        <p className="mt-1 text-sm font-bold text-zinc-300">{organizerName}</p>
-      </div>
+    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-3">
+        <div className="rounded-lg border-2 border-zinc-950 bg-zinc-950 px-5 py-4">
+          <h3 className="text-xl font-black text-white">{listingName}</h3>
+          <p className="mt-1 text-sm font-bold text-zinc-300">{organizerName}</p>
+        </div>
 
       <ReviewSection title="Schedule" icon={CalendarDays}>
         <ReviewRow label="Event dates" value={dateLabel} />
@@ -757,11 +949,43 @@ function StepReview({
         </ReviewSection>
       )}
 
-      <ReviewSection title="Description" icon={FileText}>
-        <p className="whitespace-pre-wrap py-2 text-sm leading-6 text-zinc-700">
-          {description}
+        <ReviewSection title="Description" icon={FileText}>
+          <p className="whitespace-pre-wrap py-2 text-sm leading-6 text-zinc-700">
+            {description}
+          </p>
+        </ReviewSection>
+      </div>
+      <div className="h-fit rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[4px_4px_0_#111]">
+        {coverImageUrl.trim() ? (
+          <div
+            aria-label="Listing cover preview"
+            className="mb-4 h-32 w-full rounded-md border-2 border-zinc-200 bg-cover bg-center"
+            style={{ backgroundImage: `url(${coverImageUrl})` }}
+          />
+        ) : null}
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#00a7e8]">
+          Participant preview
         </p>
-      </ReviewSection>
+        <h3 className="mt-2 text-xl font-black text-zinc-950">
+          {listingName || "Untitled hackathon"}
+        </h3>
+        <p className="mt-1 text-sm font-bold text-zinc-500">
+          {organizerName || "Organizer"} · {dateLabel || "Date TBA"}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {previewTags.map((label) => (
+            <span
+              key={label}
+              className={`rounded-full border px-2.5 py-1 text-xs font-black ${statusClass("Open")}`}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+        <p className="mt-4 text-sm font-bold leading-6 text-zinc-700">
+          {description || "Your listing description will appear here for participants."}
+        </p>
+      </div>
     </div>
   );
 }

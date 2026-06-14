@@ -1,4 +1,4 @@
-const CACHE_NAME = "hack-a-ton-shell-v1";
+const CACHE_NAME = "hack-a-ton-shell-v2";
 const APP_SHELL_URLS = [
   "/",
   "/onboarding",
@@ -7,6 +7,14 @@ const APP_SHELL_URLS = [
   "/brand/hack-a-ton-logo.svg",
   "/manifest.webmanifest"
 ];
+
+function shouldBypassCache(requestUrl) {
+  return (
+    requestUrl.pathname.startsWith("/_next/") ||
+    requestUrl.pathname.startsWith("/api/") ||
+    requestUrl.pathname.includes("webpack")
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -35,6 +43,11 @@ self.addEventListener("fetch", (event) => {
 
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
+
+  if (shouldBypassCache(requestUrl)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   if (event.request.mode === "navigate") {
     event.respondWith(
