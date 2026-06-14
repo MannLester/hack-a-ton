@@ -55,7 +55,7 @@ export function HackathonCard({
                 {hackathon.prize}
               </span>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2 line-clamp-1">
+            <div className="mt-4 flex flex-wrap gap-2 pb-5">
               {hackathon.eligibility.slice(0, 2).map((item) => (
                 <span
                   key={item}
