@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { Heart, MapPin, X } from "lucide-react";
 import type { TeamLooking } from "@/lib/sample-data";
@@ -16,15 +16,17 @@ function TeamCard({
   onSwipe,
   style,
   exitDirection,
+  isSwiping,
 }: {
   team: TeamLooking;
   isTop: boolean;
-  onSwipe: (direction: "left" | "right") => void;
+  onSwipe: (team: TeamLooking, direction: "left" | "right") => void;
   style?: React.CSSProperties;
   exitDirection: "left" | "right" | null;
+  isSwiping: boolean;
 }) {
   const { isSignedIn } = useClerkAuthState();
-  const canSwipe = isTop && isSignedIn;
+  const canSwipe = isTop && isSignedIn && !isSwiping;
   const exitX = exitDirection === "left" ? -EXIT_X : EXIT_X;
   const exitRotate = exitDirection === "left" ? -15 : 15;
 
@@ -38,9 +40,9 @@ function TeamCard({
       onDragEnd={(_: unknown, info: PanInfo) => {
         if (!canSwipe) return;
         if (info.offset.x > SWIPE_THRESHOLD) {
-          onSwipe("right");
+          onSwipe(team, "right");
         } else if (info.offset.x < -SWIPE_THRESHOLD) {
-          onSwipe("left");
+          onSwipe(team, "left");
         }
       }}
       initial={{ scale: 1, y: 0, opacity: 1 }}
@@ -85,14 +87,16 @@ function TeamCard({
         <div className="mt-auto flex gap-3 pt-6">
           <AuthActionButton
             action="like_teammate"
-            onAuthorizedClick={() => onSwipe("left")}
+            onAuthorizedClick={() => onSwipe(team, "left")}
+            disabled={isSwiping}
             className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
           >
             <X className="size-4" /> Pass
           </AuthActionButton>
           <AuthActionButton
             action="like_teammate"
-            onAuthorizedClick={() => onSwipe("right")}
+            onAuthorizedClick={() => onSwipe(team, "right")}
+            disabled={isSwiping}
             className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
           >
             <Heart className="size-4" /> Like
@@ -118,11 +122,33 @@ export function TeamSwipeStack({
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(
     null,
   );
+  const [swipingTeamId, setSwipingTeamId] = useState<string | null>(null);
+  const latestTeams = useRef(teams);
+  const teamIds = useMemo(
+    () => teams.map((team) => team.convexTeamId ?? team.teamName).join("|"),
+    [teams],
+  );
 
-  const handleSwipe = (direction: "left" | "right") => {
+  useEffect(() => {
+    latestTeams.current = teams;
+  }, [teams]);
+
+  useEffect(() => {
+    if (swipingTeamId) return;
+
+    setCardStack(latestTeams.current);
+  }, [swipingTeamId, teamIds]);
+
+  const handleSwipe = (team: TeamLooking, direction: "left" | "right") => {
+    const teamId = team.convexTeamId ?? team.teamName;
     const topCard = cardStack[cardStack.length - 1];
-    if (!topCard) return;
+    const topCardId = topCard?.convexTeamId ?? topCard?.teamName;
 
+    if (!topCard) return;
+    if (swipingTeamId) return;
+    if (teamId !== topCardId) return;
+
+    setSwipingTeamId(teamId);
     setExitDirection(direction);
 
     if (direction === "right") {
@@ -132,8 +158,11 @@ export function TeamSwipeStack({
     }
 
     setTimeout(() => {
-      setCardStack((prev) => prev.slice(0, -1));
+      setCardStack((prev) =>
+        prev.filter((card) => (card.convexTeamId ?? card.teamName) !== teamId),
+      );
       setExitDirection(null);
+      setSwipingTeamId(null);
     }, 350);
   };
 
@@ -161,11 +190,12 @@ export function TeamSwipeStack({
 
           return (
             <TeamCard
-              key={team.teamName}
+              key={team.convexTeamId ?? team.teamName}
               team={team}
               isTop={isTop}
               onSwipe={handleSwipe}
               exitDirection={isExiting ? exitDirection : null}
+              isSwiping={Boolean(swipingTeamId)}
               style={{
                 scale: depthScale,
                 y: depthY,
