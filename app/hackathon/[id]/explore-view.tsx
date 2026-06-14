@@ -108,7 +108,7 @@ export function ExploreView({
             >
               <ArrowLeft className="size-4" />
             </Link>
-            <div>
+            <div className="hidden lg:block">
               <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
                 Explore Hackathons
               </h1>
@@ -118,7 +118,7 @@ export function ExploreView({
             </div>
           </div>
 
-          <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
+          <section className="hidden lg:block rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
             <div className="flex gap-3">
               <label className="relative block flex-1">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
@@ -150,7 +150,7 @@ export function ExploreView({
           </section>
 
           <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-            <aside className="order-2 lg:order-1 lg:sticky lg:top-6 lg:self-start">
+            <aside className="hidden order-2 lg:block lg:order-1 lg:sticky lg:top-6 lg:self-start">
               <h2 className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
                 All Hackathons
               </h2>
