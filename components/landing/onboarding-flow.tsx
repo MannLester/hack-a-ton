@@ -1,6 +1,9 @@
 "use client";
 
+import { api } from "@/convex/_generated/api";
+import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
+import { useOptionalClerkUser } from "@/components/shared/convex-provider";
 import {
   ArrowRight,
   Check,
@@ -87,8 +90,26 @@ function getProfileUrl(username: string, urlPrefix: string) {
   return `${urlPrefix}${trimmedUsername}`;
 }
 
+function getInitials(displayName: string) {
+  return displayName
+    .split(" ")
+    .map((namePart) => namePart[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getClerkDisplayName(user: NonNullable<ReturnType<typeof useOptionalClerkUser>>) {
+  const emailName = user.primaryEmailAddress?.emailAddress.split("@")[0];
+
+  return user.fullName || user.username || emailName || "Hack-A-Ton Builder";
+}
+
 export function OnboardingFlow() {
   const router = useRouter();
+  const clerkUser = useOptionalClerkUser();
+  const saveOnboardingProfile = useMutation(api.users.saveOnboardingProfile);
   const [step, setStep] = useState<Step>(1);
   const [persona, setPersona] = useState<Persona | null>(null);
   const [domains, setDomains] = useState<string[]>([]);
@@ -101,6 +122,7 @@ export function OnboardingFlow() {
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [orgName, setOrgName] = useState("");
   const [orgBio, setOrgBio] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const totalSteps = 5;
   const isOrganizer = persona === "organizer";
@@ -138,9 +160,30 @@ export function OnboardingFlow() {
     setStep(5);
   }
 
-  function handleSubmit() {
-    localStorage.setItem("hackaton-onboarding-v2", "true");
-    localStorage.setItem("hackaton-persona", isOrganizer ? "organizer" : "participant");
+  async function handleSubmit() {
+    if (!clerkUser) return;
+
+    setIsSaving(true);
+
+    const displayName = getClerkDisplayName(clerkUser);
+
+    await saveOnboardingProfile({
+      clerkUserId: clerkUser.id,
+      displayName,
+      initials: getInitials(displayName) || "HA",
+      schoolOrCompany: clerkUser.primaryEmailAddress?.emailAddress,
+      persona: isOrganizer ? "organizer" : "participant",
+      domains,
+      techStack,
+      locationStrategy: locationStrategy ?? undefined,
+      experienceLevel: experienceLevel ?? undefined,
+      githubUrl: githubUrl || undefined,
+      linkedinUrl: linkedinUrl || undefined,
+      portfolioUrl: portfolioUrl || undefined,
+      orgName: orgName || undefined,
+      orgBio: orgBio || undefined,
+    });
+
     router.push("/");
   }
 
@@ -402,7 +445,8 @@ export function OnboardingFlow() {
               </div>
               <button
                 onClick={handleSubmit}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111]"
+                disabled={!clerkUser || isSaving}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
               >
                 Go to Dashboard <ArrowRight className="size-4" />
               </button>
@@ -610,7 +654,7 @@ export function OnboardingFlow() {
 
               <button
                 onClick={handleSubmit}
-                disabled={!experienceLevel}
+                disabled={!experienceLevel || !clerkUser || isSaving}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
               >
                 Complete Profile <Check className="size-4" />

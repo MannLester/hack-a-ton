@@ -1,7 +1,11 @@
 "use client";
 
 import { ClerkProvider, useAuth, useUser } from "@clerk/nextjs";
+import { api } from "@/convex/_generated/api";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { useQuery } from "convex/react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { createContext, useContext, useState } from "react";
 
 export interface OptionalClerkUser {
@@ -58,6 +62,35 @@ function ClerkAuthStateProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+function OnboardingRedirect({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const user = useOptionalClerkUser();
+  const pathname = usePathname();
+  const router = useRouter();
+  const onboardingStatus = useQuery(
+    api.users.getOnboardingStatus,
+    user?.id ? { clerkUserId: user.id } : "skip",
+  );
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (!user?.id) return;
+    if (pathname === "/onboarding") return;
+    if (!onboardingStatus) return;
+    if (onboardingStatus.isComplete) return;
+
+    router.replace("/onboarding");
+  }, [isLoaded, isSignedIn, onboardingStatus, pathname, router, user?.id]);
+
+  return children;
+}
+
+function OnboardingRedirectMaybe({ children }: { children: React.ReactNode }) {
+  if (!isClerkConfigured()) return children;
+
+  return <OnboardingRedirect>{children}</OnboardingRedirect>;
+}
+
 function ClerkProviderMaybe({ children }: { children: React.ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 
@@ -77,7 +110,9 @@ export function ConvexClientProvider({
 }) {
   return (
     <ClerkProviderMaybe>
-      <ConvexProviderMaybe>{children}</ConvexProviderMaybe>
+      <ConvexProviderMaybe>
+        <OnboardingRedirectMaybe>{children}</OnboardingRedirectMaybe>
+      </ConvexProviderMaybe>
     </ClerkProviderMaybe>
   );
 }
