@@ -57,43 +57,43 @@ function TeamCard({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       whileTap={canSwipe ? { cursor: "grabbing" } : undefined}
     >
-      <div className="flex h-full flex-col rounded-lg border-2 border-zinc-950 bg-white p-5 shadow-[5px_5px_0_#111]">
-        <p className="text-xl font-black text-zinc-950">{team.teamName}</p>
-        <p className="mt-3 text-xs font-black uppercase tracking-wider text-zinc-400">
+      <div className="flex h-full flex-col rounded-lg border-2 border-zinc-950 bg-white p-6 shadow-[6px_6px_0_#111] sm:p-7">
+        <p className="text-2xl font-black text-zinc-950">{team.teamName}</p>
+        <p className="mt-4 text-xs font-black uppercase tracking-wider text-zinc-400">
           Looking for
         </p>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {team.missingRoles.map((role) => (
             <span
               key={role}
-              className="rounded-full border-2 border-zinc-950 bg-[#ffd21f]/20 px-3 py-1 text-sm font-extrabold text-[#7a5700]"
+              className="rounded-full border-2 border-zinc-950 bg-[#ffd21f]/20 px-3.5 py-1.5 text-sm font-extrabold text-[#7a5700]"
             >
               {role}
             </span>
           ))}
         </div>
-        <div className="mt-4 border-t-2 border-zinc-100" />
-        <div className="mt-4">
-          <p className="text-sm font-black text-zinc-950">
+        <div className="mt-6 border-t-2 border-zinc-100" />
+        <div className="mt-5">
+          <p className="text-base font-black text-zinc-950">
             {team.hackathonName}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-zinc-500">
-            <MapPin className="size-3" />
+          <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-zinc-500">
+            <MapPin className="size-4" />
             {team.hackathonLocation}
           </p>
         </div>
-        <div className="mt-auto flex gap-2 pt-4">
+        <div className="mt-auto flex gap-3 pt-6">
           <AuthActionButton
             action="like_teammate"
             onAuthorizedClick={() => onSwipe("left")}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-white text-sm font-black text-zinc-800"
           >
             <X className="size-4" /> Pass
           </AuthActionButton>
           <AuthActionButton
             action="like_teammate"
             onAuthorizedClick={() => onSwipe("right")}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-[#ffd21f] text-sm font-black text-zinc-950"
           >
             <Heart className="size-4" /> Like
           </AuthActionButton>
@@ -150,7 +150,7 @@ export function TeamSwipeStack({
   }
 
   return (
-    <div className="relative mx-auto w-full" style={{ height: "300px", maxWidth: "480px" }}>
+    <div className="relative mx-auto h-[390px] w-full max-w-[680px] sm:h-[430px]">
       <AnimatePresence initial={false}>
         {visibleCards.map((team, index) => {
           const stackIndex = visibleCards.length - 1 - index;
