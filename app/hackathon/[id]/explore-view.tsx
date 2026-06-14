@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
+import type { HackathonTeam } from "@/components/shared/types";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 import { DetailPageNav } from "@/components/shared/detail-page-nav";
 
@@ -14,10 +15,12 @@ export function ExploreView({
   id,
   hackathon,
   allHackathons,
+  teams = [],
 }: {
   id: string;
   hackathon: Hackathon;
   allHackathons: Hackathon[];
+  teams?: HackathonTeam[];
 }) {
   return (
     <div className="min-h-screen bg-[#f5f3ef]">
@@ -166,6 +169,63 @@ export function ExploreView({
                     <p className="mt-1 text-sm font-bold text-zinc-500">Deadline</p>
                   </div>
                 </div>
+              </PanelCard>
+
+              <PanelCard className="border-zinc-950 p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-black text-zinc-950">
+                    Teams for this hackathon
+                  </h2>
+                  <span className="rounded-full bg-[#00a7e8]/15 px-2.5 py-1 text-xs font-black text-[#006c9c]">
+                    {teams.length} teams
+                  </span>
+                </div>
+                {teams.length > 0 ? (
+                  <div className="mt-4 grid gap-3">
+                    {teams.map((team) => (
+                      <div
+                        key={team._id}
+                        className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[3px_3px_0_#111]"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-base font-black text-zinc-950">
+                              {team.teamName}
+                            </h3>
+                            {team.goal && (
+                              <p className="mt-1 text-sm font-medium leading-6 text-zinc-600">
+                                {team.goal}
+                              </p>
+                            )}
+                          </div>
+                          <span className="rounded-full bg-[#ffd21f]/25 px-2.5 py-1 text-xs font-black text-[#7a5700]">
+                            {team.members.length} / {team.targetSize}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {team.memberProfiles.map((member) => (
+                            <span
+                              key={member.userId}
+                              className="inline-flex items-center gap-2 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-black text-zinc-700"
+                            >
+                              <span className="flex size-6 items-center justify-center rounded-full bg-[#00a7e8]/15 text-[10px] text-[#006c9c]">
+                                {member.initials}
+                              </span>
+                              {member.displayName}
+                              {member.isLead && (
+                                <span className="text-[#7a5700]">Lead</span>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-5 text-sm font-bold text-zinc-500">
+                    No teams are connected to this hackathon yet.
+                  </div>
+                )}
               </PanelCard>
             </main>
           </div>

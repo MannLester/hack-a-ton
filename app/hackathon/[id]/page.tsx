@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
 import { hackathons } from "@/lib/sample-data";
-import { ExploreView } from "./explore-view";
+import { HackathonDetailsContainer } from "./hackathon-details-container";
 
 export function generateStaticParams() {
   return hackathons.map((hackathon) => ({
@@ -14,11 +13,6 @@ export default async function HackathonDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const hackathon = hackathons.find((h) => h.id === id);
 
-  if (!hackathon) {
-    notFound();
-  }
-
-  return <ExploreView id={id} hackathon={hackathon} allHackathons={hackathons} />;
+  return <HackathonDetailsContainer id={id} />;
 }

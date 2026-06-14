@@ -179,6 +179,19 @@ export const getPlatformStats = query({
   },
 });
 
+export const getById = query({
+  args: {
+    hackathonId: v.id("hackathons"),
+  },
+  handler: async (ctx, args) => {
+    const hackathon = await ctx.db.get(args.hackathonId);
+
+    if (!hackathon) return null;
+
+    return addOrganizerAndCounts(ctx, hackathon);
+  },
+});
+
 export const listByOrganizer = query({
   args: {
     organizerId: v.id("organizers"),
