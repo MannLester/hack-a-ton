@@ -204,3 +204,21 @@ export const saveOnboardingProfile = mutation({
     return { userId, organizerId: existingOrganizer._id };
   },
 });
+
+export const updateBio = mutation({
+  args: {
+    userId: v.id("users"),
+    bio: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) throw new Error("User not found.");
+
+    await ctx.db.patch(args.userId, {
+      bio: args.bio.trim() || undefined,
+    });
+
+    return args.userId;
+  },
+});

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Edit3, Plus, Save, Trophy, X } from "lucide-react";
 import { badges, hackathons, portfolioStats } from "@/lib/sample-data";
 import type { PortfolioEntry, PortfolioProfile } from "@/components/shared/types";
@@ -33,22 +33,35 @@ function getResultLabel(result: PortfolioEntry["result"]) {
 
 export function PortfolioView({
   profile,
+  onSaveBio,
   onSaveEntry,
   onDeleteEntry,
   onBack,
 }: {
   profile?: PortfolioProfile;
+  onSaveBio?: (bio: string) => Promise<void>;
   onSaveEntry?: (values: PortfolioEntryFormValues) => Promise<void>;
   onDeleteEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
   onBack: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formValues, setFormValues] = useState(emptyEntryForm);
+  const [bioValue, setBioValue] = useState(profile?.bio ?? "");
   const [statusMessage, setStatusMessage] = useState("");
   const displayBadges = profile?.badges ?? badges;
   const displayStats = profile?.stats ?? portfolioStats;
   const displayEntries = profile?.entries ?? getFallbackEntries();
+  const displayBio =
+    profile?.bio ??
+    "Builds civic tech prototypes, dashboards, and product demos. Looking for practical hackathons with real community use.";
+
+  useEffect(() => {
+    if (isEditingBio) return;
+
+    setBioValue(profile?.bio ?? "");
+  }, [isEditingBio, profile?.bio]);
 
   const startNewEntry = () => {
     setFormValues(emptyEntryForm);
@@ -96,6 +109,30 @@ export function PortfolioView({
       setIsEditing(false);
     } catch {
       setStatusMessage("Could not remove portfolio entry.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const startEditingBio = () => {
+    setBioValue(profile?.bio === "No bio yet." ? "" : (profile?.bio ?? ""));
+    setStatusMessage("");
+    setIsEditingBio(true);
+  };
+
+  const cancelEditingBio = () => {
+    setBioValue(profile?.bio ?? "");
+    setIsEditingBio(false);
+  };
+
+  const saveBio = async () => {
+    setIsSaving(true);
+    try {
+      await onSaveBio?.(bioValue);
+      setStatusMessage("Bio saved.");
+      setIsEditingBio(false);
+    } catch {
+      setStatusMessage("Could not save bio.");
     } finally {
       setIsSaving(false);
     }
@@ -195,10 +232,59 @@ export function PortfolioView({
               </p>
             </div>
           </div>
-          <p className="mt-4 text-sm font-medium leading-6 text-zinc-600">
-            {profile?.bio ??
-              "Builds civic tech prototypes, dashboards, and product demos. Looking for practical hackathons with real community use."}
-          </p>
+          <div className="mt-4">
+            {isEditingBio ? (
+              <div className="space-y-3">
+                <textarea
+                  value={bioValue}
+                  onChange={(event) => setBioValue(event.target.value)}
+                  rows={5}
+                  maxLength={240}
+                  className="w-full rounded-md border-2 border-zinc-200 bg-white px-3 py-2 text-sm font-medium leading-6 text-zinc-700 outline-none focus:border-[#00a7e8]"
+                  placeholder="Tell builders what you make, what you care about, or what kind of teams you want."
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-bold text-zinc-400">
+                    {bioValue.length}/240
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={cancelEditingBio}
+                      disabled={isSaving}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-md border-2 border-zinc-950 px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
+                    >
+                      <X className="size-3.5" /> Cancel
+                    </button>
+                    <button
+                      onClick={saveBio}
+                      disabled={isSaving}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
+                    >
+                      <Save className="size-3.5" /> {isSaving ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm font-medium leading-6 text-zinc-600">
+                  {displayBio}
+                </p>
+                <AuthActionButton
+                  action="edit_portfolio"
+                  onAuthorizedClick={startEditingBio}
+                  className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md border-2 border-zinc-950 bg-white px-3 text-xs font-black text-zinc-950 shadow-[2px_2px_0_#111]"
+                  signedOutLabel={
+                    <>
+                      <Edit3 className="size-3.5" /> Log in to edit bio
+                    </>
+                  }
+                >
+                  <Edit3 className="size-3.5" /> Edit bio
+                </AuthActionButton>
+              </div>
+            )}
+          </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {displayBadges.map((badge) => (
               <span

@@ -35,6 +35,7 @@ export function LandingView({
   leaderboardRows,
   onSavePortfolioEntry,
   onDeletePortfolioEntry,
+  onSaveBio,
   hasTeam,
   onCreateTeam,
   myTeam,
@@ -64,6 +65,7 @@ export function LandingView({
     result: PortfolioEntry["result"];
   }) => Promise<void>;
   onDeletePortfolioEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
+  onSaveBio?: (bio: string) => Promise<void>;
   hasTeam?: boolean;
   onCreateTeam?: (teamData: {
     teamName: string;
@@ -112,6 +114,7 @@ export function LandingView({
     return (
       <PortfolioView
         profile={portfolioProfile}
+        onSaveBio={onSaveBio}
         onSaveEntry={onSavePortfolioEntry}
         onDeleteEntry={onDeletePortfolioEntry}
         onBack={() => setActiveTab("explore")}

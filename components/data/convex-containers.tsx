@@ -374,6 +374,7 @@ export function ConvexParticipantView({
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
   const createTeamMutation = useMutation(api.teams.createTeam);
   const decideOnProfile = useMutation(api.teams.decideOnProfile);
+  const updateBio = useMutation(api.users.updateBio);
   const addSelfReportedEntry = useMutation(api.portfolio.addSelfReportedEntry);
   const updateSelfReportedEntry = useMutation(
     api.portfolio.updateSelfReportedEntry,
@@ -540,6 +541,15 @@ export function ConvexParticipantView({
     });
   };
 
+  const saveBio = async (bio: string) => {
+    if (!participantUserId) return;
+
+    await updateBio({
+      userId: participantUserId,
+      bio,
+    });
+  };
+
   const createTeam = async (teamData: {
     teamName: string;
     hackathonId: string;
@@ -574,6 +584,7 @@ export function ConvexParticipantView({
       onLikeTeammate={likeTeammate}
       portfolioProfile={displayedPortfolioProfile}
       leaderboardRows={leaderboardRows}
+      onSaveBio={saveBio}
       onSavePortfolioEntry={savePortfolioEntry}
       onDeletePortfolioEntry={deletePortfolioEntry}
       hasTeam={hasTeam}
