@@ -1,6 +1,7 @@
 import { Medal, Trophy, Users } from "lucide-react";
 import type { LeaderboardRow } from "@/components/shared/types";
 import { EmptyState, PanelCard, SectionTitle, StatCard } from "@/components/shared/primitives";
+import { BackToExploreButton } from "@/components/participants/back-to-explore-button";
 
 function getRankStyle(index: number) {
   if (index === 0) return "bg-[#ffd21f] text-zinc-950";
@@ -9,22 +10,31 @@ function getRankStyle(index: number) {
   return "bg-zinc-100 text-zinc-600";
 }
 
-export function LeaderboardView({ rows = [] }: { rows?: LeaderboardRow[] }) {
+export function LeaderboardView({
+  rows = [],
+  onBack,
+}: {
+  rows?: LeaderboardRow[];
+  onBack: () => void;
+}) {
   const topBuilder = rows[0];
 
   return (
     <div className="space-y-6">
-      <SectionTitle
-        eyebrow="Community"
-        title="Hackathon leaderboard"
-        action={
-          topBuilder ? (
-            <span className="rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-3 py-2 text-xs font-black text-zinc-950 shadow-[3px_3px_0_#111]">
-              Top builder: {topBuilder.displayName}
-            </span>
-          ) : null
-        }
-      />
+      <div className="flex items-center gap-5">
+        <BackToExploreButton onBack={onBack} />
+        <SectionTitle
+          eyebrow="Community"
+          title="Hackathon leaderboard"
+          action={
+            topBuilder ? (
+              <span className="rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-3 py-2 text-xs font-black text-zinc-950 shadow-[3px_3px_0_#111]">
+                Top builder: {topBuilder.displayName}
+              </span>
+            ) : null
+          }
+        />
+      </div>
       <section className="grid gap-3 sm:grid-cols-3">
         <StatCard label="Ranked Builders" value={String(rows.length)} icon={Users} />
         <StatCard label="Top Score" value={String(topBuilder?.score ?? 0)} icon={Trophy} />

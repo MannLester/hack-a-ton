@@ -4,6 +4,7 @@ import { badges, hackathons, portfolioStats } from "@/lib/sample-data";
 import type { PortfolioEntry, PortfolioProfile } from "@/components/shared/types";
 import { AuthActionButton } from "@/components/shared/auth-controls";
 import { FeaturePanel, PanelCard, SectionTitle, StatCard } from "@/components/shared/primitives";
+import { BackToExploreButton } from "@/components/participants/back-to-explore-button";
 
 type PortfolioEntryFormValues = {
   entryId?: PortfolioEntry["id"];
@@ -34,10 +35,12 @@ export function PortfolioView({
   profile,
   onSaveEntry,
   onDeleteEntry,
+  onBack,
 }: {
   profile?: PortfolioProfile;
   onSaveEntry?: (values: PortfolioEntryFormValues) => Promise<void>;
   onDeleteEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
+  onBack: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -100,24 +103,27 @@ export function PortfolioView({
 
   return (
     <div className="space-y-6">
-      <SectionTitle
-        eyebrow="Participant / Portfolio"
-        title="Your hackathon identity"
-        action={
-          <AuthActionButton
-            action="edit_portfolio"
-            onAuthorizedClick={startNewEntry}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]"
-            signedOutLabel={
-              <>
-                <Edit3 className="size-4" /> Log in to edit
-              </>
-            }
-          >
-            <Plus className="size-4" /> Add entry
-          </AuthActionButton>
-        }
-      />
+      <div className="flex items-center gap-5">
+        <BackToExploreButton onBack={onBack} />
+        <SectionTitle
+          eyebrow="Participant / Portfolio"
+          title="Your hackathon identity"
+          action={
+            <AuthActionButton
+              action="edit_portfolio"
+              onAuthorizedClick={startNewEntry}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111]"
+              signedOutLabel={
+                <>
+                  <Edit3 className="size-4" /> Log in to edit
+                </>
+              }
+            >
+              <Plus className="size-4" /> Add entry
+            </AuthActionButton>
+          }
+        />
+      </div>
       {isEditing ? (
         <FeaturePanel className="p-5">
           <div className="grid gap-3 md:grid-cols-[1fr_180px_auto] md:items-end">

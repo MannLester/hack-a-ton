@@ -95,11 +95,17 @@ export function LandingView({
         profile={portfolioProfile}
         onSaveEntry={onSavePortfolioEntry}
         onDeleteEntry={onDeletePortfolioEntry}
+        onBack={() => setActiveTab("explore")}
       />
     );
   }
   if (activeTab === "leaderboard") {
-    return <LeaderboardView rows={leaderboardRows} />;
+    return (
+      <LeaderboardView
+        rows={leaderboardRows}
+        onBack={() => setActiveTab("explore")}
+      />
+    );
   }
 
   return (
