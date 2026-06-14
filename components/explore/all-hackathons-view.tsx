@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Filter, Search } from "lucide-react";
+import { ArrowLeft, Filter, Search } from "lucide-react";
 import { hackathons } from "@/lib/sample-data";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { AppNavigation } from "@/components/shared/app-navigation";
@@ -85,22 +85,23 @@ export function AllHackathonsView() {
       />
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          <nav className="flex items-center gap-2 text-sm font-bold text-zinc-600">
-            <Link href="/" className="hover:text-zinc-950">
-              Home
+          <div className="flex items-center gap-5">
+            <Link
+              href="/"
+              aria-label="Back to home"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 bg-white text-zinc-800 shadow-[3px_3px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111]"
+            >
+              <ArrowLeft className="size-4" />
             </Link>
-            <span>/</span>
-            <span className="text-zinc-950">Explore</span>
-          </nav>
-
-          <div>
-            <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
-              Explore Hackathons
-            </h1>
-            <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-zinc-500">
-              Browse all upcoming hackathons, discover opportunities, and find
-              your next build.
-            </p>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight text-zinc-950 sm:text-5xl">
+                Explore Hackathons
+              </h1>
+              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-zinc-500">
+                Browse all upcoming hackathons, discover opportunities, and find
+                your next build.
+              </p>
+            </div>
           </div>
 
           <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
