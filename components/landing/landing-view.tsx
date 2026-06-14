@@ -10,8 +10,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import type { Hackathon } from "@/lib/sample-data";
-import type { LeaderboardRow, ParticipantTab, PortfolioEntry, PortfolioProfile, Teammate } from "@/components/shared/types";
+import type { Hackathon, TeamLooking } from "@/lib/sample-data";
+import type { LeaderboardRow, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
@@ -38,6 +38,11 @@ export function LandingView({
   hasTeam,
   onCreateTeam,
   myTeam,
+  teamListings,
+  onDismissTeam,
+  onLikeTeam,
+  interestedUsers,
+  onRespondToInterestedUser,
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
@@ -68,6 +73,15 @@ export function LandingView({
     targetSize: number;
   }) => Promise<void>;
   myTeam?: Doc<"teams"> | null;
+  teamListings?: TeamLooking[];
+  onDismissTeam?: (team: TeamLooking) => void;
+  onLikeTeam?: (team: TeamLooking) => void;
+  interestedUsers?: TeamInterestedUser[];
+  onRespondToInterestedUser?: (
+    userId: TeamInterestedUser["userId"],
+    hackathonId: TeamInterestedUser["hackathonId"],
+    decision: "like" | "pass",
+  ) => Promise<void>;
 }) {
   const [initialTeamPhase, setInitialTeamPhase] = useState<
     "solo_swiping" | "creating_card" | "team_recruiting"
@@ -87,6 +101,11 @@ export function LandingView({
         onCreateTeam={onCreateTeam}
         myTeam={myTeam}
         initialPhase={initialTeamPhase}
+        teamListings={teamListings}
+        onDismissTeam={onDismissTeam}
+        onLikeTeam={onLikeTeam}
+        interestedUsers={interestedUsers}
+        onRespondToInterestedUser={onRespondToInterestedUser}
       />
     );
   if (activeTab === "portfolio") {
@@ -118,7 +137,10 @@ export function LandingView({
           <Search className="size-4" /> Explore
         </button>
         <button
-          onClick={() => setActiveTab("team")}
+          onClick={() => {
+            setInitialTeamPhase("solo_swiping");
+            setActiveTab("team");
+          }}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm font-black text-zinc-700 hover:bg-zinc-100"
         >
           <Users className="size-4" /> Team Up

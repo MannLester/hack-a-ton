@@ -1,3 +1,5 @@
+import type { Id } from "@/convex/_generated/dataModel";
+
 export type Hackathon = {
   id: string;
   name: string;
@@ -97,6 +99,9 @@ export const hackathons: Hackathon[] = [
 ];
 
 export type TeamLooking = {
+  convexTeamId?: Id<"teams">;
+  leadUserId?: Id<"users">;
+  convexHackathonId?: Id<"hackathons">;
   teamName: string;
   missingRoles: string[];
   hackathonName: string;

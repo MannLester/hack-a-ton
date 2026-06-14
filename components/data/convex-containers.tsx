@@ -27,11 +27,14 @@ import {
 } from "@/components/shared/types";
 import {
   getUiHackathon,
+  getUiTeamInterestedUser,
+  getUiTeamLooking,
   getUiTeammate,
 } from "@/components/data/adapters";
 import { AdminView } from "@/components/admin/moderation-view";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { LandingView } from "@/components/landing/landing-view";
+import type { TeamLooking } from "@/lib/sample-data";
 
 type ClerkIdentity = {
   clerkUserId: string;
@@ -349,8 +352,16 @@ export function ConvexParticipantView({
     api.teams.listActiveProfiles,
     participantUserId ? { viewerUserId: participantUserId } : "skip",
   );
+  const convexTeamListings = useQuery(
+    api.teams.listRecruitingTeams,
+    participantUserId ? { viewerUserId: participantUserId } : "skip",
+  );
   const myTeam = useQuery(
     api.teams.getMyTeam,
+    participantUserId ? { userId: participantUserId } : "skip",
+  );
+  const interestedUsersForMyTeam = useQuery(
+    api.teams.listInterestedUsersForMyTeam,
     participantUserId ? { userId: participantUserId } : "skip",
   );
   const hasTeam = Boolean(myTeam);
@@ -362,6 +373,7 @@ export function ConvexParticipantView({
   const saveListing = useMutation(api.hackathons.saveListing);
   const unsaveListing = useMutation(api.hackathons.unsaveListing);
   const createTeamMutation = useMutation(api.teams.createTeam);
+  const decideOnProfile = useMutation(api.teams.decideOnProfile);
   const addSelfReportedEntry = useMutation(api.portfolio.addSelfReportedEntry);
   const updateSelfReportedEntry = useMutation(
     api.portfolio.updateSelfReportedEntry,
@@ -381,6 +393,12 @@ export function ConvexParticipantView({
             (teammate) => !hiddenConvexTeammateNames.includes(teammate.name),
           )
       : visibleTeammates;
+  const displayedTeamListings =
+    convexTeamListings && convexTeamListings.length > 0
+      ? convexTeamListings.map(getUiTeamLooking)
+      : undefined;
+  const displayedInterestedUsers =
+    interestedUsersForMyTeam?.map(getUiTeamInterestedUser) ?? [];
   const displayedPortfolioProfile = convexPortfolioProfile
     ? getUiPortfolioProfile(convexPortfolioProfile)
     : undefined;
@@ -414,13 +432,46 @@ export function ConvexParticipantView({
     });
   };
 
+  const saveProfileDecision = async (
+    teammate: Teammate,
+    decision: "like" | "pass",
+  ) => {
+    if (!participantUserId) return;
+    if (!teammate.convexUserId) return;
+
+    await decideOnProfile({
+      fromUserId: participantUserId,
+      toUserId: teammate.convexUserId,
+      hackathonId: teammate.convexHackathonId,
+      decision,
+    });
+  };
+
+  const saveTeamDecision = async (
+    team: TeamLooking,
+    decision: "like" | "pass",
+  ) => {
+    if (!participantUserId) return;
+    if (!team.leadUserId) return;
+
+    await decideOnProfile({
+      fromUserId: participantUserId,
+      toUserId: team.leadUserId,
+      hackathonId: team.convexHackathonId,
+      decision,
+    });
+  };
+
   const dismissTeammate = (teammateName: string) => {
     setHiddenConvexTeammateNames((currentNames) =>
       currentNames.includes(teammateName)
         ? currentNames
         : [...currentNames, teammateName],
     );
-    onDismissTeammate(teammateName);
+    const teammate = displayedTeammates.find((item) => item.name === teammateName);
+
+    if (teammate) void saveProfileDecision(teammate, "pass");
+    if (!teammate) onDismissTeammate(teammateName);
   };
 
   const likeTeammate = (teammate: Teammate) => {
@@ -429,7 +480,31 @@ export function ConvexParticipantView({
         ? currentNames
         : [...currentNames, teammate.name],
     );
+    void saveProfileDecision(teammate, "like");
     onLikeTeammate(teammate);
+  };
+
+  const dismissTeam = (team: TeamLooking) => {
+    void saveTeamDecision(team, "pass");
+  };
+
+  const likeTeam = (team: TeamLooking) => {
+    void saveTeamDecision(team, "like");
+  };
+
+  const respondToInterestedUser = async (
+    userId: Id<"users">,
+    hackathonId: Id<"hackathons"> | undefined,
+    decision: "like" | "pass",
+  ) => {
+    if (!participantUserId) return;
+
+    await decideOnProfile({
+      fromUserId: participantUserId,
+      toUserId: userId,
+      hackathonId,
+      decision,
+    });
   };
 
   const savePortfolioEntry = async (values: {
@@ -504,6 +579,11 @@ export function ConvexParticipantView({
       hasTeam={hasTeam}
       onCreateTeam={createTeam}
       myTeam={myTeam}
+      teamListings={displayedTeamListings}
+      onDismissTeam={dismissTeam}
+      onLikeTeam={likeTeam}
+      interestedUsers={displayedInterestedUsers}
+      onRespondToInterestedUser={respondToInterestedUser}
     />
   );
 }

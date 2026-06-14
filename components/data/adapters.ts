@@ -3,8 +3,11 @@ import { type Hackathon } from "@/lib/sample-data";
 import type {
   ConvexHackathon,
   ConvexLftProfile,
+  ConvexRecruitingTeam,
   PortfolioProfile,
+  TeamInterestedUser,
   Teammate,
+  UiTeamLooking,
   UiHackathon,
 } from "@/components/shared/types";
 
@@ -43,6 +46,8 @@ export function getUiHackathon(hackathon: ConvexHackathon): UiHackathon {
 
 export function getUiTeammate(profile: ConvexLftProfile): Teammate {
   return {
+    convexUserId: profile.userId,
+    convexHackathonId: profile.hackathonId,
     name: profile.displayName,
     role: profile.role,
     school: profile.schoolOrCompany ?? "Independent builder",
@@ -50,6 +55,33 @@ export function getUiTeammate(profile: ConvexLftProfile): Teammate {
     availability: profile.availability,
     goal: profile.goal,
     match: `${profile.matchPercent}%`,
+  };
+}
+
+export function getUiTeamLooking(team: ConvexRecruitingTeam): UiTeamLooking {
+  return {
+    convexTeamId: team._id,
+    leadUserId: team.leadUserId,
+    convexHackathonId: team.hackathonId,
+    teamName: team.teamName,
+    missingRoles: team.missingRoles,
+    hackathonName: team.hackathonName,
+    hackathonLocation: team.hackathonLocation,
+  };
+}
+
+export function getUiTeamInterestedUser(
+  user: Doc<"users"> & {
+    hackathonId?: Doc<"teamDecisions">["hackathonId"];
+  },
+): TeamInterestedUser {
+  return {
+    userId: user._id,
+    hackathonId: user.hackathonId,
+    displayName: user.displayName,
+    initials: user.initials,
+    meta: [user.schoolOrCompany, user.location].filter(Boolean).join(" · "),
+    bio: user.bio ?? "Interested in joining your team.",
   };
 }
 

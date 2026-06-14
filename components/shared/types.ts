@@ -1,10 +1,13 @@
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { teammates, type Hackathon } from "@/lib/sample-data";
+import { teammates, type Hackathon, type TeamLooking } from "@/lib/sample-data";
 
 export type Persona = "participant" | "organizer";
 export type ParticipantTab = "explore" | "team" | "portfolio" | "leaderboard";
 export type OrganizerTab = "listings" | "create" | "insights";
-export type Teammate = (typeof teammates)[number];
+export type Teammate = (typeof teammates)[number] & {
+  convexUserId?: Id<"users">;
+  convexHackathonId?: Id<"hackathons">;
+};
 export type ConvexHackathon = Doc<"hackathons"> & {
   organizerName: string;
   interestedCount: number;
@@ -19,6 +22,20 @@ export type ConvexLftProfile = Doc<"lftProfiles"> & {
   displayName: string;
   schoolOrCompany: string | null;
   matchPercent: number;
+};
+export type ConvexRecruitingTeam = Doc<"teams"> & {
+  leadUserId: Id<"users">;
+  hackathonName: string;
+  hackathonLocation: string;
+};
+export type UiTeamLooking = TeamLooking;
+export type TeamInterestedUser = {
+  userId: Id<"users">;
+  hackathonId?: Id<"hackathons">;
+  displayName: string;
+  initials: string;
+  meta: string;
+  bio: string;
 };
 export type PortfolioEntry = {
   id?: Id<"portfolioEntries">;

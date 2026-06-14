@@ -9,6 +9,17 @@ type LftProfileWithUser = Doc<"lftProfiles"> & {
   matchPercent: number;
 };
 
+type RecruitingTeam = Doc<"teams"> & {
+  leadUserId: Id<"users">;
+  hackathonName: string;
+  hackathonLocation: string;
+};
+
+type InterestedUser = Doc<"users"> & {
+  decisionId: Id<"teamDecisions">;
+  hackathonId: Id<"hackathons"> | undefined;
+};
+
 function getPairKey(firstUserId: Id<"users">, secondUserId: Id<"users">) {
   return [firstUserId, secondUserId].sort().join(":");
 }
@@ -41,7 +52,7 @@ async function getProfileWithUser(
 }
 
 async function findExistingDecision(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   fromUserId: Id<"users">,
   toUserId: Id<"users">,
 ) {
@@ -51,6 +62,33 @@ async function findExistingDecision(
       index.eq("fromUserId", fromUserId).eq("toUserId", toUserId),
     )
     .unique();
+}
+
+async function getDecidedProfileUserIds(ctx: QueryCtx, userId: Id<"users">) {
+  const decisions = await ctx.db
+    .query("teamDecisions")
+    .withIndex("by_from_user", (index) => index.eq("fromUserId", userId))
+    .collect();
+
+  return new Set(decisions.map((decision) => decision.toUserId));
+}
+
+async function getRecruitingTeamWithHackathon(
+  ctx: QueryCtx,
+  team: Doc<"teams">,
+) {
+  const hackathon = await ctx.db.get(team.hackathonId);
+  const leadUserId = team.members[0];
+
+  if (!hackathon) return null;
+  if (!leadUserId) return null;
+
+  return {
+    ...team,
+    leadUserId,
+    hackathonName: hackathon.name,
+    hackathonLocation: hackathon.location,
+  } satisfies RecruitingTeam;
 }
 
 async function findReverseLike(
@@ -88,6 +126,74 @@ async function findExistingMatch(
     .unique();
 }
 
+async function findRecruitingTeamLedByUser(
+  ctx: MutationCtx,
+  leadUserId: Id<"users">,
+  hackathonId: Id<"hackathons"> | undefined,
+) {
+  const recruitingTeams = await ctx.db
+    .query("teams")
+    .withIndex("by_status", (index) => index.eq("status", "recruiting"))
+    .collect();
+
+  return (
+    recruitingTeams.find((team) => {
+      const isLead = team.members[0] === leadUserId;
+      const matchesHackathon = !hackathonId || team.hackathonId === hackathonId;
+
+      return isLead && matchesHackathon;
+    }) ?? null
+  );
+}
+
+async function addUserToTeamIfPossible(
+  ctx: MutationCtx,
+  team: Doc<"teams">,
+  userId: Id<"users">,
+) {
+  if (team.members.includes(userId)) return team._id;
+  if (team.currentSize >= team.targetSize) return null;
+
+  const nextMembers = [...team.members, userId];
+  const nextCurrentSize = nextMembers.length;
+  const nextStatus =
+    nextCurrentSize >= team.targetSize ? "full" : team.status;
+
+  await ctx.db.patch(team._id, {
+    members: nextMembers,
+    currentSize: nextCurrentSize,
+    status: nextStatus,
+  });
+
+  return team._id;
+}
+
+async function addMutualLikeUserToLeadTeam(
+  ctx: MutationCtx,
+  fromUserId: Id<"users">,
+  toUserId: Id<"users">,
+  hackathonId: Id<"hackathons"> | undefined,
+) {
+  const fromUserTeam = await findRecruitingTeamLedByUser(
+    ctx,
+    fromUserId,
+    hackathonId,
+  );
+
+  if (fromUserTeam)
+    return addUserToTeamIfPossible(ctx, fromUserTeam, toUserId);
+
+  const toUserTeam = await findRecruitingTeamLedByUser(
+    ctx,
+    toUserId,
+    hackathonId,
+  );
+
+  if (!toUserTeam) return null;
+
+  return addUserToTeamIfPossible(ctx, toUserTeam, fromUserId);
+}
+
 async function createMatchIfMutualLike(
   ctx: MutationCtx,
   fromUserId: Id<"users">,
@@ -99,6 +205,8 @@ async function createMatchIfMutualLike(
   if (!reverseLike) return null;
 
   const existingMatch = await findExistingMatch(ctx, fromUserId, toUserId);
+
+  await addMutualLikeUserToLeadTeam(ctx, fromUserId, toUserId, hackathonId);
 
   if (existingMatch) return existingMatch._id;
 
@@ -138,6 +246,36 @@ export const listActiveProfiles = query({
         getProfileWithUser(ctx, profile, args.viewerUserId),
       ),
     );
+  },
+});
+
+export const listRecruitingTeams = query({
+  args: {
+    viewerUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const decidedProfileUserIds = await getDecidedProfileUserIds(
+      ctx,
+      args.viewerUserId,
+    );
+    const recruitingTeams = await ctx.db
+      .query("teams")
+      .withIndex("by_status", (index) => index.eq("status", "recruiting"))
+      .collect();
+    const visibleTeams = recruitingTeams.filter((team) => {
+      const leadUserId = team.members[0];
+      const isNotMember = !team.members.includes(args.viewerUserId);
+      const hasLeadUser = Boolean(leadUserId);
+      const isUndecided =
+        hasLeadUser && !decidedProfileUserIds.has(leadUserId);
+
+      return isNotMember && isUndecided;
+    });
+    const teamsWithHackathon = await Promise.all(
+      visibleTeams.map((team) => getRecruitingTeamWithHackathon(ctx, team)),
+    );
+
+    return teamsWithHackathon.filter((team) => team !== null);
   },
 });
 
@@ -261,6 +399,50 @@ export const getMyTeam = query({
   handler: async (ctx, args) => {
     const allTeams = await ctx.db.query("teams").collect();
     return allTeams.find((team) => team.members.includes(args.userId)) ?? null;
+  },
+});
+
+export const listInterestedUsersForMyTeam = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const allTeams = await ctx.db.query("teams").collect();
+    const team = allTeams.find((item) => item.members[0] === args.userId);
+
+    if (!team) return [];
+
+    const inboundLikes = await ctx.db
+      .query("teamDecisions")
+      .filter((queryBuilder) =>
+        queryBuilder.and(
+          queryBuilder.eq(queryBuilder.field("toUserId"), args.userId),
+          queryBuilder.eq(queryBuilder.field("decision"), "like"),
+          queryBuilder.eq(queryBuilder.field("hackathonId"), team.hackathonId),
+        ),
+      )
+      .collect();
+    const undecidedLikes = await Promise.all(
+      inboundLikes.map(async (decision) => {
+        const existingResponse = await findExistingDecision(
+          ctx,
+          args.userId,
+          decision.fromUserId,
+        );
+        const user = await ctx.db.get(decision.fromUserId);
+
+        if (existingResponse) return null;
+        if (!user) return null;
+
+        return {
+          ...user,
+          decisionId: decision._id,
+          hackathonId: decision.hackathonId,
+        } satisfies InterestedUser;
+      }),
+    );
+
+    return undecidedLikes.filter((user) => user !== null);
   },
 });
 
