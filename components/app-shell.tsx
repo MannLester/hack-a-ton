@@ -108,7 +108,10 @@ export function HackatonApp() {
   };
 
   const canUseOrganizerMode = canAccessPersona("organizer", isSignedIn);
-  const canUseStaffMode = canAccessStaffView(isSignedIn, Boolean(demoStaffUserId));
+  const hasStaffAccessSource = process.env.NEXT_PUBLIC_CONVEX_URL
+    ? true
+    : Boolean(demoStaffUserId);
+  const canUseStaffMode = canAccessStaffView(isSignedIn, hasStaffAccessSource);
 
   return (
     <main className="min-h-screen bg-[#f5f3ea] text-zinc-950">
@@ -121,7 +124,7 @@ export function HackatonApp() {
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
         {showAdmin && canUseStaffMode ? (
-          process.env.NEXT_PUBLIC_CONVEX_URL && demoStaffUserId ? (
+          process.env.NEXT_PUBLIC_CONVEX_URL ? (
             <ConvexAdminView
               pendingReviewIds={pendingReviewIds}
               onRemovePendingReview={removePendingReview}
@@ -130,6 +133,7 @@ export function HackatonApp() {
             <AdminView
               pendingReviewIds={pendingReviewIds}
               onRemovePendingReview={removePendingReview}
+              useSampleFallback
             />
           )
         ) : persona === "participant" ? (
@@ -167,6 +171,7 @@ export function HackatonApp() {
               onLikeTeammate={likeTeammate}
               hasTeam={hasTeam}
               onCreateTeam={async () => { setHasTeam(true); }}
+              useSamplePortfolioFallback
             />
           )
         ) : !isAuthLoaded || !canUseOrganizerMode ? (
@@ -180,6 +185,7 @@ export function HackatonApp() {
           <OrganizerView
             activeTab={organizerTab}
             setActiveTab={setOrganizerTab}
+            listings={hackathons}
           />
         )}
       </div>

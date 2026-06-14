@@ -88,11 +88,13 @@ async function upsertUser(
   },
 ) {
   const existingUser = await getUserByClerkId(ctx, args.clerkUserId);
+  const preservedRole: "participant" | "organizer" | "staff" =
+    existingUser?.role === "staff" ? "staff" : args.role;
   const userFields = {
     clerkUserId: args.clerkUserId,
     displayName: args.displayName,
     initials: getResolvedInitials(args.displayName, args.initials),
-    role: args.role,
+    role: preservedRole,
     schoolOrCompany: args.schoolOrCompany,
     location: args.location,
   };
@@ -140,6 +142,20 @@ export const ensureOrganizerAccount = mutation({
 
     await ctx.db.patch(existingOrganizer._id, organizerFields);
     return { userId: ownerUserId, organizerId: existingOrganizer._id };
+  },
+});
+
+export const getStaffAccess = query({
+  args: {
+    clerkUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getExistingUserByClerkId(ctx, args.clerkUserId);
+
+    return {
+      canAccessStaffView: user?.role === "staff",
+      staffUserId: user?.role === "staff" ? user._id : null,
+    };
   },
 });
 

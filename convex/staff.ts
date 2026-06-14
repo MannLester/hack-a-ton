@@ -8,7 +8,17 @@ type PendingReview = Doc<"listingReviews"> & {
   organizer: Doc<"organizers"> | null;
 };
 
-async function requireStaffUser(ctx: MutationCtx, staffUserId: Id<"users">) {
+async function requireMutationStaffUser(ctx: MutationCtx, staffUserId: Id<"users">) {
+  const staffUser = await ctx.db.get(staffUserId);
+
+  if (!staffUser || staffUser.role !== "staff") {
+    throw new Error("Staff access is required.");
+  }
+
+  return staffUser;
+}
+
+async function requireQueryStaffUser(ctx: QueryCtx, staffUserId: Id<"users">) {
   const staffUser = await ctx.db.get(staffUserId);
 
   if (!staffUser || staffUser.role !== "staff") {
@@ -43,8 +53,11 @@ async function getPendingReview(ctx: QueryCtx, review: Doc<"listingReviews">) {
 }
 
 export const listPendingReviews = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    staffUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    await requireQueryStaffUser(ctx, args.staffUserId);
     const pendingReviews = await ctx.db
       .query("listingReviews")
       .withIndex("by_status", (index) => index.eq("status", "pending"))
@@ -62,7 +75,7 @@ export const approveListing = mutation({
     reviewId: v.id("listingReviews"),
   },
   handler: async (ctx, args) => {
-    await requireStaffUser(ctx, args.staffUserId);
+    await requireMutationStaffUser(ctx, args.staffUserId);
     const review = await requirePendingReview(ctx, args.reviewId);
     const now = Date.now();
 
@@ -87,7 +100,7 @@ export const requestListingEdits = mutation({
     note: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireStaffUser(ctx, args.staffUserId);
+    await requireMutationStaffUser(ctx, args.staffUserId);
     const review = await requirePendingReview(ctx, args.reviewId);
     const now = Date.now();
 

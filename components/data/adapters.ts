@@ -44,6 +44,7 @@ export function getUiHackathon(hackathon: ConvexHackathon): UiHackathon {
     summary: hackathon.summary,
     registrationUrl: hackathon.externalRegistrationUrl,
     coverImageUrl: hackathon.coverImageUrl,
+    coverImageStorageId: hackathon.coverImageStorageId,
     updatedAt: hackathon.updatedAt,
     cancellationReason: hackathon.cancellationReason,
     cancelledAt: hackathon.cancelledAt,

@@ -93,6 +93,7 @@ export default defineSchema({
     summary: v.string(),
     externalRegistrationUrl: v.optional(v.string()),
     coverImageUrl: v.optional(v.string()),
+    coverImageStorageId: v.optional(v.id("_storage")),
     publishedAt: v.optional(v.number()),
     updatedAt: v.optional(v.number()),
     cancellationReason: v.optional(v.string()),

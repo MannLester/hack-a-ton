@@ -60,6 +60,7 @@ export function getInitialListingFormValues(
     difficulty: listing.difficulty,
     registrationUrl: listing.registrationUrl ?? "",
     coverImageUrl: listing.coverImageUrl ?? "",
+    coverImageStorageId: listing.coverImageStorageId,
     description: listing.summary,
   };
 }

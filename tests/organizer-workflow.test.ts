@@ -54,6 +54,7 @@ const organizerListing = {
   summary: "A student-friendly AI hackathon.",
   registrationUrl: "https://example.com/register",
   coverImageUrl: "https://example.com/cover.png",
+  coverImageStorageId: "kg2teststorageid" as UiHackathon["coverImageStorageId"],
   reviewNote: "Add clearer judging criteria.",
 } satisfies UiHackathon;
 
@@ -93,6 +94,7 @@ describe("organizer workflow", () => {
     expect(getInitialListingFormValues(organizerListing)).toMatchObject({
       registrationUrl: "https://example.com/register",
       coverImageUrl: "https://example.com/cover.png",
+      coverImageStorageId: "kg2teststorageid",
       description: "A student-friendly AI hackathon.",
     });
   });

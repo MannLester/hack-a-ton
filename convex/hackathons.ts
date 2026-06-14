@@ -77,15 +77,29 @@ async function getListingCounts(ctx: QueryCtx, hackathonId: Id<"hackathons">) {
   };
 }
 
+async function getResolvedCoverImageUrl(
+  ctx: QueryCtx,
+  hackathon: Doc<"hackathons">,
+) {
+  if (!hackathon.coverImageStorageId) return hackathon.coverImageUrl;
+
+  const storedUrl = await ctx.storage.getUrl(hackathon.coverImageStorageId);
+  return storedUrl ?? hackathon.coverImageUrl;
+}
+
 async function addOrganizerAndCounts(
   ctx: QueryCtx,
   hackathon: Doc<"hackathons">,
 ) {
-  const organizer = await ctx.db.get(hackathon.organizerId);
-  const counts = await getListingCounts(ctx, hackathon._id);
+  const [organizer, counts, coverImageUrl] = await Promise.all([
+    ctx.db.get(hackathon.organizerId),
+    getListingCounts(ctx, hackathon._id),
+    getResolvedCoverImageUrl(ctx, hackathon),
+  ]);
 
   return {
     ...hackathon,
+    coverImageUrl,
     ...counts,
     organizerName: organizer?.name ?? "Unknown organizer",
   } satisfies HackathonWithOrganizer;

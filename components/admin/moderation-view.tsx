@@ -8,16 +8,22 @@ export function AdminView({
   pendingHackathons: pendingHackathonsOverride,
   onRequestEdits,
   onApprove,
+  useSampleFallback = false,
+  accessMessage,
 }: {
   pendingReviewIds: string[];
   onRemovePendingReview: (hackathonId: string) => void;
   pendingHackathons?: Hackathon[];
+  useSampleFallback?: boolean;
+  accessMessage?: string;
   onRequestEdits?: (hackathonId: string) => void;
   onApprove?: (hackathonId: string) => void;
 }) {
-  const pendingHackathons =
-    pendingHackathonsOverride ??
-    hackathons.filter((hackathon) => pendingReviewIds.includes(hackathon.id));
+  const samplePendingHackathons = hackathons.filter((hackathon) =>
+    pendingReviewIds.includes(hackathon.id),
+  );
+  const pendingHackathons = pendingHackathonsOverride ??
+    (useSampleFallback ? samplePendingHackathons : []);
   return (
     <div className="space-y-6">
       <SectionTitle
@@ -36,7 +42,7 @@ export function AdminView({
         ))}
       </section>
       {pendingHackathons.length === 0 ? (
-        <EmptyState message="No pending organizer submissions." />
+        <EmptyState message={accessMessage ?? "No pending organizer submissions."} />
       ) : null}
     </div>
   );

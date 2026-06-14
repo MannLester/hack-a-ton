@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Archive, CheckCircle2, ClipboardCheck, Edit3, FileText, Plus, Users } from "lucide-react";
-import { hackathons } from "@/lib/sample-data";
 import type {
   CreateListingFormValues,
   OrganizerTab,
@@ -20,11 +19,13 @@ import {
 export function OrganizerView({
   activeTab,
   setActiveTab,
-  listings = hackathons,
+  listings = [],
   stats,
   insights,
   onSaveDraft,
   onSubmitForReview,
+  onRemoteAutosave,
+  onUploadCoverImage,
   onArchiveListing,
   onCancelListing,
 }: {
@@ -42,10 +43,12 @@ export function OrganizerView({
     lftClickCount: number;
     externalRegistrationClickCount: number;
   };
-  onSaveDraft?: (values: CreateListingFormValues) => Promise<void> | void;
+  onSaveDraft?: (values: CreateListingFormValues) => Promise<CreateListingFormValues["listingId"] | void> | CreateListingFormValues["listingId"] | void;
   onSubmitForReview?: (
     values: CreateListingFormValues,
   ) => Promise<void> | void;
+  onRemoteAutosave?: (values: CreateListingFormValues) => Promise<CreateListingFormValues["listingId"] | void> | CreateListingFormValues["listingId"] | void;
+  onUploadCoverImage?: (file: File) => Promise<{ storageId: NonNullable<CreateListingFormValues["coverImageStorageId"]>; previewUrl: string }>;
   onArchiveListing?: (hackathonId: NonNullable<UiHackathon["convexId"]>) => Promise<void> | void;
   onCancelListing?: (
     hackathonId: NonNullable<UiHackathon["convexId"]>,
@@ -93,6 +96,8 @@ export function OrganizerView({
         onBack={clearEditingListing}
         onSaveDraft={onSaveDraft}
         onSubmitForReview={onSubmitForReview}
+        onRemoteAutosave={onRemoteAutosave}
+        onUploadCoverImage={onUploadCoverImage}
       />
     );
   }
@@ -126,12 +131,12 @@ export function OrganizerView({
       <section className="grid gap-4 lg:grid-cols-4">
         <StatCard
           label="Published"
-          value={stats ? String(stats.published) : "3"}
+          value={stats ? String(stats.published) : "0"}
           icon={CheckCircle2}
         />
         <StatCard
           label="Pending review"
-          value={stats ? String(stats.pendingReview) : "1"}
+          value={stats ? String(stats.pendingReview) : "0"}
           icon={ClipboardCheck}
         />
         <StatCard
@@ -141,7 +146,7 @@ export function OrganizerView({
         />
         <StatCard
           label="Interested participants"
-          value={stats ? String(stats.interestedParticipants) : "705"}
+          value={stats ? String(stats.interestedParticipants) : "0"}
           icon={Users}
         />
       </section>
@@ -185,6 +190,14 @@ export function OrganizerView({
         </section>
       ) : null}
       <section className="rounded-lg border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#111]">
+        {listings.length === 0 ? (
+          <div className="p-6">
+            <p className="font-black text-zinc-950">No organizer listings yet</p>
+            <p className="mt-1 text-sm font-bold leading-6 text-zinc-500">
+              Create your first listing to start collecting participant interest.
+            </p>
+          </div>
+        ) : null}
         {listings.map((item) => (
           <div
             key={item.id}

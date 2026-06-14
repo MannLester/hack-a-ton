@@ -37,12 +37,14 @@ export function PortfolioView({
   onSaveEntry,
   onDeleteEntry,
   onBack,
+  useSampleFallback = false,
 }: {
   profile?: PortfolioProfile;
   onSaveBio?: (bio: string) => Promise<void>;
   onSaveEntry?: (values: PortfolioEntryFormValues) => Promise<void>;
   onDeleteEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
   onBack: () => void;
+  useSampleFallback?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -50,12 +52,27 @@ export function PortfolioView({
   const [formValues, setFormValues] = useState(emptyEntryForm);
   const [bioValue, setBioValue] = useState(profile?.bio ?? "");
   const [statusMessage, setStatusMessage] = useState("");
-  const displayBadges = profile?.badges ?? badges;
-  const displayStats = profile?.stats ?? portfolioStats;
-  const displayEntries = profile?.entries ?? getFallbackEntries();
-  const displayBio =
-    profile?.bio ??
-    "Builds civic tech prototypes, dashboards, and product demos. Looking for practical hackathons with real community use.";
+  const displayBadges = profile?.badges ?? (useSampleFallback ? badges : []);
+  const displayStats = profile?.stats ??
+    (useSampleFallback
+      ? portfolioStats
+      : [
+          { label: "Participations", value: "0" },
+          { label: "Finals", value: "0" },
+          { label: "Wins", value: "0" },
+          { label: "Verified", value: "0" },
+        ]);
+  const displayEntries = profile?.entries ??
+    (useSampleFallback ? getFallbackEntries() : []);
+  const displayBio = profile?.bio ??
+    (useSampleFallback
+      ? "Builds civic tech prototypes, dashboards, and product demos. Looking for practical hackathons with real community use."
+      : "No bio yet.");
+  const displayInitials = profile?.initials ?? (useSampleFallback ? "JR" : "HA");
+  const displayName = profile?.displayName ??
+    (useSampleFallback ? "Juan Ramos" : "Hack-A-Ton Builder");
+  const displayMeta = profile?.meta ??
+    (useSampleFallback ? "Student builder · Manila" : "No profile details yet.");
 
   useEffect(() => {
     if (isEditingBio) return;
@@ -221,14 +238,14 @@ export function PortfolioView({
         <FeaturePanel className="p-5">
           <div className="flex items-center gap-4">
             <div className="grid size-16 place-items-center rounded-lg bg-zinc-950 text-xl font-black text-white">
-              {profile?.initials ?? "JR"}
+              {displayInitials}
             </div>
             <div>
               <h3 className="text-lg font-black">
-                {profile?.displayName ?? "Juan Ramos"}
+                {displayName}
               </h3>
               <p className="text-sm font-bold text-zinc-500">
-                {profile?.meta ?? "Student builder · Manila"}
+                {displayMeta}
               </p>
             </div>
           </div>
@@ -285,16 +302,18 @@ export function PortfolioView({
               </div>
             )}
           </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {displayBadges.map((badge) => (
-              <span
-                key={badge}
-                className="rounded-md bg-[#ffd21f]/25 px-2 py-1 text-xs font-black text-[#7a5700]"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
+          {displayBadges.length > 0 ? (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {displayBadges.map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-md bg-[#ffd21f]/25 px-2 py-1 text-xs font-black text-[#7a5700]"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </FeaturePanel>
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-4">
@@ -310,6 +329,11 @@ export function PortfolioView({
           <PanelCard>
             <h3 className="text-lg font-black">Recent participation</h3>
             <div className="mt-4 space-y-4">
+              {displayEntries.length === 0 ? (
+                <p className="rounded-md border-2 border-zinc-100 bg-zinc-50 p-4 text-sm font-bold text-zinc-500">
+                  No hackathon participation entries yet. Add your first entry to start building your portfolio.
+                </p>
+              ) : null}
               {displayEntries.slice(0, 6).map((item, index) => (
                 <div
                   key={`${item.hackathonName}-${item.result}-${index}`}

@@ -32,6 +32,7 @@ const listingFields = {
   summary: v.string(),
   externalRegistrationUrl: v.optional(v.string()),
   coverImageUrl: v.optional(v.string()),
+  coverImageStorageId: v.optional(v.id("_storage")),
 };
 
 function getOrganizerStats(hackathons: Doc<"hackathons">[]) {
@@ -122,6 +123,16 @@ async function getListingInsights(
 
 
 
+async function getResolvedCoverImageUrl(
+  ctx: QueryCtx,
+  hackathon: Doc<"hackathons">,
+) {
+  if (!hackathon.coverImageStorageId) return hackathon.coverImageUrl;
+
+  const storedUrl = await ctx.storage.getUrl(hackathon.coverImageStorageId);
+  return storedUrl ?? hackathon.coverImageUrl;
+}
+
 async function getLatestListingReviewNote(
   ctx: QueryCtx,
   hackathonId: Id<"hackathons">,
@@ -155,6 +166,7 @@ export const getDashboard = query({
     const listingsWithReviewNotes = await Promise.all(
       hackathons.map(async (hackathon) => ({
         ...hackathon,
+        coverImageUrl: await getResolvedCoverImageUrl(ctx, hackathon),
         reviewNote: await getLatestListingReviewNote(ctx, hackathon._id),
       })),
     );
@@ -187,6 +199,7 @@ export const createDraftListing = mutation({
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
       coverImageUrl: args.coverImageUrl,
+      coverImageStorageId: args.coverImageStorageId,
       status: "draft",
       updatedAt: Date.now(),
     });
@@ -231,6 +244,7 @@ export const updateDraftListing = mutation({
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
       coverImageUrl: args.coverImageUrl,
+      coverImageStorageId: args.coverImageStorageId,
       updatedAt: Date.now(),
     });
 

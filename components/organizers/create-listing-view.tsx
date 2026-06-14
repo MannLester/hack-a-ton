@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -45,8 +45,10 @@ const statusMessages: Record<CreateListingStatus, string> = {
 type CreateListingViewProps = {
   initialValues?: CreateListingFormValues;
   onBack: () => void;
-  onSaveDraft?: (values: CreateListingFormValues) => Promise<void> | void;
+  onSaveDraft?: (values: CreateListingFormValues) => Promise<CreateListingFormValues["listingId"] | void> | CreateListingFormValues["listingId"] | void;
   onSubmitForReview?: (values: CreateListingFormValues) => Promise<void> | void;
+  onRemoteAutosave?: (values: CreateListingFormValues) => Promise<CreateListingFormValues["listingId"] | void> | CreateListingFormValues["listingId"] | void;
+  onUploadCoverImage?: (file: File) => Promise<{ storageId: NonNullable<CreateListingFormValues["coverImageStorageId"]>; previewUrl: string }>;
 };
 
 function getEligibilityText(selectedEligibility: string[], eligibilityText: string) {
@@ -72,9 +74,14 @@ export function CreateListingView({
   onBack,
   onSaveDraft,
   onSubmitForReview,
+  onRemoteAutosave,
+  onUploadCoverImage,
 }: CreateListingViewProps) {
   const [status, setStatus] = useState<CreateListingStatus>("idle");
   const [currentStep, setCurrentStep] = useState(1);
+  const [persistedListingId, setPersistedListingId] = useState(initialValues?.listingId);
+  const [remoteAutosaveLabel, setRemoteAutosaveLabel] = useState<string | null>(null);
+  const [coverUploadStatus, setCoverUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "failed">("idle");
 
   const [listingName, setListingName] = useState(initialValues?.listingName ?? "");
   const [organizerName, setOrganizerName] = useState(initialValues?.organizerName ?? "");
@@ -94,6 +101,7 @@ export function CreateListingView({
   >(initialValues?.difficulty ?? "");
   const [registrationUrl, setRegistrationUrl] = useState(initialValues?.registrationUrl ?? "");
   const [coverImageUrl, setCoverImageUrl] = useState(initialValues?.coverImageUrl ?? "");
+  const [coverImageStorageId, setCoverImageStorageId] = useState(initialValues?.coverImageStorageId);
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [teamSizeMin, setTeamSizeMin] = useState(initialValues?.teamSize.split("-")[0] ?? "");
   const [teamSizeMax, setTeamSizeMax] = useState(initialValues?.teamSize.split("-")[1] ?? "");
@@ -177,13 +185,14 @@ export function CreateListingView({
       difficulty: difficulty || "Open",
       registrationUrl,
       coverImageUrl,
+      coverImageStorageId,
       description,
     };
   }
 
   const getPersistableValues = (): CreateListingFormValues => ({
     ...getFormValues(),
-    listingId: initialValues?.listingId,
+    listingId: persistedListingId,
   });
 
   const restoreAutosavedValues = useCallback((values: CreateListingFormValues) => {
@@ -200,6 +209,7 @@ export function CreateListingView({
     setDifficulty(values.difficulty);
     setRegistrationUrl(values.registrationUrl);
     setCoverImageUrl(values.coverImageUrl);
+    setCoverImageStorageId(values.coverImageStorageId);
     setDescription(values.description);
     setTeamSizeMin(values.teamSize.split("-")[0] ?? "");
     setTeamSizeMax(values.teamSize.split("-")[1] ?? "");
@@ -212,12 +222,102 @@ export function CreateListingView({
   }, []);
 
   const { autosaveLabel, clearAutosave } = useListingAutosave({
-    listingId: initialValues?.listingId,
+    listingId: persistedListingId,
     values: getPersistableValues(),
     onRestore: restoreAutosavedValues,
   });
 
   const canPersistListing = () => canSubmitOrganizerListing(getFormValues());
+
+  const savePersistedListingId = (listingId: CreateListingFormValues["listingId"] | void) => {
+    if (!listingId) return;
+
+    setPersistedListingId(listingId);
+  };
+
+
+  useEffect(() => {
+    if (!onRemoteAutosave) return;
+    if (isSubmitted || isBusy || isActiveListingEdit) return;
+
+    const values: CreateListingFormValues = {
+      listingId: persistedListingId,
+      listingName,
+      organizerName,
+      dateLabel,
+      registrationDeadlineLabel,
+      setup: setup || "Hybrid",
+      location,
+      region: region || "Philippines-wide",
+      eligibilityText: getEligibilityText(selectedEligibility, eligibilityText),
+      teamSize,
+      prize,
+      difficulty: difficulty || "Open",
+      registrationUrl,
+      coverImageUrl,
+      coverImageStorageId,
+      description,
+    };
+
+    if (!canSaveOrganizerDraft(values)) return;
+
+    const timeoutId = window.setTimeout(() => {
+      Promise.resolve(onRemoteAutosave(values))
+        .then((listingId) => {
+          savePersistedListingId(listingId);
+          setRemoteAutosaveLabel(
+            new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          );
+        })
+        .catch(() => setRemoteAutosaveLabel(null));
+    }, 2500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    coverImageStorageId,
+    coverImageUrl,
+    dateLabel,
+    description,
+    difficulty,
+    eligibilityText,
+    isActiveListingEdit,
+    isBusy,
+    isSubmitted,
+    listingName,
+    location,
+    onRemoteAutosave,
+    organizerName,
+    persistedListingId,
+    prize,
+    region,
+    registrationDeadlineLabel,
+    registrationUrl,
+    selectedEligibility,
+    setup,
+    teamSize,
+  ]);
+
+  const updateCoverImageUrl = (url: string) => {
+    setCoverImageStorageId(undefined);
+    setCoverUploadStatus("idle");
+    setCoverImageUrl(url);
+  };
+
+  const uploadCoverImage = (file: File) => {
+    if (!onUploadCoverImage) return;
+
+    setCoverUploadStatus("uploading");
+    Promise.resolve(onUploadCoverImage(file))
+      .then(({ storageId, previewUrl }) => {
+        setCoverImageStorageId(storageId);
+        setCoverImageUrl(previewUrl);
+        setCoverUploadStatus("uploaded");
+      })
+      .catch(() => setCoverUploadStatus("failed"));
+  };
 
   const goNext = () => {
     if (!isStepValid(currentStep)) {
@@ -245,7 +345,8 @@ export function CreateListingView({
 
     setStatus("saving");
     Promise.resolve(onSaveDraft?.(values))
-      .then(() => {
+      .then((listingId) => {
+        savePersistedListingId(listingId);
         clearAutosave();
         setStatus("draft-saved");
       })
@@ -338,7 +439,9 @@ export function CreateListingView({
               registrationUrl={registrationUrl}
               setRegistrationUrl={setRegistrationUrl}
               coverImageUrl={coverImageUrl}
-              setCoverImageUrl={setCoverImageUrl}
+              setCoverImageUrl={updateCoverImageUrl}
+              onUploadCoverImage={uploadCoverImage}
+              coverUploadStatus={coverUploadStatus}
             />
           )}
           {currentStep === 4 && (
@@ -370,7 +473,7 @@ export function CreateListingView({
 
         {autosaveLabel ? (
           <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
-            {autosaveLabel}
+            {remoteAutosaveLabel ? `Remote autosaved ${remoteAutosaveLabel}` : autosaveLabel}
           </p>
         ) : null}
 
@@ -668,6 +771,8 @@ function StepDetails({
   setRegistrationUrl,
   coverImageUrl,
   setCoverImageUrl,
+  onUploadCoverImage,
+  coverUploadStatus,
 }: {
   difficulty: string;
   setDifficulty: (v: "Beginner" | "Intermediate" | "Open") => void;
@@ -682,6 +787,8 @@ function StepDetails({
   setRegistrationUrl: (v: string) => void;
   coverImageUrl: string;
   setCoverImageUrl: (v: string) => void;
+  onUploadCoverImage: (file: File) => void;
+  coverUploadStatus: "idle" | "uploading" | "uploaded" | "failed";
 }) {
   const numberOptions = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const maxOptions = numberOptions.filter(
@@ -777,12 +884,37 @@ function StepDetails({
             placeholder="https://..."
             label="External registration URL (optional)"
           />
-          <Input
-            value={coverImageUrl}
-            onChange={setCoverImageUrl}
-            placeholder="https://..."
-            label="Cover or logo image URL (optional)"
-          />
+          <div>
+            <label className="mb-1.5 block text-xs font-black text-zinc-700">
+              Cover or logo image
+            </label>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+
+                onUploadCoverImage(file);
+              }}
+              className="block h-11 w-full rounded-md border-2 border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-950 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white focus:border-[#00a7e8] focus:outline-none"
+            />
+            <input
+              value={coverImageUrl}
+              onChange={(event) => setCoverImageUrl(event.target.value)}
+              placeholder="Or paste an image URL"
+              className="mt-2 h-10 w-full rounded-md border-2 border-zinc-200 px-3 text-xs font-bold focus:border-[#00a7e8] focus:outline-none"
+            />
+            {coverUploadStatus !== "idle" ? (
+              <p className="mt-1.5 text-xs font-black text-zinc-500">
+                {coverUploadStatus === "uploading"
+                  ? "Uploading cover image..."
+                  : coverUploadStatus === "uploaded"
+                    ? "Cover image uploaded."
+                    : "Cover image upload failed."}
+              </p>
+            ) : null}
+          </div>
         </div>
         {coverImageUrl.trim() ? (
           <div

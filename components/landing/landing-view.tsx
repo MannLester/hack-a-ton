@@ -44,6 +44,7 @@ export function LandingView({
   onLikeTeam,
   interestedUsers,
   onRespondToInterestedUser,
+  useSamplePortfolioFallback = false,
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
@@ -86,6 +87,7 @@ export function LandingView({
     hackathonId: TeamInterestedUser["hackathonId"],
     decision: "like" | "pass",
   ) => Promise<void>;
+  useSamplePortfolioFallback?: boolean;
 }) {
   const [initialTeamPhase, setInitialTeamPhase] = useState<
     "solo_swiping" | "creating_card" | "team_recruiting" | "onboarding_hackathon" | "onboarding_role"
@@ -120,6 +122,7 @@ export function LandingView({
         onSaveEntry={onSavePortfolioEntry}
         onDeleteEntry={onDeletePortfolioEntry}
         onBack={() => setActiveTab("explore")}
+        useSampleFallback={useSamplePortfolioFallback}
       />
     );
   }

@@ -18,7 +18,6 @@ import {
 } from "@/components/data/adapters";
 import { setup as setupOptions } from "@/components/shared/config";
 import {
-  demoStaffUserId,
   type CreateListingFormValues,
   type OrganizerTab,
   type ParticipantTab,
@@ -35,6 +34,11 @@ import { AdminView } from "@/components/admin/moderation-view";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { LandingView } from "@/components/landing/landing-view";
 import type { TeamLooking } from "@/lib/sample-data";
+import {
+  getListingDataSourceItems,
+  getOptionalRealtimeItems,
+  getOrganizerListingDataSourceItems,
+} from "@/lib/listing-data-source";
 
 type ClerkIdentity = {
   clerkUserId: string;
@@ -95,6 +99,7 @@ function getListingMutationInput(values: CreateListingFormValues) {
     summary: values.description.trim(),
     externalRegistrationUrl: values.registrationUrl.trim(),
     coverImageUrl: values.coverImageUrl.trim(),
+    coverImageStorageId: values.coverImageStorageId,
   };
 }
 
@@ -117,6 +122,9 @@ export function ConvexOrganizerView({
   );
   const archiveListing = useMutation(api.organizers.archiveListing);
   const cancelListing = useMutation(api.organizers.cancelListing);
+  const generateCoverImageUploadUrl = useMutation(
+    api.files.generateCoverImageUploadUrl,
+  );
   const dashboard = useQuery(
     api.organizers.getDashboard,
     organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
@@ -153,15 +161,16 @@ export function ConvexOrganizerView({
   const activeDashboardListings = dashboard?.hackathons.filter(
     (hackathon) => hackathon.status !== "archived",
   );
-  const listings =
-    activeDashboardListings && activeDashboardListings.length > 0
-      ? activeDashboardListings.map((hackathon) =>
-          getUiOrganizerHackathon(
-            hackathon,
-            interestedByHackathonName.get(hackathon.name) ?? 0,
-          ),
-        )
-      : undefined;
+  const listings = getOrganizerListingDataSourceItems({
+    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
+    dashboardItems: activeDashboardListings?.map((hackathon) =>
+      getUiOrganizerHackathon(
+        hackathon,
+        interestedByHackathonName.get(hackathon.name) ?? 0,
+      ),
+    ),
+    fallbackItems: [],
+  });
   const stats = dashboard
     ? {
         published: dashboard.stats.published,
@@ -193,10 +202,10 @@ export function ConvexOrganizerView({
         hackathonId: values.listingId,
         ...listingInput,
       });
-      return;
+      return values.listingId;
     }
 
-    await createDraftListing({
+    return createDraftListing({
       organizerId,
       ...listingInput,
     });
@@ -237,6 +246,25 @@ export function ConvexOrganizerView({
     });
   };
 
+  const uploadCoverImage = async (file: File) => {
+    const uploadUrl = await generateCoverImageUploadUrl({});
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Cover image upload failed.");
+    }
+
+    const { storageId } = await uploadResponse.json();
+    return {
+      storageId: storageId as Id<"_storage">,
+      previewUrl: URL.createObjectURL(file),
+    };
+  };
+
   const cancelOrganizerListing = async (
     hackathonId: Id<"hackathons">,
     reason: string,
@@ -261,6 +289,8 @@ export function ConvexOrganizerView({
       insights={insights?.totals}
       onSaveDraft={saveDraft}
       onSubmitForReview={submitForReview}
+      onRemoteAutosave={saveDraft}
+      onUploadCoverImage={uploadCoverImage}
       onArchiveListing={archiveOrganizerListing}
       onCancelListing={cancelOrganizerListing}
     />
@@ -274,9 +304,15 @@ export function ConvexAdminView({
   pendingReviewIds: string[];
   onRemovePendingReview: (hackathonId: string) => void;
 }) {
-  const pendingReviews = useQuery(api.staff.listPendingReviews, {}) as
-    | PendingReview[]
-    | undefined;
+  const user = useOptionalClerkUser();
+  const staffAccess = useQuery(
+    api.users.getStaffAccess,
+    user?.id ? { clerkUserId: user.id } : "skip",
+  );
+  const pendingReviews = useQuery(
+    api.staff.listPendingReviews,
+    staffAccess?.staffUserId ? { staffUserId: staffAccess.staffUserId } : "skip",
+  ) as PendingReview[] | undefined;
   const approveListing = useMutation(api.staff.approveListing);
   const requestListingEdits = useMutation(api.staff.requestListingEdits);
   const pendingHackathons = pendingReviews
@@ -286,26 +322,38 @@ export function ConvexAdminView({
 
   const approveReview = async (reviewId: string) => {
     onRemovePendingReview(reviewId);
+    const staffUserId = staffAccess?.staffUserId;
 
-    if (!demoStaffUserId) return;
+    if (!staffUserId) return;
 
     await approveListing({
-      staffUserId: demoStaffUserId,
+      staffUserId: staffUserId,
       reviewId: reviewId as Id<"listingReviews">,
     });
   };
 
   const requestEdits = async (reviewId: string) => {
     onRemovePendingReview(reviewId);
+    const staffUserId = staffAccess?.staffUserId;
 
-    if (!demoStaffUserId) return;
+    if (!staffUserId) return;
 
     await requestListingEdits({
-      staffUserId: demoStaffUserId,
+      staffUserId: staffUserId,
       reviewId: reviewId as Id<"listingReviews">,
       note: "Needs edits from staff review.",
     });
   };
+
+  if (staffAccess && !staffAccess.canAccessStaffView) {
+    return (
+      <AdminView
+        pendingReviewIds={[]}
+        onRemovePendingReview={onRemovePendingReview}
+        accessMessage="Staff access is required for moderation."
+      />
+    );
+  }
 
   return (
     <AdminView
@@ -418,10 +466,11 @@ export function ConvexParticipantView({
   const deleteSelfReportedEntry = useMutation(
     api.portfolio.deleteSelfReportedEntry,
   );
-  const displayedHackathons =
-    convexHackathons && convexHackathons.length > 0
-      ? convexHackathons.map(getUiHackathon)
-      : fallbackHackathons;
+  const displayedHackathons = getListingDataSourceItems({
+    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
+    convexItems: convexHackathons?.map(getUiHackathon),
+    fallbackItems: fallbackHackathons,
+  });
   const displayedTeammates =
     convexTeammates && convexTeammates.length > 0
       ? convexTeammates
@@ -430,10 +479,11 @@ export function ConvexParticipantView({
             (teammate) => !hiddenConvexTeammateNames.includes(teammate.name),
           )
       : visibleTeammates;
-  const displayedTeamListings =
-    convexTeamListings && convexTeamListings.length > 0
-      ? convexTeamListings.map(getUiTeamLooking)
-      : undefined;
+  const displayedTeamListings = getOptionalRealtimeItems({
+    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
+    realtimeItems: convexTeamListings?.map(getUiTeamLooking),
+    fallbackItems: [],
+  });
   const displayedInterestedUsers =
     interestedUsersForMyTeam?.map(getUiTeamInterestedUser) ?? [];
   const displayedPortfolioProfile = convexPortfolioProfile
@@ -441,7 +491,7 @@ export function ConvexParticipantView({
     : undefined;
   const displayedFeaturedHackathon = featuredHackathon
     ? getUiHackathon(featuredHackathon)
-    : (fallbackHackathons[0] ?? null);
+    : (displayedHackathons[0] ?? null);
 
   const toggleSavedHackathon = async (hackathonId: string) => {
     const isSaved = savedHackathonIds.includes(hackathonId);

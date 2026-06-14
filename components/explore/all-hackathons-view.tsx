@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useQuery } from "convex/react";
 import { ArrowLeft, Filter, Search } from "lucide-react";
+import { api } from "@/convex/_generated/api";
+import { getUiHackathon } from "@/components/data/adapters";
 import { hackathons } from "@/lib/sample-data";
+import { getListingDataSourceItems } from "@/lib/listing-data-source";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { AppNavigation } from "@/components/shared/app-navigation";
 import { setup, statuses, difficulties, locations } from "@/components/shared/config";
-import type { Persona } from "@/components/shared/types";
+import type { Persona, UiHackathon } from "@/components/shared/types";
 
 function FilterChips<T extends string>({
   label,
@@ -45,7 +49,50 @@ function FilterChips<T extends string>({
   );
 }
 
-export function AllHackathonsView() {
+function filterHackathons({
+  hackathonsToFilter,
+  query,
+  setupFilter,
+  statusFilter,
+  difficultyFilter,
+  locationFilter,
+}: {
+  hackathonsToFilter: UiHackathon[];
+  query: string;
+  setupFilter: (typeof setup)[number];
+  statusFilter: (typeof statuses)[number];
+  difficultyFilter: (typeof difficulties)[number];
+  locationFilter: (typeof locations)[number];
+}) {
+  return hackathonsToFilter.filter((hackathon) => {
+    const matchesQuery = [
+      hackathon.name,
+      hackathon.organizer,
+      hackathon.location,
+      hackathon.summary,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query.toLowerCase());
+    const matchesSetup = setupFilter === "All" || hackathon.setup === setupFilter;
+    const matchesStatus = statusFilter === "All" || hackathon.status === statusFilter;
+    const matchesDifficulty = difficultyFilter === "All" || hackathon.difficulty === difficultyFilter;
+    const matchesLocation =
+      locationFilter === "All" ||
+      hackathon.region === locationFilter ||
+      hackathon.region === "Philippines-wide";
+
+    return matchesQuery && matchesSetup && matchesStatus && matchesDifficulty && matchesLocation;
+  });
+}
+
+function ExploreContent({
+  sourceHackathons,
+  isLoading,
+}: {
+  sourceHackathons: UiHackathon[];
+  isLoading: boolean;
+}) {
   const [persona, setPersona] = useState<Persona>("participant");
   const [query, setQuery] = useState("");
   const [setupFilter, setSetupFilter] = useState<(typeof setup)[number]>("All");
@@ -56,24 +103,15 @@ export function AllHackathonsView() {
 
   const filteredHackathons = useMemo(
     () =>
-      hackathons.filter((hackathon) => {
-        const matchesQuery = [
-          hackathon.name,
-          hackathon.organizer,
-          hackathon.location,
-          hackathon.summary,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        const matchesSetup = setupFilter === "All" || hackathon.setup === setupFilter;
-        const matchesStatus = statusFilter === "All" || hackathon.status === statusFilter;
-        const matchesDifficulty = difficultyFilter === "All" || hackathon.difficulty === difficultyFilter;
-        const matchesLocation = locationFilter === "All" || hackathon.region === locationFilter || hackathon.region === "Philippines-wide";
-
-        return matchesQuery && matchesSetup && matchesStatus && matchesDifficulty && matchesLocation;
+      filterHackathons({
+        hackathonsToFilter: sourceHackathons,
+        query,
+        setupFilter,
+        statusFilter,
+        difficultyFilter,
+        locationFilter,
       }),
-    [query, setupFilter, statusFilter, difficultyFilter, locationFilter],
+    [query, setupFilter, statusFilter, difficultyFilter, locationFilter, sourceHackathons],
   );
 
   return (
@@ -125,34 +163,14 @@ export function AllHackathonsView() {
                 <Filter className="size-4" />
               </button>
             </div>
-            {showFilters && (
+            {showFilters ? (
               <div className="mt-3 space-y-1.5 border-t-2 border-zinc-100 pt-3 sm:mt-4 sm:space-y-2 sm:pt-4">
-                <FilterChips
-                  label="Setup"
-                  options={setup}
-                  selected={setupFilter}
-                  onSelect={setSetupFilter}
-                />
-                <FilterChips
-                  label="Status"
-                  options={statuses}
-                  selected={statusFilter}
-                  onSelect={setStatusFilter}
-                />
-                <FilterChips
-                  label="Difficulty"
-                  options={difficulties}
-                  selected={difficultyFilter}
-                  onSelect={setDifficultyFilter}
-                />
-                <FilterChips
-                  label="Location"
-                  options={locations}
-                  selected={locationFilter}
-                  onSelect={setLocationFilter}
-                />
+                <FilterChips label="Setup" options={setup} selected={setupFilter} onSelect={setSetupFilter} />
+                <FilterChips label="Status" options={statuses} selected={statusFilter} onSelect={setStatusFilter} />
+                <FilterChips label="Difficulty" options={difficulties} selected={difficultyFilter} onSelect={setDifficultyFilter} />
+                <FilterChips label="Location" options={locations} selected={locationFilter} onSelect={setLocationFilter} />
               </div>
-            )}
+            ) : null}
           </section>
 
           <section className="grid gap-3 sm:grid-cols-2 sm:gap-4">
@@ -160,8 +178,38 @@ export function AllHackathonsView() {
               <HackathonCard key={hackathon.id} hackathon={hackathon} />
             ))}
           </section>
+          {!isLoading && filteredHackathons.length === 0 ? (
+            <section className="rounded-lg border-2 border-zinc-950 bg-white p-6 shadow-[5px_5px_0_#111]">
+              <p className="font-black text-zinc-950">No hackathons found</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-zinc-500">
+                Try adjusting the filters or check again when organizers publish new listings.
+              </p>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>
   );
+}
+
+function ConvexAllHackathonsView() {
+  const convexHackathons = useQuery(api.hackathons.listPublished, {});
+  const sourceHackathons = getListingDataSourceItems({
+    isConvexEnabled: true,
+    convexItems: convexHackathons?.map(getUiHackathon),
+    fallbackItems: hackathons,
+  });
+
+  return (
+    <ExploreContent
+      sourceHackathons={sourceHackathons}
+      isLoading={convexHackathons === undefined}
+    />
+  );
+}
+
+export function AllHackathonsView() {
+  if (process.env.NEXT_PUBLIC_CONVEX_URL) return <ConvexAllHackathonsView />;
+
+  return <ExploreContent sourceHackathons={hackathons} isLoading={false} />;
 }

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as files from "../files.js";
 import type * as hackathons from "../hackathons.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as organizers from "../organizers.js";
@@ -24,6 +25,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  files: typeof files;
   hackathons: typeof hackathons;
   leaderboards: typeof leaderboards;
   organizers: typeof organizers;

@@ -19,6 +19,7 @@ export type UiHackathon = Hackathon & {
   savedCount?: number;
   registrationUrl?: string;
   coverImageUrl?: string;
+  coverImageStorageId?: Id<"_storage">;
   reviewNote?: string;
   updatedAt?: number;
   cancellationReason?: string;
@@ -113,6 +114,7 @@ export type CreateListingFormValues = {
   difficulty: "Beginner" | "Intermediate" | "Open";
   registrationUrl: string;
   coverImageUrl: string;
+  coverImageStorageId?: Id<"_storage">;
   description: string;
 };
 
