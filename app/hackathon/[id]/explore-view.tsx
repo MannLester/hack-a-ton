@@ -1,18 +1,60 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Award,
   ArrowLeft,
   CalendarDays,
   Clock,
+  Filter,
   MapPin,
+  Search,
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
 import { getListingUpdateLabel } from "@/lib/organizer-workflow";
+import { setup, statuses, difficulties, locations } from "@/components/shared/config";
 import type { HackathonTeam } from "@/components/shared/types";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 import { DetailPageNav } from "@/components/shared/detail-page-nav";
+
+function FilterChips<T extends string>({
+  label,
+  options,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  readonly options: readonly T[];
+  selected: T;
+  onSelect: (value: T) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-black uppercase tracking-wider text-zinc-500">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onSelect(option)}
+            className={`rounded-full border-2 px-3 py-1 text-xs font-black transition-all ${
+              selected === option
+                ? "border-zinc-950 bg-zinc-950 text-white"
+                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-950"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function ExploreView({
   id,
@@ -25,6 +67,29 @@ export function ExploreView({
   allHackathons: Hackathon[];
   teams?: HackathonTeam[];
 }) {
+  const [query, setQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [setupFilter, setSetupFilter] = useState<(typeof setup)[number]>("All");
+  const [statusFilter, setStatusFilter] = useState<(typeof statuses)[number]>("All");
+  const [difficultyFilter, setDifficultyFilter] = useState<(typeof difficulties)[number]>("All");
+  const [locationFilter, setLocationFilter] = useState<(typeof locations)[number]>("All");
+
+  const filteredHackathons = useMemo(
+    () =>
+      allHackathons.filter((h) => {
+        const matchesQuery = [h.name, h.organizer, h.location, h.summary]
+          .join(" ")
+          .toLowerCase()
+          .includes(query.toLowerCase());
+        const matchesSetup = setupFilter === "All" || h.setup === setupFilter;
+        const matchesStatus = statusFilter === "All" || h.status === statusFilter;
+        const matchesDifficulty = difficultyFilter === "All" || h.difficulty === difficultyFilter;
+        const matchesLocation = locationFilter === "All" || h.region === locationFilter || h.region === "Philippines-wide";
+        return matchesQuery && matchesSetup && matchesStatus && matchesDifficulty && matchesLocation;
+      }),
+    [allHackathons, query, setupFilter, statusFilter, difficultyFilter, locationFilter],
+  );
+
   const updateLabel = getListingUpdateLabel({
     updatedAt: hackathon.updatedAt,
     now: Date.now(),
@@ -53,13 +118,44 @@ export function ExploreView({
             </div>
           </div>
 
+          <section className="rounded-lg border-2 border-zinc-950 bg-white p-4 shadow-[5px_5px_0_#111]">
+            <div className="flex gap-3">
+              <label className="relative block flex-1">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search by name, organizer, location, or eligibility"
+                  className="h-11 w-full rounded-md border-2 border-zinc-200 bg-white pl-10 pr-3 text-sm font-medium outline-none focus:border-[#00a7e8]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`inline-flex size-11 shrink-0 items-center justify-center rounded-md border-2 border-zinc-950 shadow-[3px_3px_0_#111] transition-all hover:shadow-[1px_1px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] ${
+                  showFilters ? "bg-zinc-950 text-white" : "bg-white"
+                }`}
+              >
+                <Filter className="size-4" />
+              </button>
+            </div>
+            {showFilters && (
+              <div className="mt-4 space-y-3 border-t-2 border-zinc-100 pt-4">
+                <FilterChips label="Setup" options={setup} selected={setupFilter} onSelect={setSetupFilter} />
+                <FilterChips label="Status" options={statuses} selected={statusFilter} onSelect={setStatusFilter} />
+                <FilterChips label="Difficulty" options={difficulties} selected={difficultyFilter} onSelect={setDifficultyFilter} />
+                <FilterChips label="Location" options={locations} selected={locationFilter} onSelect={setLocationFilter} />
+              </div>
+            )}
+          </section>
+
           <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
             <aside className="order-2 lg:order-1 lg:sticky lg:top-6 lg:self-start">
               <h2 className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
                 All Hackathons
               </h2>
               <div className="space-y-2">
-                {allHackathons.map((h) => {
+                {filteredHackathons.map((h) => {
                   const isSelected = h.id === id;
                   return (
                     <Link
