@@ -17,6 +17,13 @@ export type ConvexHackathon = Doc<"hackathons"> & {
 export type UiHackathon = Hackathon & {
   convexId?: Id<"hackathons">;
   savedCount?: number;
+  registrationUrl?: string;
+  coverImageUrl?: string;
+  reviewNote?: string;
+  updatedAt?: number;
+  cancellationReason?: string;
+  cancelledAt?: number;
+  cancellationVisibleUntil?: number;
 };
 export type ConvexLftProfile = Doc<"lftProfiles"> & {
   displayName: string;
@@ -92,6 +99,7 @@ export type CreateListingStatus =
 
 export type CreateListingFormValues = {
   listingId?: Id<"hackathons">;
+  listingStatus?: UiHackathon["status"];
   listingName: string;
   organizerName: string;
   dateLabel: string;
@@ -104,6 +112,7 @@ export type CreateListingFormValues = {
   prize: string;
   difficulty: "Beginner" | "Intermediate" | "Open";
   registrationUrl: string;
+  coverImageUrl: string;
   description: string;
 };
 

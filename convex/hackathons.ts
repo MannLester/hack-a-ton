@@ -109,6 +109,33 @@ function filterListings(
   });
 }
 
+function isParticipantVisibleListing(hackathon: Doc<"hackathons">, now: number) {
+  if (hackathon.status === "published") return true;
+
+  if (hackathon.status !== "cancelled") return false;
+  if (!hackathon.cancellationVisibleUntil) return false;
+
+  return now <= hackathon.cancellationVisibleUntil;
+}
+
+async function getParticipantVisibleHackathons(ctx: QueryCtx) {
+  const [publishedHackathons, cancelledHackathons] = await Promise.all([
+    ctx.db
+      .query("hackathons")
+      .withIndex("by_status", (index) => index.eq("status", "published"))
+      .collect(),
+    ctx.db
+      .query("hackathons")
+      .withIndex("by_status", (index) => index.eq("status", "cancelled"))
+      .collect(),
+  ]);
+  const now = Date.now();
+
+  return [...publishedHackathons, ...cancelledHackathons].filter((hackathon) =>
+    isParticipantVisibleListing(hackathon, now),
+  );
+}
+
 export const listPublished = query({
   args: {
     queryText: v.optional(v.string()),
@@ -123,12 +150,9 @@ export const listPublished = query({
     ),
   },
   handler: async (ctx, args) => {
-    const publishedHackathons = await ctx.db
-      .query("hackathons")
-      .withIndex("by_status", (index) => index.eq("status", "published"))
-      .collect();
+    const participantVisibleHackathons = await getParticipantVisibleHackathons(ctx);
     const listings = await Promise.all(
-      publishedHackathons.map((hackathon) =>
+      participantVisibleHackathons.map((hackathon) =>
         addOrganizerAndCounts(ctx, hackathon),
       ),
     );
@@ -145,12 +169,9 @@ export const listPublished = query({
 export const featuredPublished = query({
   args: {},
   handler: async (ctx) => {
-    const publishedHackathons = await ctx.db
-      .query("hackathons")
-      .withIndex("by_status", (index) => index.eq("status", "published"))
-      .collect();
+    const participantVisibleHackathons = await getParticipantVisibleHackathons(ctx);
     const listings = await Promise.all(
-      publishedHackathons.map((hackathon) =>
+      participantVisibleHackathons.map((hackathon) =>
         addOrganizerAndCounts(ctx, hackathon),
       ),
     );
@@ -187,6 +208,7 @@ export const getById = query({
     const hackathon = await ctx.db.get(args.hackathonId);
 
     if (!hackathon) return null;
+    if (!isParticipantVisibleListing(hackathon, Date.now())) return null;
 
     return addOrganizerAndCounts(ctx, hackathon);
   },

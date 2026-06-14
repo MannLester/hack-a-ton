@@ -94,6 +94,7 @@ function getListingMutationInput(values: CreateListingFormValues) {
     difficulty: values.difficulty,
     summary: values.description.trim(),
     externalRegistrationUrl: values.registrationUrl.trim(),
+    coverImageUrl: values.coverImageUrl.trim(),
   };
 }
 
@@ -114,6 +115,8 @@ export function ConvexOrganizerView({
   const submitListingForReview = useMutation(
     api.organizers.submitListingForReview,
   );
+  const archiveListing = useMutation(api.organizers.archiveListing);
+  const cancelListing = useMutation(api.organizers.cancelListing);
   const dashboard = useQuery(
     api.organizers.getDashboard,
     organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
@@ -147,9 +150,12 @@ export function ConvexOrganizerView({
       listing.interestedCount,
     ]) ?? [],
   );
+  const activeDashboardListings = dashboard?.hackathons.filter(
+    (hackathon) => hackathon.status !== "archived",
+  );
   const listings =
-    dashboard?.hackathons && dashboard.hackathons.length > 0
-      ? dashboard.hackathons.map((hackathon) =>
+    activeDashboardListings && activeDashboardListings.length > 0
+      ? activeDashboardListings.map((hackathon) =>
           getUiOrganizerHackathon(
             hackathon,
             interestedByHackathonName.get(hackathon.name) ?? 0,
@@ -219,6 +225,33 @@ export function ConvexOrganizerView({
     });
   };
 
+
+  const archiveOrganizerListing = async (hackathonId: Id<"hackathons">) => {
+    const organizerId = organizerAccount?.organizerId;
+
+    if (!organizerId) return;
+
+    await archiveListing({
+      organizerId,
+      hackathonId,
+    });
+  };
+
+  const cancelOrganizerListing = async (
+    hackathonId: Id<"hackathons">,
+    reason: string,
+  ) => {
+    const organizerId = organizerAccount?.organizerId;
+
+    if (!organizerId) return;
+
+    await cancelListing({
+      organizerId,
+      hackathonId,
+      reason,
+    });
+  };
+
   return (
     <OrganizerView
       activeTab={activeTab}
@@ -228,6 +261,8 @@ export function ConvexOrganizerView({
       insights={insights?.totals}
       onSaveDraft={saveDraft}
       onSubmitForReview={submitForReview}
+      onArchiveListing={archiveOrganizerListing}
+      onCancelListing={cancelOrganizerListing}
     />
   );
 }

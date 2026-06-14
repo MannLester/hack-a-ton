@@ -2,22 +2,36 @@ import Link from "next/link";
 import {
   Award,
   CalendarDays,
+  AlertTriangle,
   Clock,
   Heart,
   MapPin,
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
+import { getListingUpdateLabel } from "@/lib/organizer-workflow";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 
 export function HackathonCard({
   hackathon,
 }: {
-  hackathon: Hackathon;
+  hackathon: Hackathon & { coverImageUrl?: string };
 }) {
+  const updateLabel = getListingUpdateLabel({
+    updatedAt: hackathon.updatedAt,
+    now: Date.now(),
+  });
+
   return (
     <Link href={`/hackathon/${hackathon.id}`} className="block h-full">
       <PanelCard className="flex h-full flex-col cursor-pointer border-zinc-950 p-5" hover>
+        {hackathon.coverImageUrl ? (
+          <div
+            aria-label={`${hackathon.name} cover`}
+            className="mb-4 h-32 rounded-md border-2 border-zinc-200 bg-zinc-100 bg-cover bg-center"
+            style={{ backgroundImage: `url(${hackathon.coverImageUrl})` }}
+          />
+        ) : null}
         <div className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -27,6 +41,11 @@ export function HackathonCard({
               <span className="rounded-md border-2 border-zinc-950 bg-zinc-100 px-2.5 py-1 text-xs font-black text-zinc-700">
                 {hackathon.difficulty}
               </span>
+              {updateLabel && hackathon.status !== "Cancelled" ? (
+                <span className="rounded-md border-2 border-[#00a7e8]/30 bg-[#00a7e8]/10 px-2.5 py-1 text-xs font-black text-[#006c9c]">
+                  {updateLabel}
+                </span>
+              ) : null}
             </div>
             <h3 className="mt-3 text-xl font-black tracking-tight text-zinc-950">
               {hackathon.name}
@@ -34,9 +53,18 @@ export function HackathonCard({
             <p className="mt-1 text-sm font-bold text-zinc-500">
               {hackathon.organizer}
             </p>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 line-clamp-2">
-              {hackathon.summary}
-            </p>
+            {hackathon.status === "Cancelled" && hackathon.cancellationReason ? (
+              <div className="mt-3 rounded-md border-2 border-red-200 bg-red-50 p-3 text-sm font-bold leading-6 text-red-800">
+                <span className="inline-flex items-center gap-1.5 font-black">
+                  <AlertTriangle className="size-4" /> Cancelled by organizer
+                </span>
+                <p className="mt-1 line-clamp-2">{hackathon.cancellationReason}</p>
+              </div>
+            ) : (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 line-clamp-2">
+                {hackathon.summary}
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700">
                 <CalendarDays className="size-3.5 text-[#00a7e8]" />

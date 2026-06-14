@@ -46,9 +46,13 @@ export function HackatonApp() {
     if (storedPersona === "participant" || storedPersona === "organizer") {
       setPersonaState(getDefaultPersonaAfterSignIn(storedPersona));
     }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    setShowAdmin(searchParams.get("staff") === "1");
   }, []);
 
   const setPersona = (nextPersona: Persona) => {
+    setShowAdmin(false);
     setPersonaState(nextPersona);
     window.localStorage.setItem("hackaton-persona", nextPersona);
   };
@@ -112,7 +116,7 @@ export function HackatonApp() {
         persona={persona}
         setPersona={setPersona}
         setParticipantTab={setParticipantTab}
-        activeTab={participantTab}
+        onLeaveStaffView={() => setShowAdmin(false)}
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">

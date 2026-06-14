@@ -12,6 +12,7 @@ const hackathonStatus = v.union(
   v.literal("published"),
   v.literal("needs_edits"),
   v.literal("archived"),
+  v.literal("cancelled"),
 );
 const listingSignalType = v.union(
   v.literal("interest"),
@@ -91,7 +92,12 @@ export default defineSchema({
     ),
     summary: v.string(),
     externalRegistrationUrl: v.optional(v.string()),
+    coverImageUrl: v.optional(v.string()),
     publishedAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
+    cancellationReason: v.optional(v.string()),
+    cancelledAt: v.optional(v.number()),
+    cancellationVisibleUntil: v.optional(v.number()),
   })
     .index("by_organizer", ["organizerId"])
     .index("by_status", ["status"])

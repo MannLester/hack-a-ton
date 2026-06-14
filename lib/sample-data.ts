@@ -12,11 +12,23 @@ export type Hackathon = {
   eligibility: string[];
   teamSize: string;
   prize: string;
-  status: "Open" | "Closing soon" | "Upcoming" | "Draft" | "Pending review" | "Needs edits";
+  status:
+    | "Open"
+    | "Closing soon"
+    | "Upcoming"
+    | "Happening now"
+    | "Draft"
+    | "Pending review"
+    | "Needs edits"
+    | "Cancelled";
   difficulty: "Beginner" | "Intermediate" | "Open";
   interested: number;
   lftCount: number;
   summary: string;
+  updatedAt?: number;
+  cancellationReason?: string;
+  cancelledAt?: number;
+  cancellationVisibleUntil?: number;
 };
 
 export const hackathons: Hackathon[] = [

@@ -18,6 +18,7 @@ function getDisplayStatus(
   if (status === "draft") return "Draft";
   if (status === "pending_review") return "Pending review";
   if (status === "needs_edits") return "Needs edits";
+  if (status === "cancelled") return "Cancelled";
   return "Upcoming";
 }
 
@@ -41,6 +42,12 @@ export function getUiHackathon(hackathon: ConvexHackathon): UiHackathon {
     lftCount: hackathon.lftCount,
     savedCount: hackathon.savedCount,
     summary: hackathon.summary,
+    registrationUrl: hackathon.externalRegistrationUrl,
+    coverImageUrl: hackathon.coverImageUrl,
+    updatedAt: hackathon.updatedAt,
+    cancellationReason: hackathon.cancellationReason,
+    cancelledAt: hackathon.cancelledAt,
+    cancellationVisibleUntil: hackathon.cancellationVisibleUntil,
   };
 }
 
@@ -105,7 +112,7 @@ export type OrganizerDashboard = {
     pendingReview: number;
     drafts: number;
   };
-  hackathons: Doc<"hackathons">[];
+  hackathons: (Doc<"hackathons"> & { reviewNote?: string })[];
 };
 
 export type OrganizerInsights = {
@@ -131,16 +138,21 @@ export type PendingReview = Doc<"listingReviews"> & {
 };
 
 export function getUiOrganizerHackathon(
-  hackathon: Doc<"hackathons">,
+  hackathon: Doc<"hackathons"> & { reviewNote?: string },
   interestedCount: number,
 ): UiHackathon {
-  return getUiHackathon({
+  const listing = getUiHackathon({
     ...hackathon,
     organizerName: "Your organizer",
     interestedCount,
     lftCount: 0,
     savedCount: 0,
   });
+
+  return {
+    ...listing,
+    reviewNote: hackathon.reviewNote,
+  };
 }
 
 export function getUiReviewHackathon(
