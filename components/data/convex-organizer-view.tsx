@@ -21,6 +21,7 @@ import { getOrganizerListingDataSourceItems } from "@/lib/listing-data-source";
 import {
   getClerkIdentity,
   getListingMutationInput,
+  getUserProfileMutationInput,
 } from "@/components/data/convex-shared";
 
 type OrganizerAccount = {
@@ -70,7 +71,7 @@ export function ConvexOrganizerView({
     let isActive = true;
 
     ensureOrganizerAccount({
-      ...clerkIdentity,
+      ...getUserProfileMutationInput(clerkIdentity),
       organizerName: clerkIdentity.displayName,
     }).then((account) => {
       if (!isActive) return;
@@ -115,7 +116,7 @@ export function ConvexOrganizerView({
     if (!clerkIdentity) throw new Error("Sign in before creating listings.");
 
     const account = await ensureOrganizerAccount({
-      ...clerkIdentity,
+      ...getUserProfileMutationInput(clerkIdentity),
       organizerName: values.organizerName.trim(),
     });
     setOrganizerAccount(account);

@@ -24,7 +24,10 @@ import {
   getListingDataSourceItems,
   getOptionalRealtimeItems,
 } from "@/lib/listing-data-source";
-import { getClerkIdentity } from "@/components/data/convex-shared";
+import {
+  getClerkIdentity,
+  getUserProfileMutationInput,
+} from "@/components/data/convex-shared";
 
 export function ConvexParticipantView({
   activeTab,
@@ -82,7 +85,7 @@ export function ConvexParticipantView({
 
     let isActive = true;
 
-    ensureParticipantUser(clerkIdentity).then((userId) => {
+    ensureParticipantUser(getUserProfileMutationInput(clerkIdentity)).then((userId) => {
       if (!isActive) return;
 
       setParticipantUserId(userId);

@@ -40,6 +40,15 @@ export function getClerkIdentity(user: OptionalClerkUser | null) {
   } satisfies ClerkIdentity;
 }
 
+export function getUserProfileMutationInput(identity: ClerkIdentity) {
+  return {
+    displayName: identity.displayName,
+    initials: identity.initials,
+    schoolOrCompany: identity.schoolOrCompany,
+    location: identity.location,
+  };
+}
+
 export function getListingMutationInput(values: CreateListingFormValues) {
   return {
     name: values.listingName.trim(),
