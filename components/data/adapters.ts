@@ -1,4 +1,5 @@
 import type { Doc } from "@/convex/_generated/dataModel";
+import type { ClerkIdentity } from "@/components/data/convex-shared";
 import { type Hackathon } from "@/lib/sample-data";
 import type {
   ConvexHackathon,
@@ -134,6 +135,31 @@ export function getProfileTags(source: ProfileTagSource) {
   ];
 
   return Array.from(new Set(tags.map((tag) => tag.trim()).filter(Boolean)));
+}
+
+export function getClerkPortfolioProfile(identity: ClerkIdentity): PortfolioProfile {
+  return {
+    displayName: identity.displayName,
+    initials: identity.initials,
+    meta: [identity.schoolOrCompany, identity.location].filter(Boolean).join(" · ") ||
+      "No profile details yet.",
+    bio: "No bio yet.",
+    badges: [],
+    profileTags: [],
+    stats: [
+      { label: "Participations", value: "0" },
+      { label: "Finals", value: "0" },
+      { label: "Wins", value: "0" },
+      { label: "Verified", value: "0" },
+    ],
+    placementStats: [
+      { placement: "first", label: "1st place", count: 0, points: 0 },
+      { placement: "second", label: "2nd place", count: 0, points: 0 },
+      { placement: "third", label: "3rd place", count: 0, points: 0 },
+      { placement: "participant", label: "Participant", count: 0, points: 0 },
+    ],
+    entries: [],
+  };
 }
 
 export type OrganizerDashboard = {

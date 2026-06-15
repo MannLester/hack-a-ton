@@ -12,6 +12,7 @@ import type {
   UiHackathon,
 } from "@/components/shared/types";
 import {
+  getClerkPortfolioProfile,
   getUiHackathon,
   getUiPortfolioProfile,
   getUiTeamInterestedUser,
@@ -144,9 +145,13 @@ export function ConvexParticipantView({
   });
   const displayedInterestedUsers =
     interestedUsersForMyTeam?.map(getUiTeamInterestedUser) ?? [];
-  const displayedPortfolioProfile = convexPortfolioProfile
-    ? getUiPortfolioProfile(convexPortfolioProfile)
+  const clerkPortfolioProfile = clerkIdentity
+    ? getClerkPortfolioProfile(clerkIdentity)
     : undefined;
+  const displayedPortfolioProfile =
+    (convexPortfolioProfile
+      ? getUiPortfolioProfile(convexPortfolioProfile)
+      : undefined) ?? clerkPortfolioProfile;
   const displayedFeaturedHackathon = featuredHackathon
     ? getUiHackathon(featuredHackathon)
     : (displayedHackathons[0] ?? null);
