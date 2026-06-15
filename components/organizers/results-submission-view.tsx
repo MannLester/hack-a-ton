@@ -49,12 +49,16 @@ export function ResultsSubmissionView({
   useEffect(() => {
     setPlacementsByHackathon((currentPlacements) => {
       const nextPlacements = { ...currentPlacements };
+      let hasNewPlacements = false;
 
       for (const board of boardsWithTeams) {
         if (nextPlacements[board.hackathonId]) continue;
 
         nextPlacements[board.hackathonId] = getInitialPlacements(board);
+        hasNewPlacements = true;
       }
+
+      if (!hasNewPlacements) return currentPlacements;
 
       return nextPlacements;
     });
