@@ -285,7 +285,6 @@ function OrganizerTabs({
 }) {
   const tabs: { label: string; value: OrganizerTab }[] = [
     { label: "Listings", value: "listings" },
-    { label: "Create", value: "create" },
     { label: "Insights", value: "insights" },
   ];
 
