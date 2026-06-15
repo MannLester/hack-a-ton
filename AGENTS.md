@@ -4,3 +4,4 @@
 - Descriptive names for all variables and functions
 - Always run build, lint, type check commands every after edit
 - No monolithic files. Always make the code easy to read and easily maintainable.
+- Assume that the dev server is already running. Don't run another instance.
