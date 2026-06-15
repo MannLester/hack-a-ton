@@ -253,6 +253,7 @@ export const getOnboardingStatus = query({
     return {
       isComplete: Boolean(user?.onboardingCompletedAt),
       userId: user?._id ?? null,
+      onboardingPersona: user?.onboardingPersona ?? null,
     };
   },
 });

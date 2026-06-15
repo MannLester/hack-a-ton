@@ -21,11 +21,13 @@ export interface OptionalClerkUser {
 interface AuthState {
   isAuthLoaded: boolean;
   isSignedIn: boolean;
+  onboardingPersona: "participant" | "organizer" | null;
 }
 
 const defaultAuthState: AuthState = {
   isAuthLoaded: true,
   isSignedIn: false,
+  onboardingPersona: null,
 };
 
 const AuthStateContext = createContext<AuthState>(defaultAuthState);
@@ -59,6 +61,7 @@ function ClerkAuthStateProvider({ children }: { children: React.ReactNode }) {
   const authState = {
     isAuthLoaded: isLoaded,
     isSignedIn: Boolean(isSignedIn),
+    onboardingPersona: null,
   };
 
   return (
@@ -99,6 +102,31 @@ function OnboardingRedirectMaybe({ children }: { children: React.ReactNode }) {
   return <OnboardingRedirect>{children}</OnboardingRedirect>;
 }
 
+function OnboardingStatusProvider({ children }: { children: React.ReactNode }) {
+  const authState = useContext(AuthStateContext);
+  const user = useOptionalClerkUser();
+  const onboardingStatus = useQuery(
+    api.users.getOnboardingStatus,
+    user?.id ? { clerkUserId: user.id } : "skip",
+  );
+  const nextAuthState = {
+    ...authState,
+    onboardingPersona: onboardingStatus?.onboardingPersona ?? null,
+  };
+
+  return (
+    <AuthStateContext.Provider value={nextAuthState}>
+      {children}
+    </AuthStateContext.Provider>
+  );
+}
+
+function OnboardingStatusProviderMaybe({ children }: { children: React.ReactNode }) {
+  if (!process.env.NEXT_PUBLIC_CONVEX_URL || !isClerkConfigured()) return children;
+
+  return <OnboardingStatusProvider>{children}</OnboardingStatusProvider>;
+}
+
 function ClerkProviderMaybe({ children }: { children: React.ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 
@@ -119,7 +147,9 @@ export function ConvexClientProvider({
   return (
     <ClerkProviderMaybe>
       <ConvexProviderMaybe>
-        <OnboardingRedirectMaybe>{children}</OnboardingRedirectMaybe>
+        <OnboardingStatusProviderMaybe>
+          <OnboardingRedirectMaybe>{children}</OnboardingRedirectMaybe>
+        </OnboardingStatusProviderMaybe>
       </ConvexProviderMaybe>
     </ClerkProviderMaybe>
   );

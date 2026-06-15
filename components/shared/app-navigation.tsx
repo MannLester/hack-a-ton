@@ -37,9 +37,11 @@ function SignedOutActions() {
 }
 
 function SignedInActions({
+  canAccessOrganizerPanel,
   onOrganizerClick,
   onPortfolioClick,
 }: {
+  canAccessOrganizerPanel: boolean;
   onOrganizerClick?: () => void;
   onPortfolioClick?: () => void;
 }) {
@@ -80,15 +82,17 @@ function SignedInActions({
             >
               <User className="size-4" /> View Profile
             </button>
-            <button
-              onClick={() => {
-                setOpen(false);
-                onOrganizerClick?.();
-              }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
-            >
-              <BriefcaseBusiness className="size-4" /> Organizer Panel
-            </button>
+            {canAccessOrganizerPanel ? (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onOrganizerClick?.();
+                }}
+                className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
+              >
+                <BriefcaseBusiness className="size-4" /> Organizer Panel
+              </button>
+            ) : null}
             <div className="border-t-2 border-zinc-100" />
             <button
               onClick={() => {
@@ -136,12 +140,13 @@ function AuthNavigationActions({
   onOrganizerClick?: () => void;
   onPortfolioClick?: () => void;
 }) {
-  const { isSignedIn } = useClerkAuthState();
+  const { isSignedIn, onboardingPersona } = useClerkAuthState();
 
   if (!isClerkConfigured()) return null;
   if (isSignedIn) {
     return (
       <SignedInActions
+        canAccessOrganizerPanel={onboardingPersona === "organizer"}
         onOrganizerClick={onOrganizerClick}
         onPortfolioClick={onPortfolioClick}
       />
