@@ -303,13 +303,6 @@ export function CreateListingView({
     teamSize,
   ]);
 
-  const updateCoverImageUrl = (url: string) => {
-    setCoverImageStorageId(undefined);
-    setCoverUploadStatus("idle");
-    setCoverUploadError(null);
-    setCoverImageUrl(url);
-  };
-
   const uploadCoverImage = (file: File) => {
     if (!onUploadCoverImage) return;
 
@@ -455,7 +448,6 @@ export function CreateListingView({
               registrationUrl={registrationUrl}
               setRegistrationUrl={setRegistrationUrl}
               coverImageUrl={coverImageUrl}
-              setCoverImageUrl={updateCoverImageUrl}
               onUploadCoverImage={uploadCoverImage}
               coverUploadStatus={coverUploadStatus}
               coverUploadError={coverUploadError}
@@ -787,7 +779,6 @@ function StepDetails({
   registrationUrl,
   setRegistrationUrl,
   coverImageUrl,
-  setCoverImageUrl,
   onUploadCoverImage,
   coverUploadStatus,
   coverUploadError,
@@ -804,7 +795,6 @@ function StepDetails({
   registrationUrl: string;
   setRegistrationUrl: (v: string) => void;
   coverImageUrl: string;
-  setCoverImageUrl: (v: string) => void;
   onUploadCoverImage: (file: File) => void;
   coverUploadStatus: "idle" | "uploading" | "uploaded" | "failed";
   coverUploadError: string | null;
@@ -899,7 +889,6 @@ function StepDetails({
         registrationUrl={registrationUrl}
         setRegistrationUrl={setRegistrationUrl}
         coverImageUrl={coverImageUrl}
-        setCoverImageUrl={setCoverImageUrl}
         onUploadCoverImage={onUploadCoverImage}
         coverUploadStatus={coverUploadStatus}
         coverUploadError={coverUploadError}

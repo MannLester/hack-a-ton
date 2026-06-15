@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireParticipantVisibleHackathon } from "./hackathons";
-import { getCurrentUser, getCurrentUserOrRequestedClerkUser } from "./users";
+import { getCurrentUser } from "./users";
 
 type LftProfileWithUser = Doc<"lftProfiles"> & {
   displayName: string;
@@ -23,12 +23,24 @@ type InterestedUser = Doc<"users"> & {
   hackathonId: Id<"hackathons"> | undefined;
 };
 
-type TeamMemberProfile = {
+export type TeamMemberProfile = {
   userId: Id<"users">;
   displayName: string;
   initials: string;
   meta: string | null;
   isLead: boolean;
+};
+
+export type PublicTeamSummary = {
+  _id: Id<"teams">;
+  hackathonId: Id<"hackathons">;
+  teamName: string;
+  goal?: string;
+  currentSize: number;
+  targetSize: number;
+  missingRoles: string[];
+  status: Doc<"teams">["status"];
+  memberProfiles: TeamMemberProfile[];
 };
 
 const maxUserTeamScan = 200;
@@ -124,6 +136,25 @@ async function getRecruitingTeamWithHackathon(
   } satisfies RecruitingTeam;
 }
 
+export function toPublicTeamSummary({
+  team,
+  memberProfiles,
+}: {
+  team: Doc<"teams">;
+  memberProfiles: TeamMemberProfile[];
+}): PublicTeamSummary {
+  return {
+    _id: team._id,
+    hackathonId: team.hackathonId,
+    teamName: team.teamName,
+    goal: team.goal,
+    currentSize: team.currentSize,
+    targetSize: team.targetSize,
+    missingRoles: team.missingRoles,
+    status: team.status,
+    memberProfiles,
+  };
+}
 async function getTeamMemberProfile(
   ctx: QueryCtx,
   userId: Id<"users">,
@@ -313,14 +344,10 @@ async function respondToTeamApplication(
 
 export const listActiveProfiles = query({
   args: {
-    clerkUserId: v.optional(v.string()),
     hackathonId: v.optional(v.id("hackathons")),
   },
   handler: async (ctx, args) => {
-    const currentUser = await getCurrentUserOrRequestedClerkUser(
-      ctx,
-      args.clerkUserId,
-    );
+    const currentUser = await getCurrentUser(ctx);
     await requireVisibleHackathonScope(ctx, args.hackathonId);
 
     const activeProfiles = await ctx.db
@@ -344,14 +371,9 @@ export const listActiveProfiles = query({
 });
 
 export const listRecruitingTeams = query({
-  args: {
-    clerkUserId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const currentUser = await getCurrentUserOrRequestedClerkUser(
-      ctx,
-      args.clerkUserId,
-    );
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
     const decisions = await ctx.db
       .query("teamDecisions")
       .withIndex("by_from_user", (index) =>
@@ -533,14 +555,9 @@ export const getMyTeam = query({
 });
 
 export const listMyTeams = query({
-  args: {
-    clerkUserId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const currentUser = await getCurrentUserOrRequestedClerkUser(
-      ctx,
-      args.clerkUserId,
-    );
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
     const allTeams = await ctx.db.query("teams").take(maxUserTeamScan);
     const joinedTeams = allTeams.filter((team) =>
       team.members.includes(currentUser._id),
@@ -587,24 +604,19 @@ export const listByHackathon = query({
           ),
         );
 
-        return {
-          ...team,
+        return toPublicTeamSummary({
+          team,
           memberProfiles,
-        };
+        });
       }),
     );
   },
 });
 
 export const listInterestedUsersForMyTeam = query({
-  args: {
-    clerkUserId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const currentUser = await getCurrentUserOrRequestedClerkUser(
-      ctx,
-      args.clerkUserId,
-    );
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
     const allTeams = await ctx.db.query("teams").take(maxUserTeamScan);
     const ledTeams = allTeams.filter((item) => item.members[0] === currentUser._id);
     const ledTeamIds = new Set(ledTeams.map((team) => team._id));
@@ -651,7 +663,6 @@ export const listInterestedUsersForMyTeam = query({
 
 export const createTeam = mutation({
   args: {
-    clerkUserId: v.optional(v.string()),
     teamName: v.string(),
     hackathonId: v.id("hackathons"),
     goal: v.string(),
@@ -659,10 +670,7 @@ export const createTeam = mutation({
     targetSize: v.number(),
   },
   handler: async (ctx, args) => {
-    const currentUser = await getCurrentUserOrRequestedClerkUser(
-      ctx,
-      args.clerkUserId,
-    );
+    const currentUser = await getCurrentUser(ctx);
     await requireParticipantVisibleHackathon(ctx, args.hackathonId);
 
     return ctx.db.insert("teams", {

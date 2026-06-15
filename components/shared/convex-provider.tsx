@@ -8,6 +8,7 @@ import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { createContext, useContext, useState } from "react";
+import { shouldAllowConvexClient } from "@/lib/auth-runtime";
 
 export interface OptionalClerkUser {
   id: string;
@@ -37,6 +38,13 @@ export function isClerkConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 }
 
+function canUseConvexClient() {
+  return shouldAllowConvexClient({
+    hasConvexUrl: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
+    hasClerkPublishableKey: isClerkConfigured(),
+  });
+}
+
 function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   const [convex] = useState(() =>
@@ -52,7 +60,13 @@ function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  if (canUseConvexClient()) {
+    return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  }
+
+  throw new Error(
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required when Convex is configured.",
+  );
 }
 
 function ClerkAuthStateProvider({ children }: { children: React.ReactNode }) {
@@ -80,7 +94,7 @@ function OnboardingRedirect({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? { clerkUserId: user.id } : "skip",
+    user?.id ? {} : "skip",
   );
 
   useEffect(() => {
@@ -107,7 +121,7 @@ function OnboardingStatusProvider({ children }: { children: React.ReactNode }) {
   const user = useOptionalClerkUser();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? { clerkUserId: user.id } : "skip",
+    user?.id ? {} : "skip",
   );
   const nextAuthState = {
     ...authState,

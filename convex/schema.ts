@@ -207,6 +207,17 @@ export default defineSchema({
     source: reportSource,
   }).index("by_user", ["userId"]),
 
+
+  coverImageUploads: defineTable({
+    storageId: v.id("_storage"),
+    ownerUserId: v.id("users"),
+    organizerId: v.id("organizers"),
+    validatedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_storage", ["storageId"])
+    .index("by_organizer", ["organizerId"]),
+
   listingReviews: defineTable({
     hackathonId: v.id("hackathons"),
     reviewerUserId: v.optional(v.id("users")),

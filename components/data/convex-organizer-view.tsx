@@ -102,14 +102,12 @@ export function ConvexOrganizerView({
     (hackathon) => hackathon.status !== "archived",
   );
   const listings = getOrganizerListingDataSourceItems({
-    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
     dashboardItems: activeDashboardListings?.map((hackathon) =>
       getUiOrganizerHackathon(
         hackathon,
         interestedByHackathonName.get(hackathon.name) ?? 0,
       ),
     ),
-    fallbackItems: [],
   });
   const stats = dashboard
     ? {

@@ -1,18 +1,25 @@
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { teammates, type Hackathon, type TeamLooking } from "@/lib/sample-data";
+import type { PublicHackathonListing } from "@/convex/hackathons";
+import type { PublicTeamSummary } from "@/convex/teams";
+import type { Hackathon, TeamLooking } from "@/lib/sample-data";
 
 export type Persona = "participant" | "organizer";
 export type ParticipantTab = "explore" | "team" | "portfolio" | "leaderboard";
 export type OrganizerTab = "listings" | "create" | "insights";
-export type Teammate = (typeof teammates)[number] & {
+export type Teammate = {
   convexUserId?: Id<"users">;
   convexHackathonId?: Id<"hackathons">;
+  name: string;
+  role: string;
+  school: string;
+  stack: string;
+  availability: string;
+  goal: string;
+  match: string;
 };
-export type ConvexHackathon = Doc<"hackathons"> & {
-  organizerName: string;
-  interestedCount: number;
-  lftCount: number;
-  savedCount: number;
+export type ConvexHackathon = PublicHackathonListing & {
+  coverImageStorageId?: Id<"_storage">;
+  cancellationVisibleUntil?: number;
 };
 export type UiHackathon = Hackathon & {
   convexId?: Id<"hackathons">;
@@ -56,7 +63,7 @@ export type TeamMemberProfile = {
 export type MyTeam = Doc<"teams"> & {
   memberProfiles: TeamMemberProfile[];
 };
-export type HackathonTeam = MyTeam;
+export type HackathonTeam = PublicTeamSummary;
 export type OrganizerResultTeam = {
   team: MyTeam;
   placement: TeamResultPlacement | null;
@@ -144,13 +151,3 @@ export type CreateListingFormValues = {
   coverImageStorageId?: Id<"_storage">;
   description: string;
 };
-
-export const demoUserId = process.env.NEXT_PUBLIC_DEMO_USER_ID as
-  | Id<"users">
-  | undefined;
-export const demoOrganizerId = process.env.NEXT_PUBLIC_DEMO_ORGANIZER_ID as
-  | Id<"organizers">
-  | undefined;
-export const demoStaffUserId = process.env.NEXT_PUBLIC_DEMO_STAFF_USER_ID as
-  | Id<"users">
-  | undefined;

@@ -2,7 +2,6 @@ export function ListingMediaFields({
   registrationUrl,
   setRegistrationUrl,
   coverImageUrl,
-  setCoverImageUrl,
   onUploadCoverImage,
   coverUploadStatus,
   coverUploadError,
@@ -10,7 +9,6 @@ export function ListingMediaFields({
   registrationUrl: string;
   setRegistrationUrl: (value: string) => void;
   coverImageUrl: string;
-  setCoverImageUrl: (value: string) => void;
   onUploadCoverImage: (file: File) => void;
   coverUploadStatus: "idle" | "uploading" | "uploaded" | "failed";
   coverUploadError: string | null;
@@ -43,12 +41,6 @@ export function ListingMediaFields({
               onUploadCoverImage(file);
             }}
             className="block h-11 w-full rounded-md border-2 border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-950 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white focus:border-[#00a7e8] focus:outline-none"
-          />
-          <input
-            value={coverImageUrl}
-            onChange={(event) => setCoverImageUrl(event.target.value)}
-            placeholder="Or paste an image URL"
-            className="mt-2 h-10 w-full rounded-md border-2 border-zinc-200 px-3 text-xs font-bold focus:border-[#00a7e8] focus:outline-none"
           />
           {coverUploadStatus !== "idle" ? (
             <p className="mt-1.5 text-xs font-black text-zinc-500">

@@ -78,10 +78,7 @@ export function ConvexParticipantView({
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
   const landingStats = useQuery(api.hackathons.getPlatformStats, {});
-  const participantQueryArgs =
-    clerkIdentity && participantUserId
-      ? { clerkUserId: clerkIdentity.clerkUserId }
-      : "skip";
+  const participantQueryArgs = participantUserId ? {} : "skip";
 
   useEffect(() => {
     if (!clerkIdentity || !isAuthenticated) {
@@ -130,9 +127,7 @@ export function ConvexParticipantView({
   const decideOnProfile = useMutation(api.teams.decideOnProfile);
   const updateBio = useMutation(api.users.updateBio);
   const displayedHackathons = getListingDataSourceItems({
-    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
     convexItems: convexHackathons?.map(getUiHackathon),
-    fallbackItems: fallbackHackathons,
   });
   const displayedTeammates =
     convexTeammates && convexTeammates.length > 0
@@ -143,9 +138,7 @@ export function ConvexParticipantView({
           )
       : visibleTeammates;
   const displayedTeamListings = getOptionalRealtimeItems({
-    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
     realtimeItems: convexTeamListings?.map(getUiTeamLooking),
-    fallbackItems: [],
   });
   const displayedInterestedUsers =
     interestedUsersForMyTeam?.map(getUiTeamInterestedUser) ?? [];
@@ -272,10 +265,7 @@ export function ConvexParticipantView({
     if (!clerkIdentity) return null;
 
     const userId = await ensureParticipantUser(
-      {
-        ...getUserProfileMutationInput(clerkIdentity),
-        clerkUserId: clerkIdentity.clerkUserId,
-      },
+      getUserProfileMutationInput(clerkIdentity),
     );
     setParticipantUserId(userId);
 
@@ -294,7 +284,6 @@ export function ConvexParticipantView({
     if (!actionUserId) return null;
 
     return createTeamMutation({
-      clerkUserId: clerkIdentity?.clerkUserId,
       teamName: teamData.teamName,
       hackathonId: teamData.hackathonId,
       goal: teamData.goal,

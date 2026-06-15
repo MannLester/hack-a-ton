@@ -3,6 +3,8 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireCurrentOrganizer } from "./users";
+import { requireOwnedCoverImageUpload } from "./files";
+import { getTrustedCoverImageUrl } from "../lib/cover-image-upload";
 
 const cancellationVisibilityWindowMs = 3 * 24 * 60 * 60 * 1000;
 
@@ -184,6 +186,11 @@ export const createDraftListing = mutation({
   },
   handler: async (ctx, args) => {
     const { organizer } = await requireCurrentOrganizer(ctx);
+    await requireOwnedCoverImageUpload(
+      ctx,
+      args.coverImageStorageId,
+      organizer._id,
+    );
 
     return ctx.db.insert("hackathons", {
       organizerId: organizer._id,
@@ -199,7 +206,7 @@ export const createDraftListing = mutation({
       difficulty: args.difficulty,
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
-      coverImageUrl: args.coverImageUrl,
+      coverImageUrl: getTrustedCoverImageUrl(args),
       coverImageStorageId: args.coverImageStorageId,
       status: "draft",
       updatedAt: Date.now(),
@@ -225,6 +232,12 @@ export const updateDraftListing = mutation({
       hackathon.status === "needs_edits" ||
       hackathon.status === "published";
 
+    await requireOwnedCoverImageUpload(
+      ctx,
+      args.coverImageStorageId,
+      organizer._id,
+    );
+
     if (!canUpdateListing) {
       throw new Error(
         "Only drafts, listings needing edits, or active listings can be updated here.",
@@ -244,7 +257,7 @@ export const updateDraftListing = mutation({
       difficulty: args.difficulty,
       summary: args.summary,
       externalRegistrationUrl: args.externalRegistrationUrl,
-      coverImageUrl: args.coverImageUrl,
+      coverImageUrl: getTrustedCoverImageUrl(args),
       coverImageStorageId: args.coverImageStorageId,
       updatedAt: Date.now(),
     });

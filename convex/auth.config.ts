@@ -1,7 +1,9 @@
+import { resolveClerkJwtIssuerDomain } from "./authIssuer";
+
 const authConfig = {
   providers: [
     {
-      domain: "https://sharp-warthog-68.clerk.accounts.dev",
+      domain: resolveClerkJwtIssuerDomain(process.env),
       applicationID: "convex",
     },
   ],

@@ -1,14 +1,8 @@
 import { HackathonDetailsContainer } from "./hackathon-details-container";
 import { NotFoundView } from "@/components/shared/not-found-view";
-import { hackathons } from "@/lib/sample-data";
-
 const convexHackathonIdPattern = /^j[0-9a-z]{31}$/;
 
 function canResolveHackathonId(id: string) {
-  const isSampleHackathon = hackathons.some((hackathon) => hackathon.id === id);
-
-  if (isSampleHackathon) return true;
-
   return convexHackathonIdPattern.test(id);
 }
 

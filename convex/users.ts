@@ -11,7 +11,6 @@ const userProfileFields = {
 };
 
 const onboardingDataFields = {
-  clerkUserId: v.optional(v.string()),
   persona: v.union(v.literal("participant"), v.literal("organizer")),
   domains: v.array(v.string()),
   techStack: v.array(v.string()),
@@ -82,14 +81,20 @@ function getIdentityDisplayName(identity: Awaited<ReturnType<AuthCtx["auth"]["ge
 
 export function getResolvedOnboardingClerkUserId({
   authenticatedSubject,
-  requestedClerkUserId,
+  requestedClerkUserId: _requestedClerkUserId,
 }: {
   authenticatedSubject?: string;
   requestedClerkUserId?: string;
 }) {
-  return authenticatedSubject ?? requestedClerkUserId;
+  return authenticatedSubject ?? null;
 }
 
+export function getResolvedAuthenticatedClerkUserId(
+  authenticatedSubject?: string,
+  _requestedClerkUserId?: string,
+) {
+  return authenticatedSubject ?? null;
+}
 export function getResolvedOnboardingPersona(
   user?: Pick<Doc<"users">, "role" | "onboardingPersona"> | null,
 ) {
@@ -110,22 +115,6 @@ export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
 export async function getCurrentUser(ctx: AuthCtx) {
   const clerkUserId = await getAuthenticatedClerkSubject(ctx);
   const user = await getUserByClerkId(ctx, clerkUserId);
-
-  if (!user) throw new Error("Current user record not found.");
-
-  return user;
-}
-
-export async function getCurrentUserOrRequestedClerkUser(
-  ctx: AuthCtx,
-  requestedClerkUserId?: string,
-) {
-  const identity = await ctx.auth.getUserIdentity();
-  const clerkUserId = getResolvedOnboardingClerkUserId({
-    authenticatedSubject: identity?.subject,
-    requestedClerkUserId,
-  });
-  const user = clerkUserId ? await getUserByClerkId(ctx, clerkUserId) : null;
 
   if (!user) throw new Error("Current user record not found.");
 
@@ -208,14 +197,10 @@ async function upsertUser(
 export const ensureParticipantUser = mutation({
   args: {
     ...userProfileFields,
-    clerkUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const clerkUserId = getResolvedOnboardingClerkUserId({
-      authenticatedSubject: identity?.subject,
-      requestedClerkUserId: args.clerkUserId,
-    });
+    const clerkUserId = getResolvedAuthenticatedClerkUserId(identity?.subject);
 
     if (!clerkUserId) throw new Error("Authentication is required.");
 
@@ -274,14 +259,11 @@ export const getStaffAccess = query({
 });
 
 export const getOnboardingStatus = query({
-  args: {
-    clerkUserId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     const clerkUserId = getResolvedOnboardingClerkUserId({
       authenticatedSubject: identity?.subject,
-      requestedClerkUserId: args.clerkUserId,
     });
     const user = clerkUserId ? await getUserByClerkId(ctx, clerkUserId) : null;
 
@@ -302,7 +284,6 @@ export const saveOnboardingProfile = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const clerkUserId = getResolvedOnboardingClerkUserId({
       authenticatedSubject: identity?.subject,
-      requestedClerkUserId: args.clerkUserId,
     });
 
     if (!clerkUserId) throw new Error("Authentication is required.");

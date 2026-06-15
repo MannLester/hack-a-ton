@@ -10,11 +10,6 @@ export type {
   Teammate,
   UiHackathon,
 } from "./types";
-export {
-  demoOrganizerId,
-  demoStaffUserId,
-  demoUserId,
-} from "./types";
 export { Modal } from "./modal";
 export {
   EmptyState,

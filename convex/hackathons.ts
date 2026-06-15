@@ -22,6 +22,32 @@ type HackathonWithOrganizerName = Doc<"hackathons"> & {
   organizerName: string;
 };
 
+export type PublicHackathonListing = {
+  _id: Id<"hackathons">;
+  name: string;
+  dateLabel: string;
+  registrationDeadlineLabel: string;
+  setup: Doc<"hackathons">["setup"];
+  location: string;
+  region: Doc<"hackathons">["region"];
+  eligibility: string[];
+  teamSize: string;
+  prize: string;
+  status: Doc<"hackathons">["status"];
+  difficulty: Doc<"hackathons">["difficulty"];
+  summary: string;
+  externalRegistrationUrl?: string;
+  coverImageUrl?: string;
+  publishedAt?: number;
+  updatedAt?: number;
+  cancellationReason?: string;
+  cancelledAt?: number;
+  organizerName: string;
+  interestedCount: number;
+  lftCount: number;
+  savedCount: number;
+};
+
 const defaultListingLimit = 50;
 const maxListingLimit = 100;
 
@@ -101,6 +127,47 @@ async function getResolvedCoverImageUrl(
   return storedUrl ?? hackathon.coverImageUrl;
 }
 
+export function toPublicHackathonListing({
+  hackathon,
+  organizerName,
+  interestedCount,
+  lftCount,
+  savedCount,
+  coverImageUrl,
+}: {
+  hackathon: Doc<"hackathons">;
+  organizerName: string;
+  interestedCount: number;
+  lftCount: number;
+  savedCount: number;
+  coverImageUrl?: string;
+}): PublicHackathonListing {
+  return {
+    _id: hackathon._id,
+    name: hackathon.name,
+    dateLabel: hackathon.dateLabel,
+    registrationDeadlineLabel: hackathon.registrationDeadlineLabel,
+    setup: hackathon.setup,
+    location: hackathon.location,
+    region: hackathon.region,
+    eligibility: hackathon.eligibility,
+    teamSize: hackathon.teamSize,
+    prize: hackathon.prize,
+    status: hackathon.status,
+    difficulty: hackathon.difficulty,
+    summary: hackathon.summary,
+    externalRegistrationUrl: hackathon.externalRegistrationUrl,
+    coverImageUrl,
+    publishedAt: hackathon.publishedAt,
+    updatedAt: hackathon.updatedAt,
+    cancellationReason: hackathon.cancellationReason,
+    cancelledAt: hackathon.cancelledAt,
+    organizerName,
+    interestedCount,
+    lftCount,
+    savedCount,
+  };
+}
 async function addOrganizerAndCounts(
   ctx: QueryCtx,
   hackathon: HackathonWithOrganizerName,
@@ -110,11 +177,12 @@ async function addOrganizerAndCounts(
     getResolvedCoverImageUrl(ctx, hackathon),
   ]);
 
-  return {
-    ...hackathon,
+  return toPublicHackathonListing({
+    hackathon,
+    organizerName: hackathon.organizerName,
     coverImageUrl,
     ...counts,
-  } satisfies HackathonWithOrganizer;
+  });
 }
 
 async function addOrganizerName(
@@ -290,9 +358,12 @@ export const listByOrganizer = query({
         index.eq("organizerId", args.organizerId),
       )
       .collect();
+    const participantVisibleHackathons = organizerHackathons.filter((hackathon) =>
+      isParticipantVisibleHackathon(hackathon, Date.now()),
+    );
 
     return Promise.all(
-      organizerHackathons.map((hackathon) =>
+      participantVisibleHackathons.map((hackathon) =>
         addOrganizerName(ctx, hackathon).then((listingWithOrganizerName) =>
           addOrganizerAndCounts(ctx, listingWithOrganizerName),
         ),

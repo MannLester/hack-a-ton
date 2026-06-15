@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
+import type { Id } from "../convex/_generated/dataModel";
 import {
+  getTrustedCoverImageUrl,
   maxCoverImageBytes,
   validateCoverImageFile,
 } from "../lib/cover-image-upload";
+import { isCoverImageUploadOwnedByOrganizer } from "../convex/files";
 
 describe("cover image upload validation", () => {
   test("allows PNG, JPEG, and WebP under the max size", () => {
@@ -41,5 +44,45 @@ describe("cover image upload validation", () => {
       isValid: false,
       message: "Choose a PNG, JPEG, or WebP image.",
     });
+  });
+});
+
+describe("cover image upload ownership", () => {
+  test("allows only the organizer that validated the upload", () => {
+    expect(
+      isCoverImageUploadOwnedByOrganizer({
+        upload: { storageId: ("storage_1" as Id<"_storage">), organizerId: ("organizer_1" as Id<"organizers">) },
+        storageId: ("storage_1" as Id<"_storage">),
+        organizerId: ("organizer_1" as Id<"organizers">),
+      }),
+    ).toBe(true);
+    expect(
+      isCoverImageUploadOwnedByOrganizer({
+        upload: { storageId: ("storage_1" as Id<"_storage">), organizerId: ("organizer_2" as Id<"organizers">) },
+        storageId: ("storage_1" as Id<"_storage">),
+        organizerId: ("organizer_1" as Id<"organizers">),
+      }),
+    ).toBe(false);
+  });
+});
+
+
+describe("trusted cover image URL persistence", () => {
+  test("clears arbitrary URLs that are not backed by Convex storage", () => {
+    expect(
+      getTrustedCoverImageUrl({
+        coverImageUrl: "https://example.com/tracker.png",
+        coverImageStorageId: undefined,
+      }),
+    ).toBeUndefined();
+  });
+
+  test("clears client-provided URLs even when a storage ID is present", () => {
+    expect(
+      getTrustedCoverImageUrl({
+        coverImageUrl: "blob:preview",
+        coverImageStorageId: "storage_1",
+      }),
+    ).toBeUndefined();
   });
 });

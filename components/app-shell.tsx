@@ -1,26 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AdminView } from "@/components/admin/moderation-view";
 import {
   ConvexAdminView,
   ConvexOrganizerView,
   ConvexParticipantView,
 } from "@/components/data/convex-containers";
-import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { LandingView } from "@/components/landing/landing-view";
 import { OrganizerAuthGate } from "@/components/shared/auth-controls";
 import { setup } from "@/components/shared/config";
 import { useClerkAuthState } from "@/components/shared/convex-provider";
 import {
-  demoStaffUserId,
   type OrganizerTab,
   type ParticipantTab,
   type Persona,
   type Teammate,
+  type UiHackathon,
 } from "@/components/shared/types";
 import { canAccessPersona, canAccessStaffView, getDefaultPersonaAfterSignIn } from "@/lib/auth-persona";
-import { hackathons, teammates } from "@/lib/sample-data";
 import { AppNavigation } from "@/components/shared/app-navigation";
 
 export function HackatonApp() {
@@ -33,12 +30,10 @@ export function HackatonApp() {
   const [query, setQuery] = useState("");
   const [setupFilter, setSetupFilter] = useState<(typeof setup)[number]>("All");
   const [savedHackathonIds, setSavedHackathonIds] = useState<string[]>([]);
-  const [visibleTeammates, setVisibleTeammates] = useState(teammates);
+  const [visibleTeammates, setVisibleTeammates] = useState<Teammate[]>([]);
   const [likedTeammates, setLikedTeammates] = useState<Teammate[]>([]);
   const [showMatches, setShowMatches] = useState(false);
-  const [pendingReviewIds, setPendingReviewIds] = useState(
-    hackathons.slice(0, 2).map((hackathon) => hackathon.id),
-  );
+  const [pendingReviewIds, setPendingReviewIds] = useState<string[]>([]);
   const [hasTeam, setHasTeam] = useState(false);
 
   useEffect(() => {
@@ -57,24 +52,7 @@ export function HackatonApp() {
     window.localStorage.setItem("hackaton-persona", nextPersona);
   };
 
-  const fallbackHackathons = useMemo(
-    () =>
-      hackathons.filter((hackathon) => {
-        const matchesQuery = [
-          hackathon.name,
-          hackathon.organizer,
-          hackathon.location,
-          hackathon.summary,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        const matchesSetup = setupFilter === "All" || hackathon.setup === setupFilter;
-
-        return matchesQuery && matchesSetup;
-      }),
-    [setupFilter, query],
-  );
+  const fallbackHackathons = useMemo<UiHackathon[]>(() => [], []);
 
   const toggleSavedHackathon = (hackathonId: string) => {
     setSavedHackathonIds((currentIds) =>
@@ -108,9 +86,7 @@ export function HackatonApp() {
   };
 
   const canUseOrganizerMode = canAccessPersona("organizer", isSignedIn);
-  const hasStaffAccessSource = process.env.NEXT_PUBLIC_CONVEX_URL
-    ? true
-    : Boolean(demoStaffUserId);
+  const hasStaffAccessSource = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
   const canUseStaffMode = canAccessStaffView(isSignedIn, hasStaffAccessSource);
 
   return (
@@ -123,19 +99,11 @@ export function HackatonApp() {
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
-        {showAdmin && canUseStaffMode ? (
-          process.env.NEXT_PUBLIC_CONVEX_URL ? (
-            <ConvexAdminView
-              pendingReviewIds={pendingReviewIds}
-              onRemovePendingReview={removePendingReview}
-            />
-          ) : (
-            <AdminView
-              pendingReviewIds={pendingReviewIds}
-              onRemovePendingReview={removePendingReview}
-              useSampleFallback
-            />
-          )
+        {showAdmin && canUseStaffMode && process.env.NEXT_PUBLIC_CONVEX_URL ? (
+          <ConvexAdminView
+            pendingReviewIds={pendingReviewIds}
+            onRemovePendingReview={removePendingReview}
+          />
         ) : persona === "participant" ? (
           process.env.NEXT_PUBLIC_CONVEX_URL ? (
             <ConvexParticipantView
@@ -160,7 +128,7 @@ export function HackatonApp() {
               activeTab={participantTab}
               setActiveTab={setParticipantTab}
               filteredHackathons={fallbackHackathons}
-              featuredHackathon={hackathons[0] ?? null}
+              featuredHackathon={null}
               savedHackathonIds={savedHackathonIds}
               onToggleSave={toggleSavedHackathon}
               visibleTeammates={visibleTeammates}
@@ -171,7 +139,6 @@ export function HackatonApp() {
               onLikeTeammate={likeTeammate}
               hasTeam={hasTeam}
               onCreateTeam={async () => null}
-              useSamplePortfolioFallback
             />
           )
         ) : !isAuthLoaded || !canUseOrganizerMode ? (
@@ -182,11 +149,7 @@ export function HackatonApp() {
             setActiveTab={setOrganizerTab}
           />
         ) : (
-          <OrganizerView
-            activeTab={organizerTab}
-            setActiveTab={setOrganizerTab}
-            listings={hackathons}
-          />
+          <OrganizerAuthGate />
         )}
       </div>
     </main>

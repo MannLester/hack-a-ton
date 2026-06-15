@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { requireCurrentStaffUser } from "./users";
 
 const resettableTables = [
   "organizers",
@@ -17,6 +18,31 @@ const resettableTables = [
   "portfolioEntries",
   "listingReviews",
 ] as const;
+
+export function canRunDemoSeedMutation({
+  isProduction,
+  isStaff,
+}: {
+  isProduction: boolean;
+  isStaff: boolean;
+}) {
+  if (isProduction) return false;
+
+  return isStaff;
+}
+
+async function requireDemoSeedAccess(ctx: MutationCtx) {
+  const staffUser = await requireCurrentStaffUser(ctx);
+  const isProduction = process.env.NODE_ENV === "production";
+  const canRunSeed = canRunDemoSeedMutation({
+    isProduction,
+    isStaff: Boolean(staffUser),
+  });
+
+  if (!canRunSeed) {
+    throw new Error("Demo seed access is not available.");
+  }
+}
 
 const demoHackathons = [
   {
@@ -650,6 +676,8 @@ export const seedDemoData = mutation({
     reset: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireDemoSeedAccess(ctx);
+
     return seedDemoDataHandler(ctx, args);
   },
 });
@@ -659,6 +687,8 @@ export const resetAndSeedDemoData = mutation({
     includeLargeInterestCounts: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireDemoSeedAccess(ctx);
+
     return seedDemoDataHandler(ctx, {
       includeLargeInterestCounts: args.includeLargeInterestCounts,
       reset: true,

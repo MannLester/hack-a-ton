@@ -319,7 +319,7 @@ export function ExploreView({
                             )}
                           </div>
                           <span className="rounded-full bg-[#ffd21f]/25 px-2.5 py-1 text-xs font-black text-[#7a5700]">
-                            {team.members.length} / {team.targetSize}
+                            {team.currentSize} / {team.targetSize}
                           </span>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">

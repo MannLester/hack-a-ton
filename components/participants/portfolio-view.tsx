@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Edit3, Save, X } from "lucide-react";
-import { badges, hackathons } from "@/lib/sample-data";
 import type {
   PortfolioEntry,
   PortfolioPlacementStat,
@@ -11,8 +10,6 @@ import { FeaturePanel, SectionTitle } from "@/components/shared/primitives";
 import { BackToExploreButton } from "@/components/participants/back-to-explore-button";
 import { PortfolioPlacementSummary } from "@/components/participants/portfolio-placement-summary";
 
-const fallbackProfileTags = ["Frontend", "Backend", "AI/ML", "Pitching"];
-
 const defaultPlacementStats: PortfolioPlacementStat[] = [
   { placement: "first", label: "1st place", count: 0, points: 0 },
   { placement: "second", label: "2nd place", count: 0, points: 0 },
@@ -20,56 +17,27 @@ const defaultPlacementStats: PortfolioPlacementStat[] = [
   { placement: "participant", label: "Participant", count: 0, points: 0 },
 ];
 
-function getFallbackPlacementStats(): PortfolioPlacementStat[] {
-  return [
-    { placement: "first", label: "1st place", count: 0, points: 0 },
-    { placement: "second", label: "2nd place", count: 0, points: 0 },
-    { placement: "third", label: "3rd place", count: 1, points: 50 },
-    { placement: "participant", label: "Participant", count: 2, points: 20 },
-  ];
-}
-
-function getFallbackEntries(): PortfolioEntry[] {
-  return hackathons.slice(0, 3).map((hackathon, index) => ({
-    hackathonName: hackathon.name,
-    result: index === 0 ? "finalist" : "participant",
-    source: "verified",
-    placement: index === 0 ? "third" : "participant",
-    hackathonDate: hackathon.date,
-  }));
-}
-
 export function PortfolioView({
   profile,
   onSaveBio,
   onBack,
-  useSampleFallback = false,
 }: {
   profile?: PortfolioProfile;
   onSaveBio?: (bio: string) => Promise<void>;
   onBack: () => void;
-  useSampleFallback?: boolean;
 }) {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [bioValue, setBioValue] = useState(profile?.bio ?? "");
   const [statusMessage, setStatusMessage] = useState("");
-  const displayBadges = profile?.badges ?? (useSampleFallback ? badges : []);
-  const displayProfileTags = profile?.profileTags ??
-    (useSampleFallback ? fallbackProfileTags : []);
-  const displayPlacementStats = profile?.placementStats ??
-    (useSampleFallback ? getFallbackPlacementStats() : defaultPlacementStats);
-  const displayEntries = profile?.entries ??
-    (useSampleFallback ? getFallbackEntries() : []);
-  const displayBio = profile?.bio ??
-    (useSampleFallback
-      ? "Builds civic tech prototypes, dashboards, and product demos. Looking for practical hackathons with real community use."
-      : "No bio yet.");
-  const displayInitials = profile?.initials ?? (useSampleFallback ? "JR" : "HA");
-  const displayName = profile?.displayName ??
-    (useSampleFallback ? "Juan Ramos" : "Hack-A-Ton Builder");
-  const displayMeta = profile?.meta ??
-    (useSampleFallback ? "Student builder · Manila" : "No profile details yet.");
+  const displayBadges = profile?.badges ?? [];
+  const displayProfileTags = profile?.profileTags ?? [];
+  const displayPlacementStats = profile?.placementStats ?? defaultPlacementStats;
+  const displayEntries = profile?.entries ?? [];
+  const displayBio = profile?.bio ?? "No bio yet.";
+  const displayInitials = profile?.initials ?? "HA";
+  const displayName = profile?.displayName ?? "Hack-A-Ton Builder";
+  const displayMeta = profile?.meta ?? "No profile details yet.";
   useEffect(() => {
     if (isEditingBio) return;
 

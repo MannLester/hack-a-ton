@@ -6,7 +6,6 @@ import { useQuery } from "convex/react";
 import { ArrowLeft, Filter, Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { getUiHackathon } from "@/components/data/adapters";
-import { hackathons } from "@/lib/sample-data";
 import { getListingDataSourceItems } from "@/lib/listing-data-source";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { AppNavigation } from "@/components/shared/app-navigation";
@@ -195,9 +194,7 @@ function ExploreContent({
 function ConvexAllHackathonsView() {
   const convexHackathons = useQuery(api.hackathons.listPublished, {});
   const sourceHackathons = getListingDataSourceItems({
-    isConvexEnabled: true,
     convexItems: convexHackathons?.map(getUiHackathon),
-    fallbackItems: hackathons,
   });
 
   return (
@@ -211,5 +208,5 @@ function ConvexAllHackathonsView() {
 export function AllHackathonsView() {
   if (process.env.NEXT_PUBLIC_CONVEX_URL) return <ConvexAllHackathonsView />;
 
-  return <ExploreContent sourceHackathons={hackathons} isLoading={false} />;
+  return <ExploreContent sourceHackathons={[]} isLoading={false} />;
 }

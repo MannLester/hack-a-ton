@@ -1,4 +1,4 @@
-import { hackathons, type Hackathon } from "@/lib/sample-data";
+import type { Hackathon } from "@/lib/sample-data";
 import { ReviewCard } from "@/components/admin/submission-card";
 import { EmptyState, SectionTitle } from "@/components/shared/primitives";
 
@@ -8,22 +8,16 @@ export function AdminView({
   pendingHackathons: pendingHackathonsOverride,
   onRequestEdits,
   onApprove,
-  useSampleFallback = false,
   accessMessage,
 }: {
   pendingReviewIds: string[];
   onRemovePendingReview: (hackathonId: string) => void;
   pendingHackathons?: Hackathon[];
-  useSampleFallback?: boolean;
   accessMessage?: string;
   onRequestEdits?: (hackathonId: string) => void;
   onApprove?: (hackathonId: string) => void;
 }) {
-  const samplePendingHackathons = hackathons.filter((hackathon) =>
-    pendingReviewIds.includes(hackathon.id),
-  );
-  const pendingHackathons = pendingHackathonsOverride ??
-    (useSampleFallback ? samplePendingHackathons : []);
+  const pendingHackathons = pendingHackathonsOverride ?? [];
   return (
     <div className="space-y-6">
       <SectionTitle

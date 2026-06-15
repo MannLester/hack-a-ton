@@ -29,7 +29,6 @@ import type {
   UiHackathon,
 } from "@/components/shared/types";
 import type { TeamLooking } from "@/lib/sample-data";
-import { teamsLooking } from "@/lib/sample-data";
 import { AuthActionButton } from "@/components/shared/auth-controls";
 import { Modal } from "@/components/shared/modal";
 import { FeaturePanel, SectionTitle } from "@/components/shared/primitives";
@@ -43,7 +42,7 @@ const ALL_ROLES = ["Front-End", "Back-End", "UI/UX", "AI/ML", "DevOps", "Pitch",
 
 export function TeamView({
   visibleTeammates: _visibleTeammates,
-  likedTeammates: _likedTeammates,
+  likedTeammates,
   showMatches: _showMatches,
   setShowMatches: _setShowMatches,
   onDismissTeammate: _onDismissTeammate,
@@ -92,11 +91,7 @@ export function TeamView({
   >(initialPhase);
   const [selectedHackathonId, setSelectedHackathonId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [matchedUser] = useState({
-    name: "Mika Reyes",
-    role: "Frontend + pitch deck",
-    school: "UP Diliman",
-  });
+  const matchedUser = likedTeammates[0] ?? null;
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -170,7 +165,7 @@ export function TeamView({
   ] as const;
 
   const filteredTeams = useMemo(() => {
-    let result = teamListings ?? teamsLooking;
+    let result = teamListings ?? [];
     if (selectedHackathonId) {
       const selected = hackathons.find((h) => h.id === selectedHackathonId);
       if (selected) {
@@ -599,7 +594,7 @@ export function TeamView({
     );
   }
 
-  if (teamPhase === "matched_duo") {
+  if (teamPhase === "matched_duo" && matchedUser) {
     return (
       <div className="space-y-6">
         <SectionTitle
@@ -630,7 +625,7 @@ export function TeamView({
                 <div>
                   <p className="text-sm font-black text-zinc-950">You</p>
                   <p className="text-xs font-bold text-zinc-500">
-                    Backend + data
+                    Ready to build
                   </p>
                 </div>
               </div>

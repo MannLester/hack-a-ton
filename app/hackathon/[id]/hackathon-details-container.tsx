@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { getUiHackathon } from "@/components/data/adapters";
 import { NotFoundView } from "@/components/shared/not-found-view";
-import { hackathons } from "@/lib/sample-data";
 import { getListingDataSourceItems } from "@/lib/listing-data-source";
 import { ExploreView } from "./explore-view";
 
@@ -13,7 +12,6 @@ const hackathonLookupTimeoutMs = 8000;
 
 export function HackathonDetailsContainer({ id }: { id: string }) {
   const [hasLookupTimedOut, setHasLookupTimedOut] = useState(false);
-  const sampleHackathon = hackathons.find((hackathon) => hackathon.id === id);
   const convexHackathons = useQuery(api.hackathons.listPublished, {});
   const convexHackathon = convexHackathons?.find(
     (hackathon) => hackathon._id === id,
@@ -28,7 +26,6 @@ export function HackathonDetailsContainer({ id }: { id: string }) {
   useEffect(() => {
     setHasLookupTimedOut(false);
 
-    if (sampleHackathon) return;
     if (convexHackathons !== undefined) return;
 
     const lookupTimeout = window.setTimeout(() => {
@@ -36,17 +33,7 @@ export function HackathonDetailsContainer({ id }: { id: string }) {
     }, hackathonLookupTimeoutMs);
 
     return () => window.clearTimeout(lookupTimeout);
-  }, [convexHackathons, id, sampleHackathon]);
-
-  if (sampleHackathon) {
-    return (
-      <ExploreView
-        id={id}
-        hackathon={sampleHackathon}
-        allHackathons={hackathons}
-      />
-    );
-  }
+  }, [convexHackathons, id]);
 
   if (convexHackathons === undefined && !hasLookupTimedOut) {
     return (
@@ -66,9 +53,7 @@ export function HackathonDetailsContainer({ id }: { id: string }) {
   }
 
   const allHackathons = getListingDataSourceItems({
-    isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
     convexItems: convexHackathons?.map(getUiHackathon),
-    fallbackItems: hackathons,
   });
 
   return (

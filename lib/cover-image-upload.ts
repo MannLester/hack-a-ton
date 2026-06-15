@@ -41,3 +41,11 @@ export function validateCoverImageFile(
 
   return { isValid: true };
 }
+
+
+export function getTrustedCoverImageUrl(_input: {
+  coverImageUrl?: string;
+  coverImageStorageId?: unknown;
+}) {
+  return undefined;
+}

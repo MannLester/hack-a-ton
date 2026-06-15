@@ -3,11 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { getPlacementStats } from "../lib/leaderboard";
-import {
-  getCurrentUser,
-  getCurrentUserOrRequestedClerkUser,
-  requireCurrentStaffUser,
-} from "./users";
+import { getCurrentUser, requireCurrentStaffUser } from "./users";
 
 type PortfolioStats = {
   participations: number;
@@ -140,13 +136,10 @@ async function getVerifiedPortfolioEntries(ctx: QueryCtx, userId: Id<"users">) {
 
 export const getProfile = query({
   args: {
-    clerkUserId: v.optional(v.string()),
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    const currentUser = args.userId
-      ? null
-      : await getCurrentUserOrRequestedClerkUser(ctx, args.clerkUserId);
+    const currentUser = args.userId ? null : await getCurrentUser(ctx);
     const targetUserId = args.userId ?? currentUser?._id;
 
     if (!targetUserId) throw new Error("User profile target is required.");

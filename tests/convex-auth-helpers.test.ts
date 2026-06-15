@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { isParticipantVisibleHackathon } from "../convex/hackathons";
 import {
   getAuthenticatedClerkSubject,
+  getResolvedAuthenticatedClerkUserId,
   getResolvedOnboardingPersona,
   getResolvedOnboardingClerkUserId,
   requireCurrentOrganizer,
@@ -104,12 +105,24 @@ describe("Convex auth helpers", () => {
     ).toBe("auth_user");
   });
 
-  test("uses requested onboarding identity when auth identity is unavailable", () => {
+  test("does not trust requested onboarding identity without authentication", () => {
     expect(
       getResolvedOnboardingClerkUserId({
         requestedClerkUserId: "requested_user",
       }),
-    ).toBe("requested_user");
+    ).toBeNull();
+  });
+
+  test("strict identity resolution returns the authenticated subject", () => {
+    expect(
+      getResolvedAuthenticatedClerkUserId("auth_user", "requested_user"),
+    ).toBe("auth_user");
+  });
+
+  test("strict identity resolution never falls back to requested identity", () => {
+    expect(
+      getResolvedAuthenticatedClerkUserId(undefined, "requested_user"),
+    ).toBeNull();
   });
 
   test("uses stored onboarding persona when available", () => {
