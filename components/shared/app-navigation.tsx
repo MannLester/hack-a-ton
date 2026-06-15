@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SignInButton, SignOutButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { ChevronDown, LogOut, Medal, Trophy, User } from "lucide-react";
+import { BriefcaseBusiness, ChevronDown, LogOut, Medal, Trophy, User } from "lucide-react";
 import type { ParticipantTab, Persona } from "@/components/shared/types";
 import {
   isClerkConfigured,
@@ -25,7 +25,7 @@ function SignedOutActions() {
       </SignInButton>
       <SignUpButton mode="modal">
         <button
-          className="inline-flex size-10 items-center justify-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] text-zinc-950 shadow-[2px_2px_0_#111] md:h-10 md:w-auto md:px-4 md:text-sm md:font-black md:shadow-[3px_3px_0_#111]"
+          className="hidden size-10 items-center justify-center rounded-md border-2 border-zinc-950 bg-[#ffd21f] text-zinc-950 shadow-[2px_2px_0_#111] md:inline-flex md:h-10 md:w-auto md:px-4 md:text-sm md:font-black md:shadow-[3px_3px_0_#111]"
           aria-label="Sign up"
         >
           <Trophy className="size-4 md:hidden" />
@@ -36,7 +36,13 @@ function SignedOutActions() {
   );
 }
 
-function SignedInActions({ onPortfolioClick }: { onPortfolioClick?: () => void }) {
+function SignedInActions({
+  onOrganizerClick,
+  onPortfolioClick,
+}: {
+  onOrganizerClick?: () => void;
+  onPortfolioClick?: () => void;
+}) {
   const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -73,6 +79,15 @@ function SignedInActions({ onPortfolioClick }: { onPortfolioClick?: () => void }
               className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
             >
               <User className="size-4" /> View Profile
+            </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+                onOrganizerClick?.();
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
+            >
+              <BriefcaseBusiness className="size-4" /> Organizer Dashboard
             </button>
             <div className="border-t-2 border-zinc-100" />
             <button
@@ -114,11 +129,24 @@ function SignedInActions({ onPortfolioClick }: { onPortfolioClick?: () => void }
   );
 }
 
-function AuthNavigationActions({ onPortfolioClick }: { onPortfolioClick?: () => void }) {
+function AuthNavigationActions({
+  onOrganizerClick,
+  onPortfolioClick,
+}: {
+  onOrganizerClick?: () => void;
+  onPortfolioClick?: () => void;
+}) {
   const { isSignedIn } = useClerkAuthState();
 
   if (!isClerkConfigured()) return null;
-  if (isSignedIn) return <SignedInActions onPortfolioClick={onPortfolioClick} />;
+  if (isSignedIn) {
+    return (
+      <SignedInActions
+        onOrganizerClick={onOrganizerClick}
+        onPortfolioClick={onPortfolioClick}
+      />
+    );
+  }
   return <SignedOutActions />;
 }
 
@@ -196,7 +224,17 @@ export function AppNavigation({
               </button>
             </>
           )}
-          <AuthNavigationActions onPortfolioClick={() => setParticipantTab("portfolio")} />
+          <AuthNavigationActions
+            onOrganizerClick={() => {
+              onLeaveStaffView?.();
+              setPersona("organizer");
+            }}
+            onPortfolioClick={() => {
+              onLeaveStaffView?.();
+              setPersona("participant");
+              setParticipantTab("portfolio");
+            }}
+          />
         </div>
       </div>
     </header>
