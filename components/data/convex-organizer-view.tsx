@@ -18,6 +18,7 @@ import type {
 } from "@/components/shared/types";
 import { OrganizerView } from "@/components/organizers/dashboard-view";
 import { getOrganizerListingDataSourceItems } from "@/lib/listing-data-source";
+import { validateCoverImageFile } from "@/lib/cover-image-upload";
 import {
   getClerkIdentity,
   getListingMutationInput,
@@ -52,6 +53,9 @@ export function ConvexOrganizerView({
   const submitTeamResults = useMutation(api.results.submitTeamResults);
   const generateCoverImageUploadUrl = useMutation(
     api.files.generateCoverImageUploadUrl,
+  );
+  const validateCoverImageUpload = useMutation(
+    api.files.validateCoverImageUpload,
   );
   const dashboard = useQuery(
     api.organizers.getDashboard,
@@ -173,6 +177,10 @@ export function ConvexOrganizerView({
   };
 
   const uploadCoverImage = async (file: File) => {
+    const validation = validateCoverImageFile(file);
+
+    if (!validation.isValid) throw new Error(validation.message);
+
     const uploadUrl = await generateCoverImageUploadUrl({});
     const uploadResponse = await fetch(uploadUrl, {
       method: "POST",
@@ -185,8 +193,12 @@ export function ConvexOrganizerView({
     }
 
     const { storageId } = await uploadResponse.json();
-    return {
+    const validatedStorageId = await validateCoverImageUpload({
       storageId: storageId as Id<"_storage">,
+    });
+
+    return {
+      storageId: validatedStorageId,
       previewUrl: URL.createObjectURL(file),
     };
   };
