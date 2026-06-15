@@ -168,6 +168,7 @@ export function OnboardingFlow() {
     const displayName = getClerkDisplayName(clerkUser);
 
     await saveOnboardingProfile({
+      clerkUserId: clerkUser.id,
       displayName,
       initials: getInitials(displayName) || "HA",
       schoolOrCompany: clerkUser.primaryEmailAddress?.emailAddress,

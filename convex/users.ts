@@ -11,6 +11,7 @@ const userProfileFields = {
 };
 
 const onboardingDataFields = {
+  clerkUserId: v.optional(v.string()),
   persona: v.union(v.literal("participant"), v.literal("organizer")),
   domains: v.array(v.string()),
   techStack: v.array(v.string()),
@@ -262,7 +263,14 @@ export const saveOnboardingProfile = mutation({
     ...onboardingDataFields,
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await getAuthenticatedClerkSubject(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = getResolvedOnboardingClerkUserId({
+      authenticatedSubject: identity?.subject,
+      requestedClerkUserId: args.clerkUserId,
+    });
+
+    if (!clerkUserId) throw new Error("Authentication is required.");
+
     const userId = await upsertUser(ctx, {
       clerkUserId,
       displayName: args.displayName,
