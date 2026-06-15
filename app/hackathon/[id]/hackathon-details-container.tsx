@@ -1,26 +1,42 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useEffect, useState } from "react";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import { getUiHackathon } from "@/components/data/adapters";
+import { NotFoundView } from "@/components/shared/not-found-view";
 import { hackathons } from "@/lib/sample-data";
 import { getListingDataSourceItems } from "@/lib/listing-data-source";
 import { ExploreView } from "./explore-view";
 
+const hackathonLookupTimeoutMs = 8000;
+
 export function HackathonDetailsContainer({ id }: { id: string }) {
+  const [hasLookupTimedOut, setHasLookupTimedOut] = useState(false);
   const sampleHackathon = hackathons.find((hackathon) => hackathon.id === id);
-  const convexHackathon = useQuery(
-    api.hackathons.getById,
-    sampleHackathon ? "skip" : { hackathonId: id as Id<"hackathons"> },
-  );
   const convexHackathons = useQuery(api.hackathons.listPublished, {});
+  const convexHackathon = convexHackathons?.find(
+    (hackathon) => hackathon._id === id,
+  );
   const teams = useQuery(
     api.teams.listByHackathon,
     convexHackathon?._id
       ? { hackathonId: convexHackathon._id }
       : "skip",
   );
+
+  useEffect(() => {
+    setHasLookupTimedOut(false);
+
+    if (sampleHackathon) return;
+    if (convexHackathons !== undefined) return;
+
+    const lookupTimeout = window.setTimeout(() => {
+      setHasLookupTimedOut(true);
+    }, hackathonLookupTimeoutMs);
+
+    return () => window.clearTimeout(lookupTimeout);
+  }, [convexHackathons, id, sampleHackathon]);
 
   if (sampleHackathon) {
     return (
@@ -32,7 +48,7 @@ export function HackathonDetailsContainer({ id }: { id: string }) {
     );
   }
 
-  if (convexHackathon === undefined) {
+  if (convexHackathons === undefined && !hasLookupTimedOut) {
     return (
       <div className="min-h-screen bg-[#f5f3ef] p-8 text-sm font-black text-zinc-500">
         Loading hackathon...
@@ -40,11 +56,12 @@ export function HackathonDetailsContainer({ id }: { id: string }) {
     );
   }
 
-  if (convexHackathon === null) {
+  if (!convexHackathon) {
     return (
-      <div className="min-h-screen bg-[#f5f3ef] p-8 text-sm font-black text-zinc-500">
-        Hackathon not found.
-      </div>
+      <NotFoundView
+        title="Hackathon not found"
+        message="This hackathon is unavailable, unpublished, or no longer visible to participants."
+      />
     );
   }
 
