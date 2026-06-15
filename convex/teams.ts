@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { getCurrentUser } from "./users";
 
 type LftProfileWithUser = Doc<"lftProfiles"> & {
   displayName: string;
@@ -28,6 +29,8 @@ type TeamMemberProfile = {
   meta: string | null;
   isLead: boolean;
 };
+
+const maxUserTeamScan = 200;
 
 function getPairKey(firstUserId: Id<"users">, secondUserId: Id<"users">) {
   return [firstUserId, secondUserId].sort().join(":");
@@ -300,16 +303,16 @@ async function respondToTeamApplication(
 
 export const listActiveProfiles = query({
   args: {
-    viewerUserId: v.id("users"),
     hackathonId: v.optional(v.id("hackathons")),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const activeProfiles = await ctx.db
       .query("lftProfiles")
       .withIndex("by_active", (index) => index.eq("isActive", true))
       .collect();
     const visibleProfiles = activeProfiles.filter((profile) => {
-      const isDifferentUser = profile.userId !== args.viewerUserId;
+      const isDifferentUser = profile.userId !== currentUser._id;
       const matchesHackathon =
         !args.hackathonId || profile.hackathonId === args.hackathonId;
 
@@ -318,21 +321,20 @@ export const listActiveProfiles = query({
 
     return Promise.all(
       visibleProfiles.map((profile) =>
-        getProfileWithUser(ctx, profile, args.viewerUserId),
+        getProfileWithUser(ctx, profile, currentUser._id),
       ),
     );
   },
 });
 
 export const listRecruitingTeams = query({
-  args: {
-    viewerUserId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
     const decisions = await ctx.db
       .query("teamDecisions")
       .withIndex("by_from_user", (index) =>
-        index.eq("fromUserId", args.viewerUserId),
+        index.eq("fromUserId", currentUser._id),
       )
       .collect();
     const decidedTeamIds = new Set(
@@ -345,7 +347,7 @@ export const listRecruitingTeams = query({
       .withIndex("by_status", (index) => index.eq("status", "recruiting"))
       .collect();
     const visibleTeams = recruitingTeams.filter((team) => {
-      const isNotMember = !team.members.includes(args.viewerUserId);
+      const isNotMember = !team.members.includes(currentUser._id);
       const isUndecided = !decidedTeamIds.has(team._id);
 
       return isNotMember && isUndecided;
@@ -359,20 +361,19 @@ export const listRecruitingTeams = query({
 });
 
 export const getMyProfile = query({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
+
     return ctx.db
       .query("lftProfiles")
-      .withIndex("by_user", (index) => index.eq("userId", args.userId))
+      .withIndex("by_user", (index) => index.eq("userId", currentUser._id))
       .first();
   },
 });
 
 export const upsertProfile = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.optional(v.id("hackathons")),
     role: v.string(),
     stack: v.array(v.string()),
@@ -381,9 +382,10 @@ export const upsertProfile = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const existingProfile = await ctx.db
       .query("lftProfiles")
-      .withIndex("by_user", (index) => index.eq("userId", args.userId))
+      .withIndex("by_user", (index) => index.eq("userId", currentUser._id))
       .first();
 
     const profileFields = {
@@ -397,7 +399,7 @@ export const upsertProfile = mutation({
 
     if (!existingProfile)
       return ctx.db.insert("lftProfiles", {
-        userId: args.userId,
+        userId: currentUser._id,
         ...profileFields,
       });
 
@@ -408,16 +410,16 @@ export const upsertProfile = mutation({
 
 export const decideOnProfile = mutation({
   args: {
-    fromUserId: v.id("users"),
     toUserId: v.id("users"),
     teamId: v.optional(v.id("teams")),
     hackathonId: v.optional(v.id("hackathons")),
     decision: v.union(v.literal("like"), v.literal("pass")),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const existingDecision = await findExistingDecision(
       ctx,
-      args.fromUserId,
+      currentUser._id,
       args.toUserId,
       args.teamId,
     );
@@ -431,7 +433,7 @@ export const decideOnProfile = mutation({
       await ctx.db.patch(existingDecision._id, decisionFields);
     if (!existingDecision) {
       await ctx.db.insert("teamDecisions", {
-        fromUserId: args.fromUserId,
+        fromUserId: currentUser._id,
         toUserId: args.toUserId,
         ...decisionFields,
       });
@@ -440,7 +442,7 @@ export const decideOnProfile = mutation({
     if (args.teamId)
       return respondToTeamApplication(
         ctx,
-        args.fromUserId,
+        currentUser._id,
         args.toUserId,
         args.teamId,
         args.decision,
@@ -450,7 +452,7 @@ export const decideOnProfile = mutation({
 
     return createMatchIfMutualLike(
       ctx,
-      args.fromUserId,
+      currentUser._id,
       args.toUserId,
       args.hackathonId,
     );
@@ -458,21 +460,20 @@ export const decideOnProfile = mutation({
 });
 
 export const listMyMatches = query({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
     const [firstUserMatches, secondUserMatches] = await Promise.all([
       ctx.db
         .query("teamMatches")
         .withIndex("by_first_user", (index) =>
-          index.eq("firstUserId", args.userId),
+          index.eq("firstUserId", currentUser._id),
         )
         .collect(),
       ctx.db
         .query("teamMatches")
         .withIndex("by_second_user", (index) =>
-          index.eq("secondUserId", args.userId),
+          index.eq("secondUserId", currentUser._id),
         )
         .collect(),
     ]);
@@ -484,12 +485,11 @@ export const listMyMatches = query({
 });
 
 export const getMyTeam = query({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    const allTeams = await ctx.db.query("teams").collect();
-    const team = allTeams.find((item) => item.members.includes(args.userId));
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
+    const allTeams = await ctx.db.query("teams").take(maxUserTeamScan);
+    const team = allTeams.find((item) => item.members.includes(currentUser._id));
 
     if (!team) return null;
 
@@ -508,13 +508,12 @@ export const getMyTeam = query({
 });
 
 export const listMyTeams = query({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    const allTeams = await ctx.db.query("teams").collect();
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
+    const allTeams = await ctx.db.query("teams").take(maxUserTeamScan);
     const joinedTeams = allTeams.filter((team) =>
-      team.members.includes(args.userId),
+      team.members.includes(currentUser._id),
     );
 
     return Promise.all(
@@ -566,12 +565,11 @@ export const listByHackathon = query({
 });
 
 export const listInterestedUsersForMyTeam = query({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    const allTeams = await ctx.db.query("teams").collect();
-    const ledTeams = allTeams.filter((item) => item.members[0] === args.userId);
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUser(ctx);
+    const allTeams = await ctx.db.query("teams").take(maxUserTeamScan);
+    const ledTeams = allTeams.filter((item) => item.members[0] === currentUser._id);
     const ledTeamIds = new Set(ledTeams.map((team) => team._id));
 
     if (ledTeams.length === 0) return [];
@@ -579,8 +577,8 @@ export const listInterestedUsersForMyTeam = query({
     const inboundLikes = await ctx.db
       .query("teamDecisions")
       .filter((queryBuilder) =>
-        queryBuilder.and(
-          queryBuilder.eq(queryBuilder.field("toUserId"), args.userId),
+          queryBuilder.and(
+          queryBuilder.eq(queryBuilder.field("toUserId"), currentUser._id),
           queryBuilder.eq(queryBuilder.field("decision"), "like"),
         ),
       )
@@ -592,7 +590,7 @@ export const listInterestedUsersForMyTeam = query({
       teamInboundLikes.map(async (decision) => {
         const existingResponse = await findExistingDecision(
           ctx,
-          args.userId,
+          currentUser._id,
           decision.fromUserId,
           decision.teamId,
         );
@@ -616,7 +614,6 @@ export const listInterestedUsersForMyTeam = query({
 
 export const createTeam = mutation({
   args: {
-    userId: v.id("users"),
     teamName: v.string(),
     hackathonId: v.id("hackathons"),
     goal: v.string(),
@@ -624,11 +621,13 @@ export const createTeam = mutation({
     targetSize: v.number(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+
     return ctx.db.insert("teams", {
       hackathonId: args.hackathonId,
       teamName: args.teamName,
       goal: args.goal,
-      members: [args.userId],
+      members: [currentUser._id],
       currentSize: 1,
       targetSize: args.targetSize,
       missingRoles: args.roles,

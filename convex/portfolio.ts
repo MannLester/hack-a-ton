@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { getPlacementStats } from "../lib/leaderboard";
+import { getCurrentUser, requireCurrentStaffUser } from "./users";
 
 type PortfolioStats = {
   participations: number;
@@ -27,6 +28,8 @@ type VerifiedPortfolioEntry = {
   placement: Doc<"teamResults">["placement"];
   teamName: string;
 };
+
+const maxPortfolioResultScan = 500;
 
 function getPortfolioResult(placement: Doc<"teamResults">["placement"]) {
   if (placement === "first") return "winner";
@@ -69,7 +72,7 @@ async function getUserBadges(ctx: QueryCtx, userId: Id<"users">) {
 }
 
 async function getVerifiedPortfolioEntries(ctx: QueryCtx, userId: Id<"users">) {
-  const teamResults = await ctx.db.query("teamResults").collect();
+  const teamResults = await ctx.db.query("teamResults").take(maxPortfolioResultScan);
   const entries = await Promise.all(
     teamResults.map(async (teamResult) => {
       const team = await ctx.db.get(teamResult.teamId);
@@ -100,12 +103,17 @@ async function getVerifiedPortfolioEntries(ctx: QueryCtx, userId: Id<"users">) {
 
 export const getProfile = query({
   args: {
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    const entries = await getVerifiedPortfolioEntries(ctx, args.userId);
-    const badges = await getUserBadges(ctx, args.userId);
+    const currentUser = args.userId ? null : await getCurrentUser(ctx);
+    const targetUserId = args.userId ?? currentUser?._id;
+
+    if (!targetUserId) throw new Error("User profile target is required.");
+
+    const user = await ctx.db.get(targetUserId);
+    const entries = await getVerifiedPortfolioEntries(ctx, targetUserId);
+    const badges = await getUserBadges(ctx, targetUserId);
 
     return {
       user,
@@ -119,10 +127,15 @@ export const getProfile = query({
 
 export const listEntries = query({
   args: {
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    return getVerifiedPortfolioEntries(ctx, args.userId);
+    const currentUser = args.userId ? null : await getCurrentUser(ctx);
+    const targetUserId = args.userId ?? currentUser?._id;
+
+    if (!targetUserId) throw new Error("User profile target is required.");
+
+    return getVerifiedPortfolioEntries(ctx, targetUserId);
   },
 });
 
@@ -164,6 +177,8 @@ export const awardBadge = mutation({
     badgeId: v.id("badges"),
   },
   handler: async (ctx, args) => {
+    await requireCurrentStaffUser(ctx);
+
     const existingBadge = await ctx.db
       .query("userBadges")
       .withIndex("by_user_and_badge", (index) =>
@@ -205,4 +220,3 @@ export const deleteSelfReportedEntry = mutation({
     throw new Error("Manual portfolio entries are disabled. Results come from organizers.");
   },
 });
-

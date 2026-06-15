@@ -14,6 +14,10 @@ type UserStats = {
   score: number;
 };
 
+const maxLeaderboardUsers = 500;
+const maxLeaderboardTeamResults = 500;
+const maxLeaderboardTeams = 500;
+
 function getEmptyStats(): UserStats {
   return {
     participations: 0,
@@ -68,9 +72,11 @@ function getStatsByUserId(
 export const listTopBuilders = query({
   args: {},
   handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
-    const teamResults = await ctx.db.query("teamResults").collect();
-    const teams = await ctx.db.query("teams").collect();
+    const users = await ctx.db.query("users").take(maxLeaderboardUsers);
+    const teamResults = await ctx.db
+      .query("teamResults")
+      .take(maxLeaderboardTeamResults);
+    const teams = await ctx.db.query("teams").take(maxLeaderboardTeams);
     const statsByUserId = getStatsByUserId(teamResults, teams);
     const rows = users.map((user) => {
       const stats = statsByUserId.get(user._id) ?? getEmptyStats();

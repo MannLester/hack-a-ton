@@ -2,31 +2,12 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { requireCurrentStaffUser } from "./users";
 
 type PendingReview = Doc<"listingReviews"> & {
   hackathon: Doc<"hackathons"> | null;
   organizer: Doc<"organizers"> | null;
 };
-
-async function requireMutationStaffUser(ctx: MutationCtx, staffUserId: Id<"users">) {
-  const staffUser = await ctx.db.get(staffUserId);
-
-  if (!staffUser || staffUser.role !== "staff") {
-    throw new Error("Staff access is required.");
-  }
-
-  return staffUser;
-}
-
-async function requireQueryStaffUser(ctx: QueryCtx, staffUserId: Id<"users">) {
-  const staffUser = await ctx.db.get(staffUserId);
-
-  if (!staffUser || staffUser.role !== "staff") {
-    throw new Error("Staff access is required.");
-  }
-
-  return staffUser;
-}
 
 async function requirePendingReview(
   ctx: MutationCtx,
@@ -53,11 +34,9 @@ async function getPendingReview(ctx: QueryCtx, review: Doc<"listingReviews">) {
 }
 
 export const listPendingReviews = query({
-  args: {
-    staffUserId: v.id("users"),
-  },
-  handler: async (ctx, args) => {
-    await requireQueryStaffUser(ctx, args.staffUserId);
+  args: {},
+  handler: async (ctx) => {
+    await requireCurrentStaffUser(ctx);
     const pendingReviews = await ctx.db
       .query("listingReviews")
       .withIndex("by_status", (index) => index.eq("status", "pending"))
@@ -71,11 +50,10 @@ export const listPendingReviews = query({
 
 export const approveListing = mutation({
   args: {
-    staffUserId: v.id("users"),
     reviewId: v.id("listingReviews"),
   },
   handler: async (ctx, args) => {
-    await requireMutationStaffUser(ctx, args.staffUserId);
+    const staffUser = await requireCurrentStaffUser(ctx);
     const review = await requirePendingReview(ctx, args.reviewId);
     const now = Date.now();
 
@@ -84,7 +62,7 @@ export const approveListing = mutation({
       publishedAt: now,
     });
     await ctx.db.patch(args.reviewId, {
-      reviewerUserId: args.staffUserId,
+      reviewerUserId: staffUser._id,
       status: "approved",
       reviewedAt: now,
     });
@@ -95,12 +73,11 @@ export const approveListing = mutation({
 
 export const requestListingEdits = mutation({
   args: {
-    staffUserId: v.id("users"),
     reviewId: v.id("listingReviews"),
     note: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireMutationStaffUser(ctx, args.staffUserId);
+    const staffUser = await requireCurrentStaffUser(ctx);
     const review = await requirePendingReview(ctx, args.reviewId);
     const now = Date.now();
 
@@ -108,7 +85,7 @@ export const requestListingEdits = mutation({
       status: "needs_edits",
     });
     await ctx.db.patch(args.reviewId, {
-      reviewerUserId: args.staffUserId,
+      reviewerUserId: staffUser._id,
       status: "needs_edits",
       note: args.note,
       reviewedAt: now,

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { requireCurrentOrganizer } from "./users";
 
 const cancellationVisibilityWindowMs = 3 * 24 * 60 * 60 * 1000;
 
@@ -49,7 +50,7 @@ function getOrganizerStats(hackathons: Doc<"hackathons">[]) {
 }
 
 async function requireOrganizerHackathon(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   organizerId: Id<"organizers">,
   hackathonId: Id<"hackathons">,
 ) {
@@ -152,14 +153,13 @@ async function getLatestListingReviewNote(
   return latestReview?.note?.trim();
 }
 export const getDashboard = query({
-  args: {
-    organizerId: v.id("organizers"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathons = await ctx.db
       .query("hackathons")
       .withIndex("by_organizer", (index) =>
-        index.eq("organizerId", args.organizerId),
+        index.eq("organizerId", organizer._id),
       )
       .collect();
 
@@ -180,12 +180,13 @@ export const getDashboard = query({
 
 export const createDraftListing = mutation({
   args: {
-    organizerId: v.id("organizers"),
     ...listingFields,
   },
   handler: async (ctx, args) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
+
     return ctx.db.insert("hackathons", {
-      organizerId: args.organizerId,
+      organizerId: organizer._id,
       name: args.name,
       dateLabel: args.dateLabel,
       registrationDeadlineLabel: args.registrationDeadlineLabel,
@@ -208,14 +209,14 @@ export const createDraftListing = mutation({
 
 export const updateDraftListing = mutation({
   args: {
-    organizerId: v.id("organizers"),
     hackathonId: v.id("hackathons"),
     ...listingFields,
   },
   handler: async (ctx, args) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathon = await requireOrganizerHackathon(
       ctx,
-      args.organizerId,
+      organizer._id,
       args.hackathonId,
     );
 
@@ -254,13 +255,13 @@ export const updateDraftListing = mutation({
 
 export const submitListingForReview = mutation({
   args: {
-    organizerId: v.id("organizers"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathon = await requireOrganizerHackathon(
       ctx,
-      args.organizerId,
+      organizer._id,
       args.hackathonId,
     );
 
@@ -294,7 +295,6 @@ export const submitListingForReview = mutation({
 
 export const cancelListing = mutation({
   args: {
-    organizerId: v.id("organizers"),
     hackathonId: v.id("hackathons"),
     reason: v.string(),
   },
@@ -305,9 +305,10 @@ export const cancelListing = mutation({
       throw new Error("Cancellation reason must explain what happened.");
     }
 
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathon = await requireOrganizerHackathon(
       ctx,
-      args.organizerId,
+      organizer._id,
       args.hackathonId,
     );
     const canCancelListing = hackathon.status === "published";
@@ -333,13 +334,13 @@ export const cancelListing = mutation({
 
 export const archiveListing = mutation({
   args: {
-    organizerId: v.id("organizers"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathon = await requireOrganizerHackathon(
       ctx,
-      args.organizerId,
+      organizer._id,
       args.hackathonId,
     );
 
@@ -356,14 +357,13 @@ export const archiveListing = mutation({
 });
 
 export const getInsights = query({
-  args: {
-    organizerId: v.id("organizers"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathons = await ctx.db
       .query("hackathons")
       .withIndex("by_organizer", (index) =>
-        index.eq("organizerId", args.organizerId),
+        index.eq("organizerId", organizer._id),
       )
       .collect();
     const listingInsights = await Promise.all(

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { requireCurrentOrganizer } from "./users";
 
 const placementValidator = v.union(
   v.literal("first"),
@@ -132,14 +133,13 @@ async function getExistingTeamResult(
 }
 
 export const listOrganizerResultBoards = query({
-  args: {
-    organizerId: v.id("organizers"),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathons = await ctx.db
       .query("hackathons")
       .withIndex("by_organizer", (index) =>
-        index.eq("organizerId", args.organizerId),
+        index.eq("organizerId", organizer._id),
       )
       .collect();
     const now = Date.now();
@@ -182,7 +182,6 @@ export const listOrganizerResultBoards = query({
 
 export const submitTeamResults = mutation({
   args: {
-    organizerId: v.id("organizers"),
     hackathonId: v.id("hackathons"),
     results: v.array(
       v.object({
@@ -192,9 +191,10 @@ export const submitTeamResults = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { organizer } = await requireCurrentOrganizer(ctx);
     const hackathon = await requireOrganizerHackathon(
       ctx,
-      args.organizerId,
+      organizer._id,
       args.hackathonId,
     );
 
@@ -216,7 +216,7 @@ export const submitTeamResults = mutation({
         const resultFields = {
           hackathonId: args.hackathonId,
           teamId: result.teamId,
-          organizerId: args.organizerId,
+          organizerId: organizer._id,
           placement: result.placement as Placement,
         };
 

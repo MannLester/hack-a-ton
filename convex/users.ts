@@ -1,10 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 
-const userIdentityFields = {
-  clerkUserId: v.string(),
+const userProfileFields = {
   displayName: v.string(),
   initials: v.string(),
   schoolOrCompany: v.optional(v.string()),
@@ -48,16 +47,10 @@ function getResolvedInitials(displayName: string, initials?: string) {
   return getInitials(displayName) || "HA";
 }
 
-async function getUserByClerkId(ctx: MutationCtx, clerkUserId: string) {
-  return ctx.db
-    .query("users")
-    .withIndex("by_clerk_user_id", (index) =>
-      index.eq("clerkUserId", clerkUserId),
-    )
-    .unique();
-}
+type UserRole = Doc<"users">["role"];
+type AuthCtx = MutationCtx | QueryCtx;
 
-async function getExistingUserByClerkId(ctx: QueryCtx, clerkUserId: string) {
+async function getUserByClerkId(ctx: AuthCtx, clerkUserId: string) {
   return ctx.db
     .query("users")
     .withIndex("by_clerk_user_id", (index) =>
@@ -67,13 +60,84 @@ async function getExistingUserByClerkId(ctx: QueryCtx, clerkUserId: string) {
 }
 
 async function getOrganizerByOwnerId(
-  ctx: MutationCtx,
+  ctx: AuthCtx,
   ownerUserId: Id<"users">,
 ) {
   return ctx.db
     .query("organizers")
     .withIndex("by_owner", (index) => index.eq("ownerUserId", ownerUserId))
     .unique();
+}
+
+function getIdentityDisplayName(identity: Awaited<ReturnType<AuthCtx["auth"]["getUserIdentity"]>>) {
+  return (
+    identity?.name ??
+    identity?.preferredUsername ??
+    identity?.nickname ??
+    identity?.email?.split("@")[0] ??
+    "Hack-A-Ton Builder"
+  );
+}
+
+export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+
+  if (!identity) throw new Error("Authentication is required.");
+
+  return identity.subject;
+}
+
+export async function getCurrentUser(ctx: AuthCtx) {
+  const clerkUserId = await getAuthenticatedClerkSubject(ctx);
+  const user = await getUserByClerkId(ctx, clerkUserId);
+
+  if (!user) throw new Error("Current user record not found.");
+
+  return user;
+}
+
+export async function ensureCurrentUser(
+  ctx: MutationCtx,
+  role: "participant" | "organizer",
+) {
+  const identity = await ctx.auth.getUserIdentity();
+
+  if (!identity) throw new Error("Authentication is required.");
+
+  const displayName = getIdentityDisplayName(identity);
+
+  return upsertUser(ctx, {
+    clerkUserId: identity.subject,
+    displayName,
+    initials: getInitials(displayName) || "HA",
+    role,
+    schoolOrCompany: identity.email,
+  });
+}
+
+export async function requireCurrentOrganizer(ctx: AuthCtx) {
+  const currentUser = await getCurrentUser(ctx);
+  const organizer = await getOrganizerByOwnerId(ctx, currentUser._id);
+
+  if (!organizer) throw new Error("Organizer account is required.");
+
+  return { currentUser, organizer };
+}
+
+export async function requireCurrentStaffUser(ctx: AuthCtx) {
+  const currentUser = await getCurrentUser(ctx);
+
+  if (currentUser.role !== "staff") throw new Error("Staff access is required.");
+
+  return currentUser;
+}
+
+export async function requireCurrentUserRole(ctx: AuthCtx, role: UserRole) {
+  const currentUser = await getCurrentUser(ctx);
+
+  if (currentUser.role !== role) throw new Error(`${role} access is required.`);
+
+  return currentUser;
 }
 
 async function upsertUser(
@@ -106,23 +170,28 @@ async function upsertUser(
 }
 
 export const ensureParticipantUser = mutation({
-  args: userIdentityFields,
+  args: userProfileFields,
   handler: async (ctx, args) => {
-    return upsertUser(ctx, {
+    const clerkUserId = await getAuthenticatedClerkSubject(ctx);
+    const userId = await upsertUser(ctx, {
       ...args,
+      clerkUserId,
       role: "participant",
     });
+
+    return userId;
   },
 });
 
 export const ensureOrganizerAccount = mutation({
   args: {
-    ...userIdentityFields,
+    ...userProfileFields,
     organizerName: v.string(),
   },
   handler: async (ctx, args) => {
+    const clerkUserId = await getAuthenticatedClerkSubject(ctx);
     const ownerUserId = await upsertUser(ctx, {
-      clerkUserId: args.clerkUserId,
+      clerkUserId,
       displayName: args.displayName,
       initials: args.initials,
       role: "organizer",
@@ -146,11 +215,10 @@ export const ensureOrganizerAccount = mutation({
 });
 
 export const getStaffAccess = query({
-  args: {
-    clerkUserId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getExistingUserByClerkId(ctx, args.clerkUserId);
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const user = identity ? await getUserByClerkId(ctx, identity.subject) : null;
 
     return {
       canAccessStaffView: user?.role === "staff",
@@ -160,11 +228,10 @@ export const getStaffAccess = query({
 });
 
 export const getOnboardingStatus = query({
-  args: {
-    clerkUserId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getExistingUserByClerkId(ctx, args.clerkUserId);
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const user = identity ? await getUserByClerkId(ctx, identity.subject) : null;
 
     return {
       isComplete: Boolean(user?.onboardingCompletedAt),
@@ -175,18 +242,20 @@ export const getOnboardingStatus = query({
 
 export const saveOnboardingProfile = mutation({
   args: {
-    ...userIdentityFields,
+    ...userProfileFields,
     ...onboardingDataFields,
   },
   handler: async (ctx, args) => {
+    const clerkUserId = await getAuthenticatedClerkSubject(ctx);
     const userId = await upsertUser(ctx, {
-      clerkUserId: args.clerkUserId,
+      clerkUserId,
       displayName: args.displayName,
       initials: args.initials,
       role: args.persona,
       schoolOrCompany: args.schoolOrCompany,
       location: args.location,
     });
+    const currentUser = await ctx.db.get(userId);
     const userPatch = {
       onboardingCompletedAt: Date.now(),
       onboardingPersona: args.persona,
@@ -207,7 +276,7 @@ export const saveOnboardingProfile = mutation({
     const existingOrganizer = await getOrganizerByOwnerId(ctx, userId);
     const organizerFields = {
       ownerUserId: userId,
-      name: args.orgName?.trim() || args.displayName,
+      name: args.orgName?.trim() || currentUser?.displayName || "Organizer",
       websiteUrl: args.portfolioUrl,
     };
 
@@ -223,18 +292,17 @@ export const saveOnboardingProfile = mutation({
 
 export const updateBio = mutation({
   args: {
-    userId: v.id("users"),
     bio: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const user = await getCurrentUser(ctx);
 
     if (!user) throw new Error("User not found.");
 
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(user._id, {
       bio: args.bio.trim() || undefined,
     });
 
-    return args.userId;
+    return user._id;
   },
 });

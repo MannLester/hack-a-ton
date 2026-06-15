@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
+import { getCurrentUser } from "./users";
 
 const setupArgument = v.union(
   v.literal("All"),
@@ -16,6 +17,19 @@ type HackathonWithOrganizer = Doc<"hackathons"> & {
   lftCount: number;
   savedCount: number;
 };
+
+type HackathonWithOrganizerName = Doc<"hackathons"> & {
+  organizerName: string;
+};
+
+const defaultListingLimit = 50;
+const maxListingLimit = 100;
+
+function getBoundedLimit(limit: number | undefined) {
+  if (!limit) return defaultListingLimit;
+
+  return Math.min(Math.max(limit, 1), maxListingLimit);
+}
 
 function matchesQuery(
   hackathon: Doc<"hackathons">,
@@ -89,10 +103,9 @@ async function getResolvedCoverImageUrl(
 
 async function addOrganizerAndCounts(
   ctx: QueryCtx,
-  hackathon: Doc<"hackathons">,
+  hackathon: HackathonWithOrganizerName,
 ) {
-  const [organizer, counts, coverImageUrl] = await Promise.all([
-    ctx.db.get(hackathon.organizerId),
+  const [counts, coverImageUrl] = await Promise.all([
     getListingCounts(ctx, hackathon._id),
     getResolvedCoverImageUrl(ctx, hackathon),
   ]);
@@ -101,12 +114,23 @@ async function addOrganizerAndCounts(
     ...hackathon,
     coverImageUrl,
     ...counts,
-    organizerName: organizer?.name ?? "Unknown organizer",
   } satisfies HackathonWithOrganizer;
 }
 
+async function addOrganizerName(
+  ctx: QueryCtx,
+  hackathon: Doc<"hackathons">,
+) {
+  const organizer = await ctx.db.get(hackathon.organizerId);
+
+  return {
+    ...hackathon,
+    organizerName: organizer?.name ?? "Unknown organizer",
+  } satisfies HackathonWithOrganizerName;
+}
+
 function filterListings(
-  listings: HackathonWithOrganizer[],
+  listings: HackathonWithOrganizerName[],
   queryText: string,
   setup: "All" | "Online" | "Onsite" | "Hybrid",
   region: "All" | "Luzon" | "Visayas" | "Mindanao",
@@ -132,16 +156,16 @@ function isParticipantVisibleListing(hackathon: Doc<"hackathons">, now: number) 
   return now <= hackathon.cancellationVisibleUntil;
 }
 
-async function getParticipantVisibleHackathons(ctx: QueryCtx) {
+async function getParticipantVisibleHackathons(ctx: QueryCtx, limit: number) {
   const [publishedHackathons, cancelledHackathons] = await Promise.all([
     ctx.db
       .query("hackathons")
       .withIndex("by_status", (index) => index.eq("status", "published"))
-      .collect(),
+      .take(limit),
     ctx.db
       .query("hackathons")
       .withIndex("by_status", (index) => index.eq("status", "cancelled"))
-      .collect(),
+      .take(limit),
   ]);
   const now = Date.now();
 
@@ -153,6 +177,7 @@ async function getParticipantVisibleHackathons(ctx: QueryCtx) {
 export const listPublished = query({
   args: {
     queryText: v.optional(v.string()),
+    limit: v.optional(v.number()),
     setup: v.optional(setupArgument),
     region: v.optional(
       v.union(
@@ -164,18 +189,22 @@ export const listPublished = query({
     ),
   },
   handler: async (ctx, args) => {
-    const participantVisibleHackathons = await getParticipantVisibleHackathons(ctx);
-    const listings = await Promise.all(
+    const limit = getBoundedLimit(args.limit);
+    const participantVisibleHackathons = await getParticipantVisibleHackathons(ctx, limit);
+    const listingsWithOrganizerNames = await Promise.all(
       participantVisibleHackathons.map((hackathon) =>
-        addOrganizerAndCounts(ctx, hackathon),
+        addOrganizerName(ctx, hackathon),
       ),
     );
-
-    return filterListings(
-      listings,
+    const filteredListings = filterListings(
+      listingsWithOrganizerNames,
       args.queryText ?? "",
       args.setup ?? "All",
       args.region ?? "All",
+    ).slice(0, limit);
+
+    return Promise.all(
+      filteredListings.map((hackathon) => addOrganizerAndCounts(ctx, hackathon)),
     );
   },
 });
@@ -183,14 +212,17 @@ export const listPublished = query({
 export const featuredPublished = query({
   args: {},
   handler: async (ctx) => {
-    const participantVisibleHackathons = await getParticipantVisibleHackathons(ctx);
-    const listings = await Promise.all(
-      participantVisibleHackathons.map((hackathon) =>
-        addOrganizerAndCounts(ctx, hackathon),
-      ),
+    const participantVisibleHackathons = await getParticipantVisibleHackathons(
+      ctx,
+      defaultListingLimit,
     );
+    const firstVisibleHackathon = participantVisibleHackathons[0];
 
-    return listings[0] ?? null;
+    if (!firstVisibleHackathon) return null;
+
+    const listingWithOrganizerName = await addOrganizerName(ctx, firstVisibleHackathon);
+
+    return addOrganizerAndCounts(ctx, listingWithOrganizerName);
   },
 });
 
@@ -224,7 +256,9 @@ export const getById = query({
     if (!hackathon) return null;
     if (!isParticipantVisibleListing(hackathon, Date.now())) return null;
 
-    return addOrganizerAndCounts(ctx, hackathon);
+    const listingWithOrganizerName = await addOrganizerName(ctx, hackathon);
+
+    return addOrganizerAndCounts(ctx, listingWithOrganizerName);
   },
 });
 
@@ -242,7 +276,9 @@ export const listByOrganizer = query({
 
     return Promise.all(
       organizerHackathons.map((hackathon) =>
-        addOrganizerAndCounts(ctx, hackathon),
+        addOrganizerName(ctx, hackathon).then((listingWithOrganizerName) =>
+          addOrganizerAndCounts(ctx, listingWithOrganizerName),
+        ),
       ),
     );
   },
@@ -250,21 +286,21 @@ export const listByOrganizer = query({
 
 export const saveListing = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const existingSave = await ctx.db
       .query("savedHackathons")
       .withIndex("by_user_and_hackathon", (index) =>
-        index.eq("userId", args.userId).eq("hackathonId", args.hackathonId),
+        index.eq("userId", currentUser._id).eq("hackathonId", args.hackathonId),
       )
       .unique();
 
     if (existingSave) return existingSave._id;
 
     return ctx.db.insert("savedHackathons", {
-      userId: args.userId,
+      userId: currentUser._id,
       hackathonId: args.hackathonId,
     });
   },
@@ -272,14 +308,14 @@ export const saveListing = mutation({
 
 export const unsaveListing = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const existingSave = await ctx.db
       .query("savedHackathons")
       .withIndex("by_user_and_hackathon", (index) =>
-        index.eq("userId", args.userId).eq("hackathonId", args.hackathonId),
+        index.eq("userId", currentUser._id).eq("hackathonId", args.hackathonId),
       )
       .unique();
 
@@ -292,15 +328,15 @@ export const unsaveListing = mutation({
 
 export const markInterested = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
     const existingSignal = await ctx.db
       .query("listingSignals")
       .withIndex("by_user_hackathon_and_type", (index) =>
         index
-          .eq("userId", args.userId)
+          .eq("userId", currentUser._id)
           .eq("hackathonId", args.hackathonId)
           .eq("type", "interest"),
       )
@@ -309,7 +345,7 @@ export const markInterested = mutation({
     if (existingSignal) return existingSignal._id;
 
     return ctx.db.insert("listingSignals", {
-      userId: args.userId,
+      userId: currentUser._id,
       hackathonId: args.hackathonId,
       type: "interest",
     });
@@ -318,12 +354,13 @@ export const markInterested = mutation({
 
 export const recordLftClick = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+
     return ctx.db.insert("listingSignals", {
-      userId: args.userId,
+      userId: currentUser._id,
       hackathonId: args.hackathonId,
       type: "lft_click",
     });
@@ -332,12 +369,13 @@ export const recordLftClick = mutation({
 
 export const recordExternalRegistrationClick = mutation({
   args: {
-    userId: v.id("users"),
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+
     return ctx.db.insert("listingSignals", {
-      userId: args.userId,
+      userId: currentUser._id,
       hackathonId: args.hackathonId,
       type: "external_registration_click",
     });

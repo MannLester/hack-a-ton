@@ -3,6 +3,7 @@
 import { ClerkProvider, useAuth, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -41,6 +42,13 @@ function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
   );
 
   if (!convex) return children;
+  if (isClerkConfigured()) {
+    return (
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        {children}
+      </ConvexProviderWithClerk>
+    );
+  }
 
   return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
@@ -69,7 +77,7 @@ function OnboardingRedirect({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? { clerkUserId: user.id } : "skip",
+    user?.id ? {} : "skip",
   );
 
   useEffect(() => {
