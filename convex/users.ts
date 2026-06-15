@@ -90,6 +90,15 @@ export function getResolvedOnboardingClerkUserId({
   return authenticatedSubject ?? requestedClerkUserId;
 }
 
+export function getResolvedOnboardingPersona(
+  user?: Pick<Doc<"users">, "role" | "onboardingPersona"> | null,
+) {
+  if (user?.onboardingPersona) return user.onboardingPersona;
+  if (user?.role === "organizer") return "organizer";
+
+  return null;
+}
+
 export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
   const identity = await ctx.auth.getUserIdentity();
 
@@ -253,7 +262,7 @@ export const getOnboardingStatus = query({
     return {
       isComplete: Boolean(user?.onboardingCompletedAt),
       userId: user?._id ?? null,
-      onboardingPersona: user?.onboardingPersona ?? null,
+      onboardingPersona: getResolvedOnboardingPersona(user),
     };
   },
 });

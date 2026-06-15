@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { isParticipantVisibleHackathon } from "../convex/hackathons";
 import {
   getAuthenticatedClerkSubject,
+  getResolvedOnboardingPersona,
   getResolvedOnboardingClerkUserId,
   requireCurrentOrganizer,
   requireCurrentStaffUser,
@@ -109,6 +110,31 @@ describe("Convex auth helpers", () => {
         requestedClerkUserId: "requested_user",
       }),
     ).toBe("requested_user");
+  });
+
+  test("uses stored onboarding persona when available", () => {
+    expect(
+      getResolvedOnboardingPersona({
+        role: "participant",
+        onboardingPersona: "organizer",
+      } as never),
+    ).toBe("organizer");
+  });
+
+  test("falls back to organizer role for organizer onboarding access", () => {
+    expect(
+      getResolvedOnboardingPersona({
+        role: "organizer",
+      } as never),
+    ).toBe("organizer");
+  });
+
+  test("does not infer organizer access for participant users", () => {
+    expect(
+      getResolvedOnboardingPersona({
+        role: "participant",
+      } as never),
+    ).toBeNull();
   });
 });
 
