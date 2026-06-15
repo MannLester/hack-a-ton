@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { MouseEvent } from "react";
 import {
   Award,
   CalendarDays,
@@ -12,18 +16,34 @@ import type { Hackathon } from "@/lib/sample-data";
 import { getListingUpdateLabel } from "@/lib/organizer-workflow";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 
+function getHackathonPath(hackathonId: string) {
+  return `/hackathon/${hackathonId}`;
+}
+
 export function HackathonCard({
   hackathon,
 }: {
   hackathon: Hackathon & { coverImageUrl?: string };
 }) {
+  const router = useRouter();
+  const hackathonPath = getHackathonPath(hackathon.id);
   const updateLabel = getListingUpdateLabel({
     updatedAt: hackathon.updatedAt,
     now: Date.now(),
   });
 
+  const openHackathon = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    router.push(hackathonPath);
+  };
+
   return (
-    <Link href={`/hackathon/${hackathon.id}`} className="block h-full">
+    <Link
+      href={hackathonPath}
+      prefetch={false}
+      onClick={openHackathon}
+      className="block h-full"
+    >
       <PanelCard className="flex h-full flex-col cursor-pointer border-zinc-950 p-4 sm:p-5" hover>
         {hackathon.coverImageUrl ? (
           <div
