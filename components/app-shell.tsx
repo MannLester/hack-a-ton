@@ -170,7 +170,7 @@ export function HackatonApp() {
               onDismissTeammate={dismissTeammate}
               onLikeTeammate={likeTeammate}
               hasTeam={hasTeam}
-              onCreateTeam={async () => { setHasTeam(true); }}
+              onCreateTeam={async () => null}
               useSamplePortfolioFallback
             />
           )

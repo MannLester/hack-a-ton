@@ -9,8 +9,17 @@ import {
   UserPlus,
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
-import type { Hackathon, TeamLooking } from "@/lib/sample-data";
-import type { LandingStats, LeaderboardRow, MyTeam, ParticipantTab, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
+import type { TeamLooking } from "@/lib/sample-data";
+import type {
+  LandingStats,
+  LeaderboardRow,
+  MyTeam,
+  ParticipantTab,
+  PortfolioProfile,
+  TeamInterestedUser,
+  Teammate,
+  UiHackathon,
+} from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
@@ -46,8 +55,8 @@ export function LandingView({
 }: {
   activeTab: ParticipantTab;
   setActiveTab: (tab: ParticipantTab) => void;
-  filteredHackathons: Hackathon[];
-  featuredHackathon: Hackathon | null;
+  filteredHackathons: UiHackathon[];
+  featuredHackathon: UiHackathon | null;
   savedHackathonIds: string[];
   onToggleSave: (hackathonId: string) => void;
   visibleTeammates: Teammate[];
@@ -63,11 +72,11 @@ export function LandingView({
   hasTeam?: boolean;
   onCreateTeam?: (teamData: {
     teamName: string;
-    hackathonId: string;
+    hackathonId: Id<"hackathons">;
     goal: string;
     roles: string[];
     targetSize: number;
-  }) => Promise<void>;
+  }) => Promise<Id<"teams"> | null>;
   myTeams?: MyTeam[] | null;
   teamListings?: TeamLooking[];
   onDismissTeam?: (team: TeamLooking) => void;

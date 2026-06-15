@@ -22,8 +22,13 @@ import {
   X,
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
-import type { MyTeam, TeamInterestedUser, Teammate } from "@/components/shared/types";
-import type { Hackathon, TeamLooking } from "@/lib/sample-data";
+import type {
+  MyTeam,
+  TeamInterestedUser,
+  Teammate,
+  UiHackathon,
+} from "@/components/shared/types";
+import type { TeamLooking } from "@/lib/sample-data";
 import { teamsLooking } from "@/lib/sample-data";
 import { AuthActionButton } from "@/components/shared/auth-controls";
 import { Modal } from "@/components/shared/modal";
@@ -60,15 +65,15 @@ export function TeamView({
   setShowMatches: (showMatches: boolean) => void;
   onDismissTeammate: (teammateName: string) => void;
   onLikeTeammate: (teammate: Teammate) => void;
-  hackathons: Hackathon[];
+  hackathons: UiHackathon[];
   onBack: () => void;
   onCreateTeam?: (teamData: {
     teamName: string;
-    hackathonId: string;
+    hackathonId: Id<"hackathons">;
     goal: string;
     roles: string[];
     targetSize: number;
-  }) => Promise<void>;
+  }) => Promise<Id<"teams"> | null>;
   myTeams?: MyTeam[] | null;
   initialPhase?: "solo_swiping" | "creating_card" | "team_recruiting" | "onboarding_hackathon" | "onboarding_role";
   teamListings?: TeamLooking[];
@@ -94,6 +99,7 @@ export function TeamView({
   });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<Id<"teams"> | null>(
     null,
   );
@@ -108,6 +114,7 @@ export function TeamView({
   const selectedHackathon = hackathons.find(
     (h) => h.id === teamLobby.hackathon,
   );
+  const selectedConvexHackathonId = selectedHackathon?.convexId ?? null;
   const teamSizeLabel = selectedHackathon?.teamSize ?? "2-4";
   const [minStr, maxStr] = teamSizeLabel.split("-");
   const minMembers = parseInt(minStr, 10);
@@ -515,28 +522,40 @@ export function TeamView({
               <AuthActionButton
                 action="create_lft_card"
                 onAuthorizedClick={async () => {
-                  if (!selectedHackathon || !onCreateTeam) {
-                    setShowConfirmModal(true);
+                  if (!selectedHackathon) return;
+                  if (!selectedConvexHackathonId) return;
+                  if (!onCreateTeam) return;
+
+                  setCreating(true);
+                  setCreateError(null);
+                  const createdTeamId = await onCreateTeam({
+                    teamName: teamLobby.teamName,
+                    hackathonId: selectedConvexHackathonId,
+                    goal: teamLobby.goal,
+                    roles: teamLobby.roles,
+                    targetSize: maxMembers,
+                  })
+                    .catch(() => {
+                      setCreateError("Team creation failed. Please try again.");
+                      return null;
+                    })
+                    .finally(() => setCreating(false));
+
+                  if (!createdTeamId) {
+                    setCreateError((currentError) =>
+                      currentError ?? "Team creation is not ready yet.",
+                    );
                     return;
                   }
-                  setCreating(true);
-                  try {
-                    await onCreateTeam({
-                      teamName: teamLobby.teamName,
-                      hackathonId: selectedHackathon.id,
-                      goal: teamLobby.goal,
-                      roles: teamLobby.roles,
-                      targetSize: maxMembers,
-                    });
-                    setShowConfirmModal(true);
-                  } finally {
-                    setCreating(false);
-                  }
+
+                  setSelectedTeamId(createdTeamId);
+                  setShowConfirmModal(true);
                 }}
                 disabled={
                   creating ||
                   !teamLobby.teamName ||
                   !teamLobby.hackathon ||
+                  !selectedConvexHackathonId ||
                   !teamLobby.goal ||
                   belowMin
                 }
@@ -550,6 +569,11 @@ export function TeamView({
                 <Plus className="size-4" /> {creating ? "Creating..." : "Create Team"}
               </AuthActionButton>
             </div>
+            {createError && (
+              <p className="mt-3 text-sm font-bold text-red-600">
+                {createError}
+              </p>
+            )}
           </FeaturePanel>
         </div>
         <Modal

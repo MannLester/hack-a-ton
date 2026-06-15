@@ -51,7 +51,7 @@ function getResolvedInitials(displayName: string, initials?: string) {
 type UserRole = Doc<"users">["role"];
 type AuthCtx = MutationCtx | QueryCtx;
 
-async function getUserByClerkId(ctx: AuthCtx, clerkUserId: string) {
+export async function getUserByClerkId(ctx: AuthCtx, clerkUserId: string) {
   return ctx.db
     .query("users")
     .withIndex("by_clerk_user_id", (index) =>
@@ -110,6 +110,22 @@ export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
 export async function getCurrentUser(ctx: AuthCtx) {
   const clerkUserId = await getAuthenticatedClerkSubject(ctx);
   const user = await getUserByClerkId(ctx, clerkUserId);
+
+  if (!user) throw new Error("Current user record not found.");
+
+  return user;
+}
+
+export async function getCurrentUserOrRequestedClerkUser(
+  ctx: AuthCtx,
+  requestedClerkUserId?: string,
+) {
+  const identity = await ctx.auth.getUserIdentity();
+  const clerkUserId = getResolvedOnboardingClerkUserId({
+    authenticatedSubject: identity?.subject,
+    requestedClerkUserId,
+  });
+  const user = clerkUserId ? await getUserByClerkId(ctx, clerkUserId) : null;
 
   if (!user) throw new Error("Current user record not found.");
 
@@ -190,9 +206,19 @@ async function upsertUser(
 }
 
 export const ensureParticipantUser = mutation({
-  args: userProfileFields,
+  args: {
+    ...userProfileFields,
+    clerkUserId: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    const clerkUserId = await getAuthenticatedClerkSubject(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = getResolvedOnboardingClerkUserId({
+      authenticatedSubject: identity?.subject,
+      requestedClerkUserId: args.clerkUserId,
+    });
+
+    if (!clerkUserId) throw new Error("Authentication is required.");
+
     const userId = await upsertUser(ctx, {
       ...args,
       clerkUserId,

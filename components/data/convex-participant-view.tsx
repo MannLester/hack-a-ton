@@ -100,24 +100,24 @@ export function ConvexParticipantView({
 
   const convexTeammates = useQuery(
     api.teams.listActiveProfiles,
-    participantUserId ? {} : "skip",
+    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
   );
   const convexTeamListings = useQuery(
     api.teams.listRecruitingTeams,
-    participantUserId ? {} : "skip",
+    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
   );
   const myTeams = useQuery(
     api.teams.listMyTeams,
-    participantUserId ? {} : "skip",
+    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
   );
   const interestedUsersForMyTeam = useQuery(
     api.teams.listInterestedUsersForMyTeam,
-    participantUserId ? {} : "skip",
+    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
   );
   const hasTeam = Boolean(myTeams?.length);
   const convexPortfolioProfile = useQuery(
     api.portfolio.getProfile,
-    participantUserId ? {} : "skip",
+    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
   );
   const leaderboardRows = useQuery(api.leaderboards.listTopBuilders, {});
   const saveListing = useMutation(api.hackathons.saveListing);
@@ -263,17 +263,36 @@ export function ConvexParticipantView({
     });
   };
 
+  const ensureParticipantUserForAction = async () => {
+    if (participantUserId) return participantUserId;
+    if (!clerkIdentity) return null;
+
+    const userId = await ensureParticipantUser(
+      {
+        ...getUserProfileMutationInput(clerkIdentity),
+        clerkUserId: clerkIdentity.clerkUserId,
+      },
+    );
+    setParticipantUserId(userId);
+
+    return userId;
+  };
+
   const createTeam = async (teamData: {
     teamName: string;
-    hackathonId: string;
+    hackathonId: Id<"hackathons">;
     goal: string;
     roles: string[];
     targetSize: number;
   }) => {
-    if (!participantUserId) return;
-    await createTeamMutation({
+    const actionUserId = await ensureParticipantUserForAction();
+
+    if (!actionUserId) return null;
+
+    return createTeamMutation({
+      clerkUserId: clerkIdentity?.clerkUserId,
       teamName: teamData.teamName,
-      hackathonId: teamData.hackathonId as Id<"hackathons">,
+      hackathonId: teamData.hackathonId,
       goal: teamData.goal,
       roles: teamData.roles,
       targetSize: teamData.targetSize,
