@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -37,6 +37,7 @@ export function ConvexOrganizerView({
   setActiveTab: (tab: OrganizerTab) => void;
 }) {
   const user = useOptionalClerkUser();
+  const { isAuthenticated } = useConvexAuth();
   const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
   const [organizerAccount, setOrganizerAccount] =
     useState<OrganizerAccount | null>(null);
@@ -66,7 +67,10 @@ export function ConvexOrganizerView({
   ) as OrganizerResultBoard[] | undefined;
 
   useEffect(() => {
-    if (!clerkIdentity) return;
+    if (!clerkIdentity || !isAuthenticated) {
+      setOrganizerAccount(null);
+      return;
+    }
 
     let isActive = true;
 
@@ -82,7 +86,7 @@ export function ConvexOrganizerView({
     return () => {
       isActive = false;
     };
-  }, [clerkIdentity, ensureOrganizerAccount]);
+  }, [clerkIdentity, ensureOrganizerAccount, isAuthenticated]);
 
   const interestedByHackathonName = new Map(
     insights?.listings.map((listing) => [
@@ -114,6 +118,7 @@ export function ConvexOrganizerView({
 
   const ensureOrganizerForListing = async (values: CreateListingFormValues) => {
     if (!clerkIdentity) throw new Error("Sign in before creating listings.");
+    if (!isAuthenticated) throw new Error("Authentication is still loading.");
 
     const account = await ensureOrganizerAccount({
       ...getUserProfileMutationInput(clerkIdentity),

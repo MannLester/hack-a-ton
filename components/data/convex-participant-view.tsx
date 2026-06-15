@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -63,6 +63,7 @@ export function ConvexParticipantView({
   onLikeTeammate: (teammate: Teammate) => void;
 }) {
   const user = useOptionalClerkUser();
+  const { isAuthenticated } = useConvexAuth();
   const clerkIdentity = useMemo(() => getClerkIdentity(user), [user]);
   const [participantUserId, setParticipantUserId] =
     useState<Id<"users"> | null>(null);
@@ -78,7 +79,7 @@ export function ConvexParticipantView({
   const landingStats = useQuery(api.hackathons.getPlatformStats, {});
 
   useEffect(() => {
-    if (!clerkIdentity) {
+    if (!clerkIdentity || !isAuthenticated) {
       setParticipantUserId(null);
       return;
     }
@@ -94,7 +95,7 @@ export function ConvexParticipantView({
     return () => {
       isActive = false;
     };
-  }, [clerkIdentity, ensureParticipantUser]);
+  }, [clerkIdentity, ensureParticipantUser, isAuthenticated]);
 
   const convexTeammates = useQuery(
     api.teams.listActiveProfiles,
