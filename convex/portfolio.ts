@@ -16,6 +16,21 @@ type UserBadge = Doc<"badges"> & {
   awardedAt: number;
 };
 
+export type PublicPortfolioUser = Pick<
+  Doc<"users">,
+  | "_id"
+  | "displayName"
+  | "initials"
+  | "schoolOrCompany"
+  | "location"
+  | "bio"
+  | "onboardingDomains"
+  | "onboardingTechStack"
+  | "githubUrl"
+  | "linkedinUrl"
+  | "portfolioUrl"
+>;
+
 type VerifiedPortfolioEntry = {
   _id: Id<"portfolioEntries">;
   _creationTime: number;
@@ -46,6 +61,24 @@ function getPortfolioStats(entries: VerifiedPortfolioEntry[]): PortfolioStats {
     ).length,
     wins: entries.filter((entry) => entry.result === "winner").length,
     verified: entries.length,
+  };
+}
+
+export function toPublicPortfolioUser(
+  user: Doc<"users">,
+): PublicPortfolioUser {
+  return {
+    _id: user._id,
+    displayName: user.displayName,
+    initials: user.initials,
+    schoolOrCompany: user.schoolOrCompany,
+    location: user.location,
+    bio: user.bio,
+    onboardingDomains: user.onboardingDomains,
+    onboardingTechStack: user.onboardingTechStack,
+    githubUrl: user.githubUrl,
+    linkedinUrl: user.linkedinUrl,
+    portfolioUrl: user.portfolioUrl,
   };
 }
 
@@ -116,7 +149,7 @@ export const getProfile = query({
     const badges = await getUserBadges(ctx, targetUserId);
 
     return {
-      user,
+      user: user ? toPublicPortfolioUser(user) : null,
       badges,
       stats: getPortfolioStats(entries),
       placementStats: getPlacementStats(entries),

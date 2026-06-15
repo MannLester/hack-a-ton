@@ -1,4 +1,5 @@
 import type { Doc } from "@/convex/_generated/dataModel";
+import type { PublicPortfolioUser } from "@/convex/portfolio";
 import type { ClerkIdentity } from "@/components/data/convex-shared";
 import { type Hackathon } from "@/lib/sample-data";
 import type {
@@ -97,7 +98,7 @@ export function getUiTeamInterestedUser(
 }
 
 export type ConvexPortfolioProfile = {
-  user: Doc<"users"> | null;
+  user: PublicPortfolioUser | null;
   badges: (Doc<"badges"> & { awardedAt: number })[];
   stats: {
     participations: number;
