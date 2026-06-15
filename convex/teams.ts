@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { requireParticipantVisibleHackathon } from "./hackathons";
 import { getCurrentUser } from "./users";
 
 type LftProfileWithUser = Doc<"lftProfiles"> & {
@@ -81,6 +82,15 @@ async function findExistingDecision(
       ),
     )
     .first();
+}
+
+async function requireVisibleHackathonScope(
+  ctx: MutationCtx | QueryCtx,
+  hackathonId: Id<"hackathons"> | undefined,
+) {
+  if (!hackathonId) return;
+
+  await requireParticipantVisibleHackathon(ctx, hackathonId);
 }
 
 async function getDecidedProfileUserIds(ctx: QueryCtx, userId: Id<"users">) {
@@ -307,6 +317,8 @@ export const listActiveProfiles = query({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireVisibleHackathonScope(ctx, args.hackathonId);
+
     const activeProfiles = await ctx.db
       .query("lftProfiles")
       .withIndex("by_active", (index) => index.eq("isActive", true))
@@ -383,6 +395,8 @@ export const upsertProfile = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireVisibleHackathonScope(ctx, args.hackathonId);
+
     const existingProfile = await ctx.db
       .query("lftProfiles")
       .withIndex("by_user", (index) => index.eq("userId", currentUser._id))
@@ -417,6 +431,8 @@ export const decideOnProfile = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireVisibleHackathonScope(ctx, args.hackathonId);
+
     const existingDecision = await findExistingDecision(
       ctx,
       currentUser._id,
@@ -539,6 +555,8 @@ export const listByHackathon = query({
     hackathonId: v.id("hackathons"),
   },
   handler: async (ctx, args) => {
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
+
     const hackathonTeams = await ctx.db
       .query("teams")
       .withIndex("by_hackathon", (index) =>
@@ -622,6 +640,7 @@ export const createTeam = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
 
     return ctx.db.insert("teams", {
       hackathonId: args.hackathonId,

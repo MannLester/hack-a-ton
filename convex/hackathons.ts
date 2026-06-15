@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { getCurrentUser } from "./users";
 
 const setupArgument = v.union(
@@ -147,13 +147,30 @@ function filterListings(
   });
 }
 
-function isParticipantVisibleListing(hackathon: Doc<"hackathons">, now: number) {
+export function isParticipantVisibleHackathon(
+  hackathon: Doc<"hackathons">,
+  now: number,
+) {
   if (hackathon.status === "published") return true;
 
   if (hackathon.status !== "cancelled") return false;
   if (!hackathon.cancellationVisibleUntil) return false;
 
   return now <= hackathon.cancellationVisibleUntil;
+}
+
+export async function requireParticipantVisibleHackathon(
+  ctx: QueryCtx | MutationCtx,
+  hackathonId: Id<"hackathons">,
+) {
+  const hackathon = await ctx.db.get(hackathonId);
+
+  if (!hackathon) throw new Error("Hackathon is not available.");
+  if (!isParticipantVisibleHackathon(hackathon, Date.now())) {
+    throw new Error("Hackathon is not available.");
+  }
+
+  return hackathon;
 }
 
 async function getParticipantVisibleHackathons(ctx: QueryCtx, limit: number) {
@@ -170,7 +187,7 @@ async function getParticipantVisibleHackathons(ctx: QueryCtx, limit: number) {
   const now = Date.now();
 
   return [...publishedHackathons, ...cancelledHackathons].filter((hackathon) =>
-    isParticipantVisibleListing(hackathon, now),
+    isParticipantVisibleHackathon(hackathon, now),
   );
 }
 
@@ -254,7 +271,7 @@ export const getById = query({
     const hackathon = await ctx.db.get(args.hackathonId);
 
     if (!hackathon) return null;
-    if (!isParticipantVisibleListing(hackathon, Date.now())) return null;
+    if (!isParticipantVisibleHackathon(hackathon, Date.now())) return null;
 
     const listingWithOrganizerName = await addOrganizerName(ctx, hackathon);
 
@@ -290,6 +307,8 @@ export const saveListing = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
+
     const existingSave = await ctx.db
       .query("savedHackathons")
       .withIndex("by_user_and_hackathon", (index) =>
@@ -312,6 +331,8 @@ export const unsaveListing = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
+
     const existingSave = await ctx.db
       .query("savedHackathons")
       .withIndex("by_user_and_hackathon", (index) =>
@@ -332,6 +353,8 @@ export const markInterested = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
+
     const existingSignal = await ctx.db
       .query("listingSignals")
       .withIndex("by_user_hackathon_and_type", (index) =>
@@ -358,6 +381,7 @@ export const recordLftClick = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
 
     return ctx.db.insert("listingSignals", {
       userId: currentUser._id,
@@ -373,6 +397,7 @@ export const recordExternalRegistrationClick = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
+    await requireParticipantVisibleHackathon(ctx, args.hackathonId);
 
     return ctx.db.insert("listingSignals", {
       userId: currentUser._id,

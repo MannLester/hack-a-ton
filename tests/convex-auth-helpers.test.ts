@@ -1,10 +1,26 @@
 import { describe, expect, test } from "vitest";
+import { isParticipantVisibleHackathon } from "../convex/hackathons";
 import {
   getAuthenticatedClerkSubject,
   getResolvedOnboardingClerkUserId,
   requireCurrentOrganizer,
   requireCurrentStaffUser,
 } from "../convex/users";
+
+const visibleHackathonTime = Date.UTC(2026, 5, 15, 12, 0, 0);
+
+function createHackathonWithStatus({
+  status,
+  cancellationVisibleUntil,
+}: {
+  status: "archived" | "draft" | "published" | "cancelled";
+  cancellationVisibleUntil?: number;
+}) {
+  return {
+    status,
+    cancellationVisibleUntil,
+  };
+}
 
 function createAuthContext({
   subject,
@@ -93,5 +109,67 @@ describe("Convex auth helpers", () => {
         requestedClerkUserId: "requested_user",
       }),
     ).toBe("requested_user");
+  });
+});
+
+describe("participant-visible hackathon predicate", () => {
+  test("shows published hackathons to participants", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({ status: "published" }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(true);
+  });
+
+  test("hides draft hackathons from participants", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({ status: "draft" }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(false);
+  });
+
+  test("hides archived hackathons from participants", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({ status: "archived" }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(false);
+  });
+
+  test("hides cancelled hackathons without a participant visibility window", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({ status: "cancelled" }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(false);
+  });
+
+  test("shows cancelled hackathons inside the participant visibility window", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({
+          status: "cancelled",
+          cancellationVisibleUntil: visibleHackathonTime + 1,
+        }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(true);
+  });
+
+  test("hides cancelled hackathons after the participant visibility window", () => {
+    expect(
+      isParticipantVisibleHackathon(
+        createHackathonWithStatus({
+          status: "cancelled",
+          cancellationVisibleUntil: visibleHackathonTime - 1,
+        }) as never,
+        visibleHackathonTime,
+      ),
+    ).toBe(false);
   });
 });
