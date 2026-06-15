@@ -20,7 +20,9 @@ import {
   getListingDateValidationMessage,
   getListingQualityChecks,
 } from "@/lib/organizer-workflow";
+import { validateCoverImageFile } from "@/lib/cover-image-upload";
 import { useListingAutosave } from "@/components/organizers/use-listing-autosave";
+import { ListingMediaFields } from "@/components/organizers/listing-media-fields";
 
 const STEP_LABELS = ["Basics", "Location", "Details", "Description", "Review"] as const;
 
@@ -82,6 +84,7 @@ export function CreateListingView({
   const [persistedListingId, setPersistedListingId] = useState(initialValues?.listingId);
   const [remoteAutosaveLabel, setRemoteAutosaveLabel] = useState<string | null>(null);
   const [coverUploadStatus, setCoverUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "failed">("idle");
+  const [coverUploadError, setCoverUploadError] = useState<string | null>(null);
 
   const [listingName, setListingName] = useState(initialValues?.listingName ?? "");
   const [organizerName, setOrganizerName] = useState(initialValues?.organizerName ?? "");
@@ -303,20 +306,33 @@ export function CreateListingView({
   const updateCoverImageUrl = (url: string) => {
     setCoverImageStorageId(undefined);
     setCoverUploadStatus("idle");
+    setCoverUploadError(null);
     setCoverImageUrl(url);
   };
 
   const uploadCoverImage = (file: File) => {
     if (!onUploadCoverImage) return;
 
+    const validation = validateCoverImageFile(file);
+
+    if (!validation.isValid) {
+      setCoverUploadStatus("failed");
+      setCoverUploadError(validation.message);
+      return;
+    }
+
     setCoverUploadStatus("uploading");
+    setCoverUploadError(null);
     Promise.resolve(onUploadCoverImage(file))
       .then(({ storageId, previewUrl }) => {
         setCoverImageStorageId(storageId);
         setCoverImageUrl(previewUrl);
         setCoverUploadStatus("uploaded");
       })
-      .catch(() => setCoverUploadStatus("failed"));
+      .catch(() => {
+        setCoverUploadStatus("failed");
+        setCoverUploadError("Cover image upload failed.");
+      });
   };
 
   const goNext = () => {
@@ -442,6 +458,7 @@ export function CreateListingView({
               setCoverImageUrl={updateCoverImageUrl}
               onUploadCoverImage={uploadCoverImage}
               coverUploadStatus={coverUploadStatus}
+              coverUploadError={coverUploadError}
             />
           )}
           {currentStep === 4 && (
@@ -773,6 +790,7 @@ function StepDetails({
   setCoverImageUrl,
   onUploadCoverImage,
   coverUploadStatus,
+  coverUploadError,
 }: {
   difficulty: string;
   setDifficulty: (v: "Beginner" | "Intermediate" | "Open") => void;
@@ -789,6 +807,7 @@ function StepDetails({
   setCoverImageUrl: (v: string) => void;
   onUploadCoverImage: (file: File) => void;
   coverUploadStatus: "idle" | "uploading" | "uploaded" | "failed";
+  coverUploadError: string | null;
 }) {
   const numberOptions = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const maxOptions = numberOptions.filter(
@@ -876,54 +895,15 @@ function StepDetails({
           })}
         </div>
       </div>
-      <div className="border-t-2 border-zinc-100 pt-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input
-            value={registrationUrl}
-            onChange={setRegistrationUrl}
-            placeholder="https://..."
-            label="External registration URL (optional)"
-          />
-          <div>
-            <label className="mb-1.5 block text-xs font-black text-zinc-700">
-              Cover or logo image
-            </label>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-
-                onUploadCoverImage(file);
-              }}
-              className="block h-11 w-full rounded-md border-2 border-zinc-200 bg-white px-3 py-2 text-sm font-bold text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-950 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white focus:border-[#00a7e8] focus:outline-none"
-            />
-            <input
-              value={coverImageUrl}
-              onChange={(event) => setCoverImageUrl(event.target.value)}
-              placeholder="Or paste an image URL"
-              className="mt-2 h-10 w-full rounded-md border-2 border-zinc-200 px-3 text-xs font-bold focus:border-[#00a7e8] focus:outline-none"
-            />
-            {coverUploadStatus !== "idle" ? (
-              <p className="mt-1.5 text-xs font-black text-zinc-500">
-                {coverUploadStatus === "uploading"
-                  ? "Uploading cover image..."
-                  : coverUploadStatus === "uploaded"
-                    ? "Cover image uploaded."
-                    : "Cover image upload failed."}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        {coverImageUrl.trim() ? (
-          <div
-            aria-label="Listing cover preview"
-            className="mt-3 h-36 overflow-hidden rounded-lg border-2 border-zinc-200 bg-zinc-50 bg-cover bg-center"
-            style={{ backgroundImage: `url(${coverImageUrl})` }}
-          />
-        ) : null}
-      </div>
+      <ListingMediaFields
+        registrationUrl={registrationUrl}
+        setRegistrationUrl={setRegistrationUrl}
+        coverImageUrl={coverImageUrl}
+        setCoverImageUrl={setCoverImageUrl}
+        onUploadCoverImage={onUploadCoverImage}
+        coverUploadStatus={coverUploadStatus}
+        coverUploadError={coverUploadError}
+      />
     </div>
   );
 }
