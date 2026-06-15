@@ -161,6 +161,12 @@ export function AppNavigation({
   setParticipantTab: (tab: ParticipantTab) => void;
   onLeaveStaffView?: () => void;
 }) {
+  const openLeaderboard = () => {
+    onLeaveStaffView?.();
+    setPersona("participant");
+    setParticipantTab("leaderboard");
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b-2 border-zinc-950 bg-zinc-950 text-white shadow-[0_4px_0_#00a7e8]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -190,40 +196,21 @@ export function AppNavigation({
           </span>
         </button>
 
-        <div className="hidden rounded-lg border border-white/15 bg-white/10 p-1 sm:flex">
-          <button
-            onClick={() => { onLeaveStaffView?.(); setPersona("participant"); }}
-            className={`h-9 rounded-md px-4 text-sm font-black ${persona === "participant" ? "bg-[#ffd21f] text-zinc-950" : "text-white hover:bg-white/10"}`}
-          >
-            Participant
-          </button>
-          <button
-            onClick={() => { onLeaveStaffView?.(); setPersona("organizer"); }}
-            className={`h-9 rounded-md px-4 text-sm font-black ${persona === "organizer" ? "bg-[#00a7e8] text-zinc-950" : "text-white hover:bg-white/10"}`}
-          >
-            Organizer
-          </button>
-        </div>
-
         <div className="flex items-center gap-3">
-          {persona === "participant" && (
-            <>
-              <button
-                onClick={() => setParticipantTab("leaderboard")}
-                className="inline-flex size-10 items-center justify-center rounded-full bg-[#ffd21f] text-zinc-950 shadow-[3px_3px_0_#111] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] md:hidden"
-                aria-label="Leaderboard"
-              >
-                <Medal className="size-5" />
-              </button>
-              <button
-                onClick={() => setParticipantTab("leaderboard")}
-                className="hidden items-center gap-2 rounded-full bg-[#ffd21f] px-4 py-2 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] md:inline-flex"
-              >
-                <Medal className="size-4" />
-                Leaderboard
-              </button>
-            </>
-          )}
+          <button
+            onClick={openLeaderboard}
+            className="inline-flex size-10 items-center justify-center rounded-full bg-[#ffd21f] text-zinc-950 shadow-[3px_3px_0_#111] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] md:hidden"
+            aria-label="Leaderboard"
+          >
+            <Medal className="size-5" />
+          </button>
+          <button
+            onClick={openLeaderboard}
+            className="hidden items-center gap-2 rounded-full bg-[#ffd21f] px-4 py-2 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#111] md:inline-flex"
+          >
+            <Medal className="size-4" />
+            Leaderboard
+          </button>
           <AuthNavigationActions
             onOrganizerClick={() => {
               onLeaveStaffView?.();
