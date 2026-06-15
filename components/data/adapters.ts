@@ -104,8 +104,37 @@ export type ConvexPortfolioProfile = {
     wins: number;
     verified: number;
   };
-  entries: Doc<"portfolioEntries">[];
+  placementStats: {
+    placement: "first" | "second" | "third" | "participant";
+    label: string;
+    count: number;
+    points: number;
+  }[];
+  entries: {
+    _id: Doc<"portfolioEntries">["_id"];
+    hackathonName: string;
+    hackathonDate?: string;
+    result: "participant" | "finalist" | "winner";
+    source: "self_reported" | "verified";
+    placement?: "first" | "second" | "third" | "participant";
+    teamName?: string;
+  }[];
 };
+
+
+export type ProfileTagSource = {
+  onboardingTechStack?: string[];
+  onboardingDomains?: string[];
+};
+
+export function getProfileTags(source: ProfileTagSource) {
+  const tags = [
+    ...(source.onboardingTechStack ?? []),
+    ...(source.onboardingDomains ?? []),
+  ];
+
+  return Array.from(new Set(tags.map((tag) => tag.trim()).filter(Boolean)));
+}
 
 export type OrganizerDashboard = {
   stats: {
@@ -188,17 +217,22 @@ export function getUiPortfolioProfile(
       .join(" · "),
     bio: profile.user.bio ?? "No bio yet.",
     badges: profile.badges.map((badge) => badge.name),
+    profileTags: getProfileTags(profile.user),
     stats: [
       { label: "Participations", value: String(profile.stats.participations) },
       { label: "Finals", value: String(profile.stats.finals) },
       { label: "Wins", value: String(profile.stats.wins) },
       { label: "Verified", value: String(profile.stats.verified) },
     ],
+    placementStats: profile.placementStats,
     entries: profile.entries.map((entry) => ({
       id: entry._id,
       hackathonName: entry.hackathonName,
+      hackathonDate: entry.hackathonDate,
       result: entry.result,
       source: entry.source,
+      placement: entry.placement,
+      teamName: entry.teamName,
     })),
   };
 }

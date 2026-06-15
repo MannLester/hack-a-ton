@@ -28,6 +28,12 @@ const reportSource = v.union(v.literal("self_reported"), v.literal("verified"));
 const teamDecision = v.union(v.literal("like"), v.literal("pass"));
 const teamMatchStatus = v.union(v.literal("active"), v.literal("archived"));
 const teamStatus = v.union(v.literal("recruiting"), v.literal("full"));
+const teamResultPlacement = v.union(
+  v.literal("first"),
+  v.literal("second"),
+  v.literal("third"),
+  v.literal("participant"),
+);
 
 export default defineSchema({
   users: defineTable({
@@ -168,6 +174,18 @@ export default defineSchema({
   })
     .index("by_hackathon", ["hackathonId"])
     .index("by_status", ["status"]),
+
+  teamResults: defineTable({
+    hackathonId: v.id("hackathons"),
+    teamId: v.id("teams"),
+    organizerId: v.id("organizers"),
+    placement: teamResultPlacement,
+    submittedAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_hackathon", ["hackathonId"])
+    .index("by_team", ["teamId"])
+    .index("by_organizer", ["organizerId"]),
 
   badges: defineTable({
     name: v.string(),

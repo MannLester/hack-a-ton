@@ -57,11 +57,36 @@ export type MyTeam = Doc<"teams"> & {
   memberProfiles: TeamMemberProfile[];
 };
 export type HackathonTeam = MyTeam;
+export type OrganizerResultTeam = {
+  team: MyTeam;
+  placement: TeamResultPlacement | null;
+  resultId: Id<"teamResults"> | null;
+};
+export type OrganizerResultBoard = {
+  hackathonId: Id<"hackathons">;
+  hackathonName: string;
+  dateLabel: string;
+  status: Doc<"hackathons">["status"];
+  canSubmitResults: boolean;
+  teams: OrganizerResultTeam[];
+};
+export type TeamResultPlacement = "first" | "second" | "third" | "participant";
+
 export type PortfolioEntry = {
   id?: Id<"portfolioEntries">;
   hackathonName: string;
+  hackathonDate?: string;
   result: "participant" | "finalist" | "winner";
   source: "self_reported" | "verified";
+  placement?: TeamResultPlacement;
+  teamName?: string;
+};
+
+export type PortfolioPlacementStat = {
+  placement: TeamResultPlacement;
+  label: string;
+  count: number;
+  points: number;
 };
 export type LeaderboardRow = {
   userId: string;
@@ -81,7 +106,9 @@ export type PortfolioProfile = {
   meta: string;
   bio: string;
   badges: string[];
+  profileTags: string[];
   stats: { label: string; value: string }[];
+  placementStats: PortfolioPlacementStat[];
   entries: PortfolioEntry[];
 };
 export type LandingStats = {

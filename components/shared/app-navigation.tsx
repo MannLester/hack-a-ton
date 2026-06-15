@@ -87,7 +87,7 @@ function SignedInActions({
               }}
               className="flex w-full items-center gap-3 px-4 py-3 text-sm font-black text-zinc-950 hover:bg-zinc-100"
             >
-              <BriefcaseBusiness className="size-4" /> Organizer Dashboard
+              <BriefcaseBusiness className="size-4" /> Organizer Panel
             </button>
             <div className="border-t-2 border-zinc-100" />
             <button

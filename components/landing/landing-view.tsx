@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Hackathon, TeamLooking } from "@/lib/sample-data";
-import type { LandingStats, LeaderboardRow, MyTeam, ParticipantTab, PortfolioEntry, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
+import type { LandingStats, LeaderboardRow, MyTeam, ParticipantTab, PortfolioProfile, TeamInterestedUser, Teammate } from "@/components/shared/types";
 import { HackathonCard } from "@/components/participants/hackathon-card";
 import { FeaturePanel, SectionTitle, StatCard } from "@/components/shared/primitives";
 import { PortfolioView } from "@/components/participants/portfolio-view";
@@ -33,8 +33,6 @@ export function LandingView({
   portfolioProfile,
   leaderboardRows,
   landingStats,
-  onSavePortfolioEntry,
-  onDeletePortfolioEntry,
   onSaveBio,
   hasTeam,
   onCreateTeam,
@@ -61,12 +59,6 @@ export function LandingView({
   portfolioProfile?: PortfolioProfile;
   leaderboardRows?: LeaderboardRow[];
   landingStats?: LandingStats;
-  onSavePortfolioEntry?: (values: {
-    entryId?: PortfolioEntry["id"];
-    hackathonName: string;
-    result: PortfolioEntry["result"];
-  }) => Promise<void>;
-  onDeletePortfolioEntry?: (entryId: NonNullable<PortfolioEntry["id"]>) => Promise<void>;
   onSaveBio?: (bio: string) => Promise<void>;
   hasTeam?: boolean;
   onCreateTeam?: (teamData: {
@@ -119,8 +111,6 @@ export function LandingView({
       <PortfolioView
         profile={portfolioProfile}
         onSaveBio={onSaveBio}
-        onSaveEntry={onSavePortfolioEntry}
-        onDeleteEntry={onDeletePortfolioEntry}
         onBack={() => setActiveTab("explore")}
         useSampleFallback={useSamplePortfolioFallback}
       />

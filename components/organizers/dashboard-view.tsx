@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Archive, CheckCircle2, ClipboardCheck, Edit3, FileText, Plus, Users } from "lucide-react";
 import type {
   CreateListingFormValues,
+  OrganizerResultBoard,
   OrganizerTab,
+  TeamResultPlacement,
   UiHackathon,
 } from "@/components/shared/types";
 import { SectionTitle, StatCard, statusClass } from "@/components/shared/primitives";
 import { CreateListingView } from "@/components/organizers/create-listing-view";
 import { OrganizerInsightsView } from "@/components/organizers/insights-view";
+import { ResultsSubmissionView } from "@/components/organizers/results-submission-view";
 import {
   canArchiveOrganizerListing,
   canCancelOrganizerListing,
@@ -22,6 +25,8 @@ export function OrganizerView({
   listings = [],
   stats,
   insights,
+  resultBoards,
+  onSubmitTeamResults,
   onSaveDraft,
   onSubmitForReview,
   onRemoteAutosave,
@@ -43,6 +48,11 @@ export function OrganizerView({
     lftClickCount: number;
     externalRegistrationClickCount: number;
   };
+  resultBoards?: OrganizerResultBoard[];
+  onSubmitTeamResults?: (
+    hackathonId: OrganizerResultBoard["hackathonId"],
+    results: { teamId: string; placement: TeamResultPlacement }[],
+  ) => Promise<void> | void;
   onSaveDraft?: (values: CreateListingFormValues) => Promise<CreateListingFormValues["listingId"] | void> | CreateListingFormValues["listingId"] | void;
   onSubmitForReview?: (
     values: CreateListingFormValues,
@@ -189,6 +199,11 @@ export function OrganizerView({
           </div>
         </section>
       ) : null}
+      <ResultsSubmissionView
+        resultBoards={resultBoards}
+        onSubmitResults={onSubmitTeamResults}
+      />
+
       <section className="rounded-lg border-2 border-zinc-950 bg-white shadow-[5px_5px_0_#111]">
         {listings.length === 0 ? (
           <div className="p-6">

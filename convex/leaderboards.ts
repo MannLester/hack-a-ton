@@ -1,63 +1,85 @@
 import { query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
-  getLeaderboardScore,
+  getPlacementScore,
   sortLeaderboardRows,
   type LeaderboardRow,
 } from "../lib/leaderboard";
 
-type PortfolioStats = {
+type UserStats = {
   participations: number;
   finals: number;
   wins: number;
   verified: number;
+  score: number;
 };
 
-function getEmptyStats(): PortfolioStats {
+function getEmptyStats(): UserStats {
   return {
     participations: 0,
     finals: 0,
     wins: 0,
     verified: 0,
+    score: 0,
   };
-}
-
-function getStatsFromEntries(entries: Doc<"portfolioEntries">[]) {
-  return entries.reduce((stats, entry) => {
-    const finals = entry.result === "finalist" || entry.result === "winner" ? 1 : 0;
-    const wins = entry.result === "winner" ? 1 : 0;
-    const verified = entry.source === "verified" ? 1 : 0;
-
-    return {
-      participations: stats.participations + 1,
-      finals: stats.finals + finals,
-      wins: stats.wins + wins,
-      verified: stats.verified + verified,
-    };
-  }, getEmptyStats());
 }
 
 function getTeamsFormed(teams: Doc<"teams">[], userId: Id<"users">) {
   return teams.filter((team) => team.members[0] === userId).length;
 }
 
+function addResultToStats(
+  stats: UserStats,
+  placement: Doc<"teamResults">["placement"],
+) {
+  const isFinalist = placement === "first" || placement === "second" || placement === "third";
+  const isWinner = placement === "first";
+
+  return {
+    participations: stats.participations + 1,
+    finals: stats.finals + (isFinalist ? 1 : 0),
+    wins: stats.wins + (isWinner ? 1 : 0),
+    verified: stats.verified + 1,
+    score: stats.score + getPlacementScore(placement),
+  };
+}
+
+function getStatsByUserId(
+  teamResults: Doc<"teamResults">[],
+  teams: Doc<"teams">[],
+) {
+  const teamById = new Map(teams.map((team) => [team._id, team]));
+  const statsByUserId = new Map<Id<"users">, UserStats>();
+
+  for (const teamResult of teamResults) {
+    const team = teamById.get(teamResult.teamId);
+
+    if (!team) continue;
+
+    for (const userId of team.members) {
+      const currentStats = statsByUserId.get(userId) ?? getEmptyStats();
+      statsByUserId.set(userId, addResultToStats(currentStats, teamResult.placement));
+    }
+  }
+
+  return statsByUserId;
+}
+
 export const listTopBuilders = query({
   args: {},
   handler: async (ctx) => {
     const users = await ctx.db.query("users").collect();
-    const entries = await ctx.db.query("portfolioEntries").collect();
+    const teamResults = await ctx.db.query("teamResults").collect();
     const teams = await ctx.db.query("teams").collect();
+    const statsByUserId = getStatsByUserId(teamResults, teams);
     const rows = users.map((user) => {
-      const userEntries = entries.filter((entry) => entry.userId === user._id);
-      const stats = getStatsFromEntries(userEntries);
+      const stats = statsByUserId.get(user._id) ?? getEmptyStats();
       const teamsFormed = getTeamsFormed(teams, user._id);
-      const score = getLeaderboardScore({ ...stats, teamsFormed });
 
       return {
         userId: user._id,
         displayName: user.displayName,
         initials: user.initials,
-        score,
         teamsFormed,
         ...stats,
       } satisfies LeaderboardRow;

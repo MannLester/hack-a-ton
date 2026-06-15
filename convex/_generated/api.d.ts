@@ -13,6 +13,7 @@ import type * as hackathons from "../hackathons.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as organizers from "../organizers.js";
 import type * as portfolio from "../portfolio.js";
+import type * as results from "../results.js";
 import type * as seed from "../seed.js";
 import type * as staff from "../staff.js";
 import type * as teams from "../teams.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   leaderboards: typeof leaderboards;
   organizers: typeof organizers;
   portfolio: typeof portfolio;
+  results: typeof results;
   seed: typeof seed;
   staff: typeof staff;
   teams: typeof teams;

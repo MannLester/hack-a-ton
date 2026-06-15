@@ -19,8 +19,10 @@ import {
 import { setup as setupOptions } from "@/components/shared/config";
 import {
   type CreateListingFormValues,
+  type OrganizerResultBoard,
   type OrganizerTab,
   type ParticipantTab,
+  type TeamResultPlacement,
   type Teammate,
   type UiHackathon,
 } from "@/components/shared/types";
@@ -122,6 +124,7 @@ export function ConvexOrganizerView({
   );
   const archiveListing = useMutation(api.organizers.archiveListing);
   const cancelListing = useMutation(api.organizers.cancelListing);
+  const submitTeamResults = useMutation(api.results.submitTeamResults);
   const generateCoverImageUploadUrl = useMutation(
     api.files.generateCoverImageUploadUrl,
   );
@@ -133,6 +136,10 @@ export function ConvexOrganizerView({
     api.organizers.getInsights,
     organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
   ) as OrganizerInsights | undefined;
+  const resultBoards = useQuery(
+    api.results.listOrganizerResultBoards,
+    organizerAccount ? { organizerId: organizerAccount.organizerId } : "skip",
+  ) as OrganizerResultBoard[] | undefined;
   useEffect(() => {
     if (!clerkIdentity) return;
 
@@ -265,6 +272,24 @@ export function ConvexOrganizerView({
     };
   };
 
+  const saveTeamResults = async (
+    hackathonId: Id<"hackathons">,
+    results: { teamId: string; placement: TeamResultPlacement }[],
+  ) => {
+    const organizerId = organizerAccount?.organizerId;
+
+    if (!organizerId) return;
+
+    await submitTeamResults({
+      organizerId,
+      hackathonId,
+      results: results.map((result) => ({
+        teamId: result.teamId as Id<"teams">,
+        placement: result.placement,
+      })),
+    });
+  };
+
   const cancelOrganizerListing = async (
     hackathonId: Id<"hackathons">,
     reason: string,
@@ -287,6 +312,8 @@ export function ConvexOrganizerView({
       listings={listings}
       stats={stats}
       insights={insights?.totals}
+      resultBoards={resultBoards}
+      onSubmitTeamResults={saveTeamResults}
       onSaveDraft={saveDraft}
       onSubmitForReview={submitForReview}
       onRemoteAutosave={saveDraft}
@@ -459,13 +486,6 @@ export function ConvexParticipantView({
   const createTeamMutation = useMutation(api.teams.createTeam);
   const decideOnProfile = useMutation(api.teams.decideOnProfile);
   const updateBio = useMutation(api.users.updateBio);
-  const addSelfReportedEntry = useMutation(api.portfolio.addSelfReportedEntry);
-  const updateSelfReportedEntry = useMutation(
-    api.portfolio.updateSelfReportedEntry,
-  );
-  const deleteSelfReportedEntry = useMutation(
-    api.portfolio.deleteSelfReportedEntry,
-  );
   const displayedHackathons = getListingDataSourceItems({
     isConvexEnabled: Boolean(process.env.NEXT_PUBLIC_CONVEX_URL),
     convexItems: convexHackathons?.map(getUiHackathon),
@@ -597,39 +617,6 @@ export function ConvexParticipantView({
     });
   };
 
-  const savePortfolioEntry = async (values: {
-    entryId?: Id<"portfolioEntries">;
-    hackathonName: string;
-    result: "participant" | "finalist" | "winner";
-  }) => {
-    if (!participantUserId) return;
-
-    if (values.entryId) {
-      await updateSelfReportedEntry({
-        userId: participantUserId,
-        entryId: values.entryId,
-        hackathonName: values.hackathonName,
-        result: values.result,
-      });
-      return;
-    }
-
-    await addSelfReportedEntry({
-      userId: participantUserId,
-      hackathonName: values.hackathonName,
-      result: values.result,
-    });
-  };
-
-  const deletePortfolioEntry = async (entryId: Id<"portfolioEntries">) => {
-    if (!participantUserId) return;
-
-    await deleteSelfReportedEntry({
-      userId: participantUserId,
-      entryId,
-    });
-  };
-
   const saveBio = async (bio: string) => {
     if (!participantUserId) return;
 
@@ -675,8 +662,6 @@ export function ConvexParticipantView({
       leaderboardRows={leaderboardRows}
       landingStats={landingStats}
       onSaveBio={saveBio}
-      onSavePortfolioEntry={savePortfolioEntry}
-      onDeletePortfolioEntry={deletePortfolioEntry}
       hasTeam={hasTeam}
       onCreateTeam={createTeam}
       myTeams={myTeams}
