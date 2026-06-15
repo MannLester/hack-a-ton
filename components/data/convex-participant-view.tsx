@@ -78,6 +78,10 @@ export function ConvexParticipantView({
   });
   const featuredHackathon = useQuery(api.hackathons.featuredPublished, {});
   const landingStats = useQuery(api.hackathons.getPlatformStats, {});
+  const participantQueryArgs =
+    clerkIdentity && participantUserId
+      ? { clerkUserId: clerkIdentity.clerkUserId }
+      : "skip";
 
   useEffect(() => {
     if (!clerkIdentity || !isAuthenticated) {
@@ -100,24 +104,24 @@ export function ConvexParticipantView({
 
   const convexTeammates = useQuery(
     api.teams.listActiveProfiles,
-    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
+    participantQueryArgs,
   );
   const convexTeamListings = useQuery(
     api.teams.listRecruitingTeams,
-    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
+    participantQueryArgs,
   );
   const myTeams = useQuery(
     api.teams.listMyTeams,
-    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
+    participantQueryArgs,
   );
   const interestedUsersForMyTeam = useQuery(
     api.teams.listInterestedUsersForMyTeam,
-    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
+    participantQueryArgs,
   );
   const hasTeam = Boolean(myTeams?.length);
   const convexPortfolioProfile = useQuery(
     api.portfolio.getProfile,
-    clerkIdentity ? { clerkUserId: clerkIdentity.clerkUserId } : "skip",
+    participantQueryArgs,
   );
   const leaderboardRows = useQuery(api.leaderboards.listTopBuilders, {});
   const saveListing = useMutation(api.hackathons.saveListing);
