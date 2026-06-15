@@ -77,7 +77,7 @@ function OnboardingRedirect({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? {} : "skip",
+    user?.id ? { clerkUserId: user.id } : "skip",
   );
 
   useEffect(() => {

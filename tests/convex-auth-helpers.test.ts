@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   getAuthenticatedClerkSubject,
+  getResolvedOnboardingClerkUserId,
   requireCurrentOrganizer,
   requireCurrentStaffUser,
 } from "../convex/users";
@@ -75,5 +76,22 @@ describe("Convex auth helpers", () => {
       currentUser: { _id: "user_1" },
       organizer: { _id: "organizer_1" },
     });
+  });
+
+  test("prefers authenticated onboarding identity over requested fallback", () => {
+    expect(
+      getResolvedOnboardingClerkUserId({
+        authenticatedSubject: "auth_user",
+        requestedClerkUserId: "requested_user",
+      }),
+    ).toBe("auth_user");
+  });
+
+  test("uses requested onboarding identity when auth identity is unavailable", () => {
+    expect(
+      getResolvedOnboardingClerkUserId({
+        requestedClerkUserId: "requested_user",
+      }),
+    ).toBe("requested_user");
   });
 });

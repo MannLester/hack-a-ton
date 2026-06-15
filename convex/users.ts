@@ -79,6 +79,16 @@ function getIdentityDisplayName(identity: Awaited<ReturnType<AuthCtx["auth"]["ge
   );
 }
 
+export function getResolvedOnboardingClerkUserId({
+  authenticatedSubject,
+  requestedClerkUserId,
+}: {
+  authenticatedSubject?: string;
+  requestedClerkUserId?: string;
+}) {
+  return authenticatedSubject ?? requestedClerkUserId;
+}
+
 export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
   const identity = await ctx.auth.getUserIdentity();
 
@@ -228,10 +238,16 @@ export const getStaffAccess = query({
 });
 
 export const getOnboardingStatus = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    clerkUserId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const user = identity ? await getUserByClerkId(ctx, identity.subject) : null;
+    const clerkUserId = getResolvedOnboardingClerkUserId({
+      authenticatedSubject: identity?.subject,
+      requestedClerkUserId: args.clerkUserId,
+    });
+    const user = clerkUserId ? await getUserByClerkId(ctx, clerkUserId) : null;
 
     return {
       isComplete: Boolean(user?.onboardingCompletedAt),
