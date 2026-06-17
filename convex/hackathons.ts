@@ -37,6 +37,11 @@ export type PublicHackathonListing = {
   difficulty: Doc<"hackathons">["difficulty"];
   summary: string;
   externalRegistrationUrl?: string;
+  listedByName?: string;
+  realOrganizerName?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  lastVerifiedAt?: number;
   coverImageUrl?: string;
   publishedAt?: number;
   updatedAt?: number;
@@ -157,6 +162,11 @@ export function toPublicHackathonListing({
     difficulty: hackathon.difficulty,
     summary: hackathon.summary,
     externalRegistrationUrl: hackathon.externalRegistrationUrl,
+    listedByName: hackathon.listedByName,
+    realOrganizerName: hackathon.realOrganizerName,
+    sourceName: hackathon.sourceName,
+    sourceUrl: hackathon.sourceUrl,
+    lastVerifiedAt: hackathon.lastVerifiedAt,
     coverImageUrl,
     publishedAt: hackathon.publishedAt,
     updatedAt: hackathon.updatedAt,

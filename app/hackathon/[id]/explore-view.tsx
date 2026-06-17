@@ -8,17 +8,26 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock,
+  ExternalLink,
   Filter,
   MapPin,
   Search,
   Users,
 } from "lucide-react";
 import type { Hackathon } from "@/lib/sample-data";
+import { getOfficialRegistrationUrl } from "@/lib/hackathon-links";
 import { getListingUpdateLabel } from "@/lib/organizer-workflow";
 import { setup, statuses, difficulties, locations } from "@/components/shared/config";
 import type { HackathonTeam } from "@/components/shared/types";
 import { PanelCard, StatusPill, statusClass } from "@/components/shared/primitives";
 import { DetailPageNav } from "@/components/shared/detail-page-nav";
+
+type SourceLinkedHackathon = Hackathon & {
+  registrationUrl?: string;
+  realOrganizerName?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+};
 
 function FilterChips<T extends string>({
   label,
@@ -63,8 +72,8 @@ export function ExploreView({
   teams = [],
 }: {
   id: string;
-  hackathon: Hackathon;
-  allHackathons: Hackathon[];
+  hackathon: SourceLinkedHackathon;
+  allHackathons: SourceLinkedHackathon[];
   teams?: HackathonTeam[];
 }) {
   const [query, setQuery] = useState("");
@@ -94,6 +103,8 @@ export function ExploreView({
     updatedAt: hackathon.updatedAt,
     now: Date.now(),
   });
+  const officialRegistrationUrl = getOfficialRegistrationUrl(hackathon);
+  const sourceLabel = hackathon.sourceName ?? hackathon.realOrganizerName;
 
   return (
     <div className="min-h-screen bg-[#f5f3ef]">
@@ -233,6 +244,25 @@ export function ExploreView({
                 <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600">
                   {hackathon.summary}
                 </p>
+
+                {officialRegistrationUrl ? (
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <a
+                      href={officialRegistrationUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md border-2 border-zinc-950 bg-[#ffd21f] px-4 py-2 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition-transform hover:-translate-y-0.5"
+                    >
+                      Register on official site
+                      <ExternalLink className="size-4" />
+                    </a>
+                    {sourceLabel ? (
+                      <span className="text-sm font-bold text-zinc-500">
+                        Source: {sourceLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className="mt-6 flex flex-wrap gap-3">
                   <span className="inline-flex items-center gap-2 rounded-full border-2 border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-bold text-zinc-700">

@@ -25,6 +25,11 @@ export type UiHackathon = Hackathon & {
   convexId?: Id<"hackathons">;
   savedCount?: number;
   registrationUrl?: string;
+  listedByName?: string;
+  realOrganizerName?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  lastVerifiedAt?: number;
   coverImageUrl?: string;
   coverImageStorageId?: Id<"_storage">;
   reviewNote?: string;

@@ -19,6 +19,9 @@ const resettableTables = [
   "listingReviews",
 ] as const;
 
+const adminListerName = "Hack-A-Ton Admin";
+const seedVerifiedAt = 1781654400000;
+
 export function canRunDemoSeedMutation({
   isProduction,
   isStaff,
@@ -46,72 +49,249 @@ async function requireDemoSeedAccess(ctx: MutationCtx) {
 
 const demoHackathons = [
   {
-    name: "PH AI Build Weekend",
-    organizer: "DevCon Manila",
-    dateLabel: "Jul 19-21, 2026",
-    registrationDeadlineLabel: "Closes Jul 10",
-    setup: "Hybrid",
-    location: "BGC, Taguig",
-    region: "Luzon",
-    eligibility: ["Students", "Professionals", "Beginner-friendly"],
-    teamSize: "2-4",
-    prize: "PHP 120k pool",
-    difficulty: "Beginner",
+    name: "AI Fest PH 2026 AI Hackathon",
+    organizer: adminListerName,
+    realOrganizerName: "AI Fest Philippines",
+    sourceName: "AI Fest PH",
+    sourceUrl: "https://aifest.ph/ai-hackathon-2026/",
+    externalRegistrationUrl: "https://aifest.ph/ai-hackathon-2026/",
+    dateLabel: "Aug 3-5, 2026",
+    registrationDeadlineLabel: "See official event page",
+    setup: "Onsite",
+    location: "Iloilo City",
+    region: "Visayas",
+    eligibility: ["Students", "Open category"],
+    teamSize: "Team size on official page",
+    prize: "See official event page",
+    difficulty: "Open",
     interested: 348,
     lftCount: 62,
     summary:
-      "Build practical AI tools for local government services, education, and community response workflows.",
+      "AI Fest PH's hackathon invites participants to build AI-enabled solutions to real-world problems.",
   },
   {
-    name: "Fintech Campus Cup",
-    organizer: "PayLab PH",
-    dateLabel: "Aug 3-4, 2026",
-    registrationDeadlineLabel: "Closes Jul 24",
+    name: "Build the Future of Finance Hackathon",
+    organizer: adminListerName,
+    realOrganizerName: "Stellar Philippines and Rise In",
+    sourceName: "Rise In",
+    sourceUrl:
+      "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+    externalRegistrationUrl:
+      "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+    dateLabel: "May 18-24, 2026",
+    registrationDeadlineLabel: "Registration closed",
     setup: "Online",
     location: "Philippines-wide",
     region: "Philippines-wide",
-    eligibility: ["Students", "Open to all schools"],
-    teamSize: "3-5",
-    prize: "Internship + grants",
-    difficulty: "Intermediate",
+    eligibility: ["Developers", "Founders", "Student builders"],
+    teamSize: "1-5",
+    prize: "PHP 60k pool",
+    difficulty: "Open",
     interested: 221,
     lftCount: 41,
     summary:
-      "Create inclusive payment, budgeting, or financial-literacy products for young Filipinos.",
+      "A Stellar-focused hackathon for building real-world financial applications and localized finance tools.",
   },
   {
-    name: "Climate Hack Cebu",
-    organizer: "Cebu Tech Council",
-    dateLabel: "Sep 12-13, 2026",
-    registrationDeadlineLabel: "Closes Aug 29",
+    name: "BrAPI Los Banos Hackathon 2025",
+    organizer: adminListerName,
+    realOrganizerName: "BrAPI Community",
+    sourceName: "BrAPI",
+    sourceUrl: "https://brapi.org/events/hackathon?id=hackathon-jun-2025",
+    externalRegistrationUrl:
+      "https://brapi.org/events/hackathon?id=hackathon-jun-2025",
+    dateLabel: "Jun 2-6, 2025",
+    registrationDeadlineLabel: "Registration closed",
     setup: "Onsite",
-    location: "Cebu City",
-    region: "Visayas",
-    eligibility: ["Students", "Professionals"],
-    teamSize: "2-4",
-    prize: "PHP 80k pool",
+    location: "Los Banos, Laguna",
+    region: "Luzon",
+    eligibility: ["BrAPI community", "Developers", "Researchers"],
+    teamSize: "Open collaboration",
+    prize: "Community build week",
     difficulty: "Open",
     interested: 156,
     lftCount: 29,
     summary:
-      "Prototype climate resilience dashboards, reporting tools, and community preparedness apps.",
+      "A BrAPI community hackathon at IRRI focused on code, prototypes, and crop-data standards collaboration.",
   },
   {
-    name: "Mindanao Game Jam",
-    organizer: "Davao Indie Collective",
-    dateLabel: "Oct 2-4, 2026",
-    registrationDeadlineLabel: "Closes Sep 18",
-    setup: "Hybrid",
-    location: "Davao City",
-    region: "Mindanao",
-    eligibility: ["Open to all", "Beginner-friendly"],
-    teamSize: "1-4",
-    prize: "Showcase slots",
+    name: "InnOlympics 2025: GDSC PLM Hackathon",
+    organizer: adminListerName,
+    realOrganizerName: "Google Developer Groups on Campus PLM",
+    sourceName: "Devpost",
+    sourceUrl: "https://innolympics-2025-gdsc-plm.devpost.com/",
+    externalRegistrationUrl: "https://innolympics-2025-gdsc-plm.devpost.com/",
+    dateLabel: "Jan 11-12, 2025",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Makati, Metro Manila",
+    region: "Luzon",
+    eligibility: ["College students", "Confirmed registered participants"],
+    teamSize: "3-4",
+    prize: "USD 680 in prizes",
     difficulty: "Beginner",
     interested: 184,
     lftCount: 53,
     summary:
-      "Design small but polished games rooted in Filipino stories, places, and everyday experiences.",
+      "A student hackathon challenging teams to build solutions aligned with the UN Sustainable Development Goals.",
+  },
+  {
+    name: "Hack the Future: Technology for a Better World",
+    organizer: adminListerName,
+    realOrganizerName: "Hyperparameter",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl:
+      "https://ph.allhackathons.com/hackathon/hack-the-future-technology-for-a-better-world/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/hack-the-future-technology-for-a-better-world/",
+    dateLabel: "Nov 22, 2024",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Makati, Metro Manila",
+    region: "Luzon",
+    eligibility: ["Coders", "Designers", "Problem solvers"],
+    teamSize: "Team size on source page",
+    prize: "No listed prize",
+    difficulty: "Beginner",
+    interested: 97,
+    lftCount: 18,
+    summary:
+      "A Makati hackathon focused on collaborative technology solutions for social impact.",
+  },
+  {
+    name: "Xircus Draper Hackathon at Manila",
+    organizer: adminListerName,
+    realOrganizerName: "Xircus Web3 Protocol",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl:
+      "https://ph.allhackathons.com/hackathon/xircus-draper-hackathon-manila/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/xircus-draper-hackathon-manila/",
+    dateLabel: "Mar 31-Apr 2, 2023",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Makati, Metro Manila",
+    region: "Luzon",
+    eligibility: ["No-code builders", "Low-code builders", "Web3 builders"],
+    teamSize: "1-4",
+    prize: "USD 2k in prizes",
+    difficulty: "Beginner",
+    interested: 88,
+    lftCount: 17,
+    summary:
+      "An in-person Web3 dApp builder hackathon hosted with Draper Startup House in Manila.",
+  },
+  {
+    name: "ADB-AIM Hackathon 2020: Shaping the New Normal",
+    organizer: adminListerName,
+    realOrganizerName: "Asian Development Bank and Asian Institute of Management",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl:
+      "https://ph.allhackathons.com/hackathon/adb-aim-hackathon-2020-shaping-the-new-normal-3/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/adb-aim-hackathon-2020-shaping-the-new-normal-3/",
+    dateLabel: "Jun 30, 2020",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Manila",
+    region: "Luzon",
+    eligibility: ["Students", "Professionals", "General public"],
+    teamSize: "Team size on source page",
+    prize: "USD 10k pilot funding",
+    difficulty: "Open",
+    interested: 132,
+    lftCount: 24,
+    summary:
+      "A post-COVID recovery hackathon for solutions supporting economic activity in the new normal.",
+  },
+  {
+    name: "Global Game Jam 2020: DLSU Laguna Campus Chill Space",
+    organizer: adminListerName,
+    realOrganizerName: "Global Game Jam local organizers",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl:
+      "https://ph.allhackathons.com/hackathon/global-game-jam-2020-dlsu-laguna-campus-chill-space/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/global-game-jam-2020-dlsu-laguna-campus-chill-space/",
+    dateLabel: "Jan 31-Feb 2, 2020",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Manila",
+    region: "Luzon",
+    eligibility: ["Game developers", "Students", "Artists"],
+    teamSize: "Open collaboration",
+    prize: "Game jam showcase",
+    difficulty: "Open",
+    interested: 119,
+    lftCount: 31,
+    summary:
+      "A Philippine Global Game Jam site where participants collaborated to create games in under 48 hours.",
+  },
+  {
+    name: "DISH 2019",
+    organizer: adminListerName,
+    realOrganizerName: "EOI Digital",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl: "https://ph.allhackathons.com/hackathon/dish-2019/",
+    externalRegistrationUrl: "https://ph.allhackathons.com/hackathon/dish-2019/",
+    dateLabel: "Apr 6-7, 2019",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Makati, Metro Manila",
+    region: "Luzon",
+    eligibility: ["Fintech builders", "Blockchain builders", "Entrepreneurs"],
+    teamSize: "Team size on source page",
+    prize: "See source page",
+    difficulty: "Open",
+    interested: 103,
+    lftCount: 21,
+    summary:
+      "A fintech and blockchain hackathon connected to the Inclusive Prosperity Fintech Summit.",
+  },
+  {
+    name: "U:Hac Manila - Unionbank Hackathon",
+    organizer: adminListerName,
+    realOrganizerName: "EConnext Ideas and Media",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl:
+      "https://ph.allhackathons.com/hackathon/u-hac-manila-unionbank-hackathon/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/u-hac-manila-unionbank-hackathon/",
+    dateLabel: "Aug 27-28, 2016",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Mandaluyong, Metro Manila",
+    region: "Luzon",
+    eligibility: ["College students", "Developers", "Designers"],
+    teamSize: "Team size on source page",
+    prize: "PHP 80k",
+    difficulty: "Open",
+    interested: 115,
+    lftCount: 26,
+    summary:
+      "A UnionBank-themed hackathon for apps and prototypes across fintech, games, VR, IoT, and robotics.",
+  },
+  {
+    name: "1st Masskara Hackathon",
+    organizer: adminListerName,
+    realOrganizerName: "BNeFIT, HyBrain Development Corporation, and Horsepower.ph",
+    sourceName: "All Hackathons Philippines",
+    sourceUrl: "https://ph.allhackathons.com/hackathon/1st-masskara-hackathon/",
+    externalRegistrationUrl:
+      "https://ph.allhackathons.com/hackathon/1st-masskara-hackathon/",
+    dateLabel: "Oct 17-18, 2016",
+    registrationDeadlineLabel: "Registration closed",
+    setup: "Onsite",
+    location: "Bacolod City",
+    region: "Visayas",
+    eligibility: ["Developers", "Healthcare innovators", "IoT builders"],
+    teamSize: "Team size on source page",
+    prize: "Seed funding package",
+    difficulty: "Open",
+    interested: 94,
+    lftCount: 19,
+    summary:
+      "A Bacolod hackathon for IoT, healthcare, and medical tourism technology concepts.",
   },
 ] as const;
 
@@ -154,30 +334,30 @@ const demoParticipants = [
 
 const demoTeams = [
   {
-    teamName: "AI Public Servants",
+    teamName: "AI Iloilo Builders",
     leadDisplayName: "Mika Reyes",
-    hackathonName: "PH AI Build Weekend",
-    goal: "Build a barangay request triage assistant for common citizen services.",
+    hackathonName: "AI Fest PH 2026 AI Hackathon",
+    goal: "Build an AI assistant for local tourism and public-service discovery.",
     missingRoles: ["AI/ML", "Backend"],
     currentSize: 2,
     targetSize: 4,
     status: "recruiting",
   },
   {
-    teamName: "PayItForward",
+    teamName: "Peso Rails",
     leadDisplayName: "Andre Santos",
-    hackathonName: "Fintech Campus Cup",
-    goal: "Prototype a student budgeting app with transparent savings nudges.",
+    hackathonName: "Build the Future of Finance Hackathon",
+    goal: "Prototype low-cost payment workflows for Filipino micro-merchants.",
     missingRoles: ["Frontend", "Pitch"],
     currentSize: 2,
     targetSize: 5,
     status: "recruiting",
   },
   {
-    teamName: "Research Relay",
+    teamName: "Crop Data Crew",
     leadDisplayName: "Gia Lim",
-    hackathonName: "Climate Hack Cebu",
-    goal: "Turn community climate reports into clear responder dashboards.",
+    hackathonName: "BrAPI Los Banos Hackathon 2025",
+    goal: "Design friendlier crop-data import flows for field researchers.",
     missingRoles: ["Data", "Backend"],
     currentSize: 1,
     targetSize: 4,
@@ -376,6 +556,12 @@ async function getOrCreateHackathon(
     status: "published",
     difficulty: hackathon.difficulty,
     summary: hackathon.summary,
+    externalRegistrationUrl: hackathon.externalRegistrationUrl,
+    listedByName: hackathon.organizer,
+    realOrganizerName: hackathon.realOrganizerName,
+    sourceName: hackathon.sourceName,
+    sourceUrl: hackathon.sourceUrl,
+    lastVerifiedAt: seedVerifiedAt,
     publishedAt: Date.now(),
   });
 }
@@ -625,7 +811,7 @@ async function seedDemoDataHandler(
 
     for (const participant of demoParticipants) {
       const userId = createdUserIds.get(participant.displayName);
-      const hackathonId = createdHackathonIds.get("PH AI Build Weekend");
+      const hackathonId = createdHackathonIds.get("AI Fest PH 2026 AI Hackathon");
 
       if (!userId) throw new Error(`Missing participant ${participant.displayName}`);
 
@@ -645,9 +831,13 @@ async function seedDemoDataHandler(
       await seedPortfolioEntry(ctx, juanUserId, entry);
     }
 
-    const savedHackathonId = createdHackathonIds.get("PH AI Build Weekend");
-    const interestedHackathonId = createdHackathonIds.get("Fintech Campus Cup");
-    const lftHackathonId = createdHackathonIds.get("Climate Hack Cebu");
+    const savedHackathonId = createdHackathonIds.get("AI Fest PH 2026 AI Hackathon");
+    const interestedHackathonId = createdHackathonIds.get(
+      "Build the Future of Finance Hackathon",
+    );
+    const lftHackathonId = createdHackathonIds.get(
+      "BrAPI Los Banos Hackathon 2025",
+    );
 
     if (savedHackathonId) await seedSavedHackathon(ctx, juanUserId, savedHackathonId);
     if (interestedHackathonId)

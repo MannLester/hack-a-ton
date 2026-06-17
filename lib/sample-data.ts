@@ -25,6 +25,11 @@ export type Hackathon = {
   interested: number;
   lftCount: number;
   summary: string;
+  listedByName?: string;
+  realOrganizerName?: string;
+  sourceName?: string;
+  sourceUrl?: string;
+  lastVerifiedAt?: number;
   updatedAt?: number;
   cancellationReason?: string;
   cancelledAt?: number;

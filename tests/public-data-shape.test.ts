@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { getUiHackathon } from "../components/data/adapters";
 import { toPublicHackathonListing } from "../convex/hackathons";
 import { toPublicTeamSummary } from "../convex/teams";
 
@@ -40,6 +41,90 @@ describe("public data mappers", () => {
     });
     expect("organizerId" in publicListing).toBe(false);
     expect("coverImageStorageId" in publicListing).toBe(false);
+  });
+
+  test("includes source-backed listing provenance for curated hackathons", () => {
+    const publicListing = toPublicHackathonListing({
+      hackathon: {
+        _id: "hackathon_1",
+        _creationTime: 1,
+        organizerId: "organizer_1",
+        name: "AI Fest PH Hackathon",
+        dateLabel: "Aug 3-5, 2026",
+        registrationDeadlineLabel: "Closes Jun 15, 2026",
+        setup: "Onsite",
+        location: "Iloilo City",
+        region: "Visayas",
+        eligibility: ["Students", "Open category"],
+        teamSize: "3+",
+        prize: "PHP 40k champion prizes",
+        status: "published",
+        difficulty: "Open",
+        summary: "Build AI-enabled solutions to real-world problems.",
+        externalRegistrationUrl: "https://aifest.ph/ai-hackathon-2026/",
+        listedByName: "Hack-A-Ton Admin",
+        realOrganizerName: "AI Fest Philippines",
+        sourceName: "AI Fest PH",
+        sourceUrl: "https://aifest.ph/ai-hackathon-2026/",
+        lastVerifiedAt: 1781654400000,
+      },
+      organizerName: "Hack-A-Ton Admin",
+      interestedCount: 2,
+      lftCount: 3,
+      savedCount: 4,
+    } as never);
+
+    expect(publicListing).toMatchObject({
+      organizerName: "Hack-A-Ton Admin",
+      externalRegistrationUrl: "https://aifest.ph/ai-hackathon-2026/",
+      listedByName: "Hack-A-Ton Admin",
+      realOrganizerName: "AI Fest Philippines",
+      sourceName: "AI Fest PH",
+      sourceUrl: "https://aifest.ph/ai-hackathon-2026/",
+      lastVerifiedAt: 1781654400000,
+    });
+  });
+
+  test("maps official registration and provenance fields into UI hackathons", () => {
+    const uiHackathon = getUiHackathon({
+      _id: "hackathon_1",
+      name: "Build on Stellar Philippines Hackathon",
+      dateLabel: "May 18-24, 2026",
+      registrationDeadlineLabel: "Closes May 24, 2026",
+      setup: "Online",
+      location: "Philippines-wide",
+      region: "Philippines-wide",
+      eligibility: ["Open to all"],
+      teamSize: "1-5",
+      prize: "PHP 60k pool",
+      status: "published",
+      difficulty: "Open",
+      summary: "Build financial solutions for Filipinos on Stellar.",
+      externalRegistrationUrl:
+        "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+      listedByName: "Hack-A-Ton Admin",
+      realOrganizerName: "Stellar",
+      sourceName: "Rise In",
+      sourceUrl:
+        "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+      lastVerifiedAt: 1781654400000,
+      organizerName: "Hack-A-Ton Admin",
+      interestedCount: 0,
+      lftCount: 0,
+      savedCount: 0,
+    } as never);
+
+    expect(uiHackathon).toMatchObject({
+      organizer: "Hack-A-Ton Admin",
+      registrationUrl:
+        "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+      listedByName: "Hack-A-Ton Admin",
+      realOrganizerName: "Stellar",
+      sourceName: "Rise In",
+      sourceUrl:
+        "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+      lastVerifiedAt: 1781654400000,
+    });
   });
 
   test("omits raw team member ids from public team summaries", () => {
