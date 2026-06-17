@@ -2,7 +2,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useOptionalClerkUser } from "@/components/shared/convex-provider";
 import {
@@ -117,10 +117,53 @@ function getOnboardingErrorMessage(error: unknown) {
   return "We couldn't save your profile. Please try again.";
 }
 
+function OnboardingLoadingState() {
+  return (
+    <div className="relative flex min-h-screen items-center justify-center bg-[#f5f3ea] p-4">
+      <div className="w-full max-w-md rounded-lg border-2 border-zinc-950 bg-white p-6 shadow-[8px_8px_0_#111]">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#00a7e8]">
+          Checking profile
+        </p>
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-zinc-950">
+          Loading onboarding status
+        </h1>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingCompleteScreen() {
+  const router = useRouter();
+
+  return (
+    <div className="relative flex min-h-screen items-center justify-center bg-[#f5f3ea] p-4">
+      <div className="w-full max-w-md rounded-lg border-2 border-zinc-950 bg-white p-6 shadow-[8px_8px_0_#111]">
+        <div className="grid size-12 place-items-center rounded-lg bg-[#ffd21f]/30 text-zinc-950">
+          <Check className="size-6" />
+        </div>
+        <h1 className="mt-4 text-2xl font-black tracking-tight text-zinc-950">
+          You&apos;re already done with the onboarding!
+        </h1>
+        <button
+          onClick={() => router.push("/")}
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111]"
+        >
+          Back to dashboard <ArrowRight className="size-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function OnboardingFlow() {
   const router = useRouter();
   const clerkUser = useOptionalClerkUser();
   const { isLoaded, isSignedIn } = useAuth();
+  const { isAuthenticated, isLoading: isConvexAuthLoading } = useConvexAuth();
+  const onboardingStatus = useQuery(
+    api.users.getOnboardingStatus,
+    isAuthenticated ? {} : "skip",
+  );
   const saveOnboardingProfile = useMutation(api.users.saveOnboardingProfile);
   const [step, setStep] = useState<Step>(1);
   const [persona, setPersona] = useState<Persona | null>(null);
@@ -219,6 +262,18 @@ export function OnboardingFlow() {
     if (step === totalSteps) return 90;
 
     return Math.round((step / totalSteps) * 100);
+  }
+
+  if (isLoaded && isSignedIn && isConvexAuthLoading) {
+    return <OnboardingLoadingState />;
+  }
+
+  if (isAuthenticated && !onboardingStatus) {
+    return <OnboardingLoadingState />;
+  }
+
+  if (onboardingStatus?.isComplete) {
+    return <OnboardingCompleteScreen />;
   }
 
   return (
