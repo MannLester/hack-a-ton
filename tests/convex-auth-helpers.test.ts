@@ -2,9 +2,10 @@ import { describe, expect, test } from "vitest";
 import { isParticipantVisibleHackathon } from "../convex/hackathons";
 import {
   getAuthenticatedClerkSubject,
+  getCurrentUserOrRequestedClerkUser,
   getResolvedAuthenticatedClerkUserId,
-  getResolvedOnboardingPersona,
   getResolvedOnboardingClerkUserId,
+  getResolvedOnboardingPersona,
   requireCurrentOrganizer,
   requireCurrentStaffUser,
 } from "../convex/users";
@@ -96,13 +97,17 @@ describe("Convex auth helpers", () => {
     });
   });
 
-  test("prefers authenticated onboarding identity over requested fallback", () => {
-    expect(
-      getResolvedOnboardingClerkUserId({
-        authenticatedSubject: "auth_user",
-        requestedClerkUserId: "requested_user",
-      }),
-    ).toBe("auth_user");
+  test("ignores requested Clerk IDs on protected user lookups", async () => {
+    const ctx = createAuthContext({
+      subject: "auth_user",
+      user: { _id: "auth_user", clerkUserId: "auth_user", role: "participant" },
+    });
+
+    await expect(
+      getCurrentUserOrRequestedClerkUser(ctx as never, "requested_user"),
+    ).resolves.toMatchObject({
+      clerkUserId: "auth_user",
+    });
   });
 
   test("does not trust requested onboarding identity without authentication", () => {

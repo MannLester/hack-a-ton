@@ -95,6 +95,7 @@ export function getResolvedAuthenticatedClerkUserId(
 ) {
   return authenticatedSubject ?? null;
 }
+
 export function getResolvedOnboardingPersona(
   user?: Pick<Doc<"users">, "role" | "onboardingPersona"> | null,
 ) {
@@ -113,6 +114,18 @@ export async function getAuthenticatedClerkSubject(ctx: AuthCtx) {
 }
 
 export async function getCurrentUser(ctx: AuthCtx) {
+  const clerkUserId = await getAuthenticatedClerkSubject(ctx);
+  const user = await getUserByClerkId(ctx, clerkUserId);
+
+  if (!user) throw new Error("Current user record not found.");
+
+  return user;
+}
+
+export async function getCurrentUserOrRequestedClerkUser(
+  ctx: AuthCtx,
+  _requestedClerkUserId?: string,
+) {
   const clerkUserId = await getAuthenticatedClerkSubject(ctx);
   const user = await getUserByClerkId(ctx, clerkUserId);
 

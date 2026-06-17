@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
+import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useOptionalClerkUser } from "@/components/shared/convex-provider";
@@ -106,9 +107,20 @@ function getClerkDisplayName(user: NonNullable<ReturnType<typeof useOptionalCler
   return user.fullName || user.username || emailName || "Hack-A-Ton Builder";
 }
 
+function getOnboardingErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.includes("Authentication is required")) {
+    return "Your sign-in session is still connecting to the database. Refresh the page and try again.";
+  }
+
+  return "We couldn't save your profile. Please try again.";
+}
+
 export function OnboardingFlow() {
   const router = useRouter();
   const clerkUser = useOptionalClerkUser();
+  const { isLoaded, isSignedIn } = useAuth();
   const saveOnboardingProfile = useMutation(api.users.saveOnboardingProfile);
   const [step, setStep] = useState<Step>(1);
   const [persona, setPersona] = useState<Persona | null>(null);
@@ -123,17 +135,15 @@ export function OnboardingFlow() {
   const [orgName, setOrgName] = useState("");
   const [orgBio, setOrgBio] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
   const totalSteps = 5;
   const isOrganizer = persona === "organizer";
+  const isSubmitDisabled = !isLoaded || !isSignedIn || !clerkUser || isSaving;
 
   function handlePersonaSelect(selected: Persona) {
     setPersona(selected);
-    if (selected === "organizer") {
-      setStep(2);
-    } else {
-      setStep(2);
-    }
+    setStep(2);
   }
 
   function handleDomainSelect(selected: string) {
@@ -162,8 +172,10 @@ export function OnboardingFlow() {
 
   async function handleSubmit() {
     if (!clerkUser) return;
+    if (!isSignedIn) return;
 
     setIsSaving(true);
+    setOnboardingError(null);
 
     const displayName = getClerkDisplayName(clerkUser);
 
@@ -181,9 +193,10 @@ export function OnboardingFlow() {
       portfolioUrl: portfolioUrl || undefined,
       orgName: orgName || undefined,
       orgBio: orgBio || undefined,
-    });
-
-    router.push("/");
+    })
+      .then(() => router.push("/"))
+      .catch((error) => setOnboardingError(getOnboardingErrorMessage(error)))
+      .finally(() => setIsSaving(false));
   }
 
   function handleGithubUsernameChange(username: string) {
@@ -444,11 +457,16 @@ export function OnboardingFlow() {
               </div>
               <button
                 onClick={handleSubmit}
-                disabled={!clerkUser || isSaving}
+                disabled={isSubmitDisabled}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
               >
                 Go to Dashboard <ArrowRight className="size-4" />
               </button>
+              {onboardingError && (
+                <p className="text-sm font-bold text-red-600">
+                  {onboardingError}
+                </p>
+              )}
             </div>
           )}
 
@@ -653,11 +671,16 @@ export function OnboardingFlow() {
 
               <button
                 onClick={handleSubmit}
-                disabled={!experienceLevel || !clerkUser || isSaving}
+                disabled={!experienceLevel || isSubmitDisabled}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#ffd21f] px-6 text-sm font-black text-zinc-950 shadow-[3px_3px_0_#111] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#111] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#111]"
               >
                 Complete Profile <Check className="size-4" />
               </button>
+              {onboardingError && (
+                <p className="text-sm font-bold text-red-600">
+                  {onboardingError}
+                </p>
+              )}
             </div>
           )}
         </div>

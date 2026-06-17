@@ -1,12 +1,16 @@
 "use client";
 
-import { ClerkProvider, useAuth, useUser } from "@clerk/nextjs";
+import { ClerkProvider, useAuth as useClerkAuth, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
+import {
+  ConvexProvider,
+  ConvexProviderWithAuth,
+  ConvexReactClient,
+  useConvexAuth,
+} from "convex/react";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { createContext, useContext, useState } from "react";
 import { shouldAllowConvexClient } from "@/lib/auth-runtime";
 
@@ -33,6 +37,8 @@ const defaultAuthState: AuthState = {
 
 const AuthStateContext = createContext<AuthState>(defaultAuthState);
 const ClerkUserContext = createContext<OptionalClerkUser | null>(null);
+const clerkJwtTemplate =
+  process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE ?? "convex-hackathon";
 
 export function isClerkConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
@@ -45,6 +51,27 @@ function canUseConvexClient() {
   });
 }
 
+function useConvexClerkAuth() {
+  const { getToken, isLoaded, isSignedIn } = useClerkAuth();
+  const fetchAccessToken = useCallback(
+    ({ forceRefreshToken }: { forceRefreshToken: boolean }) =>
+      getToken({
+        skipCache: forceRefreshToken,
+        template: clerkJwtTemplate,
+      }).catch(() => null),
+    [getToken],
+  );
+
+  return useMemo(
+    () => ({
+      fetchAccessToken,
+      isAuthenticated: Boolean(isSignedIn),
+      isLoading: !isLoaded,
+    }),
+    [fetchAccessToken, isLoaded, isSignedIn],
+  );
+}
+
 function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   const [convex] = useState(() =>
@@ -54,9 +81,9 @@ function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
   if (!convex) return children;
   if (isClerkConfigured()) {
     return (
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+      <ConvexProviderWithAuth client={convex} useAuth={useConvexClerkAuth}>
         {children}
-      </ConvexProviderWithClerk>
+      </ConvexProviderWithAuth>
     );
   }
 
@@ -70,7 +97,7 @@ function ConvexProviderMaybe({ children }: { children: React.ReactNode }) {
 }
 
 function ClerkAuthStateProvider({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useClerkAuth();
   const { user } = useUser();
   const authState = {
     isAuthLoaded: isLoaded,
@@ -88,24 +115,24 @@ function ClerkAuthStateProvider({ children }: { children: React.ReactNode }) {
 }
 
 function OnboardingRedirect({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
-  const user = useOptionalClerkUser();
+  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { isAuthenticated } = useConvexAuth();
   const pathname = usePathname();
   const router = useRouter();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? {} : "skip",
+    isAuthenticated ? {} : "skip",
   );
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
-    if (!user?.id) return;
+    if (!isAuthenticated) return;
     if (pathname === "/onboarding") return;
     if (!onboardingStatus) return;
     if (onboardingStatus.isComplete) return;
 
     router.replace("/onboarding");
-  }, [isLoaded, isSignedIn, onboardingStatus, pathname, router, user?.id]);
+  }, [isAuthenticated, isLoaded, isSignedIn, onboardingStatus, pathname, router]);
 
   return children;
 }
@@ -118,10 +145,10 @@ function OnboardingRedirectMaybe({ children }: { children: React.ReactNode }) {
 
 function OnboardingStatusProvider({ children }: { children: React.ReactNode }) {
   const authState = useContext(AuthStateContext);
-  const user = useOptionalClerkUser();
+  const { isAuthenticated } = useConvexAuth();
   const onboardingStatus = useQuery(
     api.users.getOnboardingStatus,
-    user?.id ? {} : "skip",
+    isAuthenticated ? {} : "skip",
   );
   const nextAuthState = {
     ...authState,
