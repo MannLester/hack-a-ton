@@ -9,7 +9,10 @@
  */
 
 import type * as authIssuer from "../authIssuer.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
+import type * as hackathonImports from "../hackathonImports.js";
+import type * as hackathonScraper from "../hackathonScraper.js";
 import type * as hackathons from "../hackathons.js";
 import type * as leaderboards from "../leaderboards.js";
 import type * as organizers from "../organizers.js";
@@ -28,7 +31,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   authIssuer: typeof authIssuer;
+  crons: typeof crons;
   files: typeof files;
+  hackathonImports: typeof hackathonImports;
+  hackathonScraper: typeof hackathonScraper;
   hackathons: typeof hackathons;
   leaderboards: typeof leaderboards;
   organizers: typeof organizers;
