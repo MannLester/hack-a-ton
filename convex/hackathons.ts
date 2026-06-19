@@ -41,7 +41,13 @@ export type PublicHackathonListing = {
   realOrganizerName?: string;
   sourceName?: string;
   sourceUrl?: string;
+  sourceKey?: string;
+  sourceAdapter?: string;
+  registrationDeadlineAt?: number;
+  eventStartAt?: number;
+  eventEndAt?: number;
   lastVerifiedAt?: number;
+  lastSeenAt?: number;
   coverImageUrl?: string;
   publishedAt?: number;
   updatedAt?: number;
@@ -166,7 +172,13 @@ export function toPublicHackathonListing({
     realOrganizerName: hackathon.realOrganizerName,
     sourceName: hackathon.sourceName,
     sourceUrl: hackathon.sourceUrl,
+    sourceKey: hackathon.sourceKey,
+    sourceAdapter: hackathon.sourceAdapter,
+    registrationDeadlineAt: hackathon.registrationDeadlineAt,
+    eventStartAt: hackathon.eventStartAt,
+    eventEndAt: hackathon.eventEndAt,
     lastVerifiedAt: hackathon.lastVerifiedAt,
+    lastSeenAt: hackathon.lastSeenAt,
     coverImageUrl,
     publishedAt: hackathon.publishedAt,
     updatedAt: hackathon.updatedAt,
@@ -225,11 +237,32 @@ function filterListings(
   });
 }
 
+function isImportedHackathon(hackathon: Doc<"hackathons">) {
+  return Boolean(hackathon.sourceKey || hackathon.sourceAdapter);
+}
+
+function hasTimestampPassed(timestamp: number | undefined, now: number) {
+  return timestamp !== undefined && timestamp < now;
+}
+
+function isImportedHackathonStillJoinable(
+  hackathon: Doc<"hackathons">,
+  now: number,
+) {
+  if (!isImportedHackathon(hackathon)) return true;
+  if (hasTimestampPassed(hackathon.registrationDeadlineAt, now)) return false;
+  if (hasTimestampPassed(hackathon.eventEndAt, now)) return false;
+
+  return true;
+}
+
 export function isParticipantVisibleHackathon(
   hackathon: Doc<"hackathons">,
   now: number,
 ) {
-  if (hackathon.status === "published") return true;
+  if (hackathon.status === "published") {
+    return isImportedHackathonStillJoinable(hackathon, now);
+  }
 
   if (hackathon.status !== "cancelled") return false;
   if (!hackathon.cancellationVisibleUntil) return false;

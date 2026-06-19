@@ -102,7 +102,13 @@ export default defineSchema({
     realOrganizerName: v.optional(v.string()),
     sourceName: v.optional(v.string()),
     sourceUrl: v.optional(v.string()),
+    sourceKey: v.optional(v.string()),
+    sourceAdapter: v.optional(v.string()),
+    registrationDeadlineAt: v.optional(v.number()),
+    eventStartAt: v.optional(v.number()),
+    eventEndAt: v.optional(v.number()),
     lastVerifiedAt: v.optional(v.number()),
+    lastSeenAt: v.optional(v.number()),
     coverImageUrl: v.optional(v.string()),
     coverImageStorageId: v.optional(v.id("_storage")),
     publishedAt: v.optional(v.number()),
@@ -113,10 +119,27 @@ export default defineSchema({
   })
     .index("by_organizer", ["organizerId"])
     .index("by_status", ["status"])
+    .index("by_source_key", ["sourceKey"])
     .searchIndex("search_listing_text", {
       searchField: "summary",
       filterFields: ["status", "setup"],
     }),
+
+  scrapeRuns: defineTable({
+    startedAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("running"),
+      v.literal("succeeded"),
+      v.literal("failed"),
+    ),
+    importedCount: v.number(),
+    updatedCount: v.number(),
+    archivedCount: v.number(),
+    reviewCount: v.number(),
+    rejectedCount: v.number(),
+    errorMessage: v.optional(v.string()),
+  }).index("by_started_at", ["startedAt"]),
 
   savedHackathons: defineTable({
     userId: v.id("users"),

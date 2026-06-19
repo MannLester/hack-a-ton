@@ -17,10 +17,19 @@ const resettableTables = [
   "userBadges",
   "portfolioEntries",
   "listingReviews",
+  "scrapeRuns",
 ] as const;
 
 const adminListerName = "Hack-A-Ton Admin";
 const seedVerifiedAt = 1781654400000;
+
+function getSeedDateStart(year: number, monthIndex: number, day: number) {
+  return Date.UTC(year, monthIndex, day, 0, 0, 0, 0);
+}
+
+function getSeedDateEnd(year: number, monthIndex: number, day: number) {
+  return Date.UTC(year, monthIndex, day, 23, 59, 59, 999);
+}
 
 export function canRunDemoSeedMutation({
   isProduction,
@@ -49,249 +58,112 @@ async function requireDemoSeedAccess(ctx: MutationCtx) {
 
 const demoHackathons = [
   {
-    name: "AI Fest PH 2026 AI Hackathon",
+    name: "Build with Gemini XPRIZE",
     organizer: adminListerName,
-    realOrganizerName: "AI Fest Philippines",
-    sourceName: "AI Fest PH",
-    sourceUrl: "https://aifest.ph/ai-hackathon-2026/",
-    externalRegistrationUrl: "https://aifest.ph/ai-hackathon-2026/",
-    dateLabel: "Aug 3-5, 2026",
-    registrationDeadlineLabel: "See official event page",
-    setup: "Onsite",
-    location: "Iloilo City",
-    region: "Visayas",
-    eligibility: ["Students", "Open category"],
-    teamSize: "Team size on official page",
-    prize: "See official event page",
+    realOrganizerName: "XPRIZE",
+    sourceName: "Devpost",
+    sourceUrl: "https://xprize.devpost.com/",
+    sourceKey: "devpost:29541",
+    sourceAdapter: "devpost",
+    externalRegistrationUrl:
+      "https://xprize.devpost.com/challenges/start_a_submission",
+    dateLabel: "May 19 - Aug 17, 2026",
+    registrationDeadlineLabel: "Submissions close Aug 17, 2026",
+    registrationDeadlineAt: getSeedDateEnd(2026, 7, 17),
+    eventStartAt: getSeedDateStart(2026, 4, 19),
+    eventEndAt: getSeedDateEnd(2026, 7, 17),
+    setup: "Online",
+    location: "Online",
+    region: "Philippines-wide",
+    eligibility: ["Remote builders"],
+    teamSize: "See official page",
+    prize: "USD 2,000,000",
     difficulty: "Open",
     interested: 348,
     lftCount: 62,
     summary:
-      "AI Fest PH's hackathon invites participants to build AI-enabled solutions to real-world problems.",
+      "Build AI-powered projects for education, productivity, and real-world impact in an open online Devpost challenge.",
   },
   {
-    name: "Build the Future of Finance Hackathon",
+    name: "H0: Hack the Zero Stack with Vercel v0 and AWS Databases",
     organizer: adminListerName,
-    realOrganizerName: "Stellar Philippines and Rise In",
-    sourceName: "Rise In",
-    sourceUrl:
-      "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
+    realOrganizerName: "Amazon",
+    sourceName: "Devpost",
+    sourceUrl: "https://h01.devpost.com/",
+    sourceKey: "devpost:29812",
+    sourceAdapter: "devpost",
     externalRegistrationUrl:
-      "https://www.risein.com/programs/build-on-stellar-philippines-hackathon",
-    dateLabel: "May 18-24, 2026",
-    registrationDeadlineLabel: "Registration closed",
+      "https://h01.devpost.com/challenges/start_a_submission",
+    dateLabel: "May 27 - Jun 29, 2026",
+    registrationDeadlineLabel: "Submissions close Jun 29, 2026",
+    registrationDeadlineAt: getSeedDateEnd(2026, 5, 29),
+    eventStartAt: getSeedDateStart(2026, 4, 27),
+    eventEndAt: getSeedDateEnd(2026, 5, 29),
     setup: "Online",
-    location: "Philippines-wide",
+    location: "Online",
     region: "Philippines-wide",
-    eligibility: ["Developers", "Founders", "Student builders"],
-    teamSize: "1-5",
-    prize: "PHP 60k pool",
+    eligibility: ["Remote builders"],
+    teamSize: "See official page",
+    prize: "USD 80,000",
     difficulty: "Open",
     interested: 221,
     lftCount: 41,
     summary:
-      "A Stellar-focused hackathon for building real-world financial applications and localized finance tools.",
+      "Build web apps using Vercel v0 and AWS databases for an online Devpost challenge.",
   },
   {
-    name: "BrAPI Los Banos Hackathon 2025",
+    name: "Global AI Hackathon Series with Qwen Cloud",
     organizer: adminListerName,
-    realOrganizerName: "BrAPI Community",
-    sourceName: "BrAPI",
-    sourceUrl: "https://brapi.org/events/hackathon?id=hackathon-jun-2025",
+    realOrganizerName: "Alibaba Cloud",
+    sourceName: "Devpost",
+    sourceUrl: "https://qwencloud-hackathon.devpost.com/",
+    sourceKey: "devpost:29966",
+    sourceAdapter: "devpost",
     externalRegistrationUrl:
-      "https://brapi.org/events/hackathon?id=hackathon-jun-2025",
-    dateLabel: "Jun 2-6, 2025",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Los Banos, Laguna",
-    region: "Luzon",
-    eligibility: ["BrAPI community", "Developers", "Researchers"],
-    teamSize: "Open collaboration",
-    prize: "Community build week",
+      "https://qwencloud-hackathon.devpost.com/challenges/start_a_submission",
+    dateLabel: "May 26 - Jul 09, 2026",
+    registrationDeadlineLabel: "Submissions close Jul 09, 2026",
+    registrationDeadlineAt: getSeedDateEnd(2026, 6, 9),
+    eventStartAt: getSeedDateStart(2026, 4, 26),
+    eventEndAt: getSeedDateEnd(2026, 6, 9),
+    setup: "Online",
+    location: "Online",
+    region: "Philippines-wide",
+    eligibility: ["Remote builders"],
+    teamSize: "See official page",
+    prize: "USD 45,000",
     difficulty: "Open",
     interested: 156,
     lftCount: 29,
     summary:
-      "A BrAPI community hackathon at IRRI focused on code, prototypes, and crop-data standards collaboration.",
+      "Create AI products with Qwen Cloud in a remote Devpost challenge focused on AI, design, and productivity.",
   },
   {
-    name: "InnOlympics 2025: GDSC PLM Hackathon",
+    name: "Slack Agent Builder Challenge",
     organizer: adminListerName,
-    realOrganizerName: "Google Developer Groups on Campus PLM",
+    realOrganizerName: "Salesforce",
     sourceName: "Devpost",
-    sourceUrl: "https://innolympics-2025-gdsc-plm.devpost.com/",
-    externalRegistrationUrl: "https://innolympics-2025-gdsc-plm.devpost.com/",
-    dateLabel: "Jan 11-12, 2025",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Makati, Metro Manila",
-    region: "Luzon",
-    eligibility: ["College students", "Confirmed registered participants"],
-    teamSize: "3-4",
-    prize: "USD 680 in prizes",
-    difficulty: "Beginner",
+    sourceUrl: "https://slackhack.devpost.com/",
+    sourceKey: "devpost:29843",
+    sourceAdapter: "devpost",
+    externalRegistrationUrl:
+      "https://slackhack.devpost.com/challenges/start_a_submission",
+    dateLabel: "May 20 - Jul 13, 2026",
+    registrationDeadlineLabel: "Submissions close Jul 13, 2026",
+    registrationDeadlineAt: getSeedDateEnd(2026, 6, 13),
+    eventStartAt: getSeedDateStart(2026, 4, 20),
+    eventEndAt: getSeedDateEnd(2026, 6, 13),
+    setup: "Online",
+    location: "Online",
+    region: "Philippines-wide",
+    eligibility: ["Remote builders"],
+    teamSize: "See official page",
+    prize: "USD 42,000",
+    difficulty: "Open",
     interested: 184,
     lftCount: 53,
     summary:
-      "A student hackathon challenging teams to build solutions aligned with the UN Sustainable Development Goals.",
-  },
-  {
-    name: "Hack the Future: Technology for a Better World",
-    organizer: adminListerName,
-    realOrganizerName: "Hyperparameter",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl:
-      "https://ph.allhackathons.com/hackathon/hack-the-future-technology-for-a-better-world/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/hack-the-future-technology-for-a-better-world/",
-    dateLabel: "Nov 22, 2024",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Makati, Metro Manila",
-    region: "Luzon",
-    eligibility: ["Coders", "Designers", "Problem solvers"],
-    teamSize: "Team size on source page",
-    prize: "No listed prize",
-    difficulty: "Beginner",
-    interested: 97,
-    lftCount: 18,
-    summary:
-      "A Makati hackathon focused on collaborative technology solutions for social impact.",
-  },
-  {
-    name: "Xircus Draper Hackathon at Manila",
-    organizer: adminListerName,
-    realOrganizerName: "Xircus Web3 Protocol",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl:
-      "https://ph.allhackathons.com/hackathon/xircus-draper-hackathon-manila/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/xircus-draper-hackathon-manila/",
-    dateLabel: "Mar 31-Apr 2, 2023",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Makati, Metro Manila",
-    region: "Luzon",
-    eligibility: ["No-code builders", "Low-code builders", "Web3 builders"],
-    teamSize: "1-4",
-    prize: "USD 2k in prizes",
-    difficulty: "Beginner",
-    interested: 88,
-    lftCount: 17,
-    summary:
-      "An in-person Web3 dApp builder hackathon hosted with Draper Startup House in Manila.",
-  },
-  {
-    name: "ADB-AIM Hackathon 2020: Shaping the New Normal",
-    organizer: adminListerName,
-    realOrganizerName: "Asian Development Bank and Asian Institute of Management",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl:
-      "https://ph.allhackathons.com/hackathon/adb-aim-hackathon-2020-shaping-the-new-normal-3/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/adb-aim-hackathon-2020-shaping-the-new-normal-3/",
-    dateLabel: "Jun 30, 2020",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Manila",
-    region: "Luzon",
-    eligibility: ["Students", "Professionals", "General public"],
-    teamSize: "Team size on source page",
-    prize: "USD 10k pilot funding",
-    difficulty: "Open",
-    interested: 132,
-    lftCount: 24,
-    summary:
-      "A post-COVID recovery hackathon for solutions supporting economic activity in the new normal.",
-  },
-  {
-    name: "Global Game Jam 2020: DLSU Laguna Campus Chill Space",
-    organizer: adminListerName,
-    realOrganizerName: "Global Game Jam local organizers",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl:
-      "https://ph.allhackathons.com/hackathon/global-game-jam-2020-dlsu-laguna-campus-chill-space/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/global-game-jam-2020-dlsu-laguna-campus-chill-space/",
-    dateLabel: "Jan 31-Feb 2, 2020",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Manila",
-    region: "Luzon",
-    eligibility: ["Game developers", "Students", "Artists"],
-    teamSize: "Open collaboration",
-    prize: "Game jam showcase",
-    difficulty: "Open",
-    interested: 119,
-    lftCount: 31,
-    summary:
-      "A Philippine Global Game Jam site where participants collaborated to create games in under 48 hours.",
-  },
-  {
-    name: "DISH 2019",
-    organizer: adminListerName,
-    realOrganizerName: "EOI Digital",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl: "https://ph.allhackathons.com/hackathon/dish-2019/",
-    externalRegistrationUrl: "https://ph.allhackathons.com/hackathon/dish-2019/",
-    dateLabel: "Apr 6-7, 2019",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Makati, Metro Manila",
-    region: "Luzon",
-    eligibility: ["Fintech builders", "Blockchain builders", "Entrepreneurs"],
-    teamSize: "Team size on source page",
-    prize: "See source page",
-    difficulty: "Open",
-    interested: 103,
-    lftCount: 21,
-    summary:
-      "A fintech and blockchain hackathon connected to the Inclusive Prosperity Fintech Summit.",
-  },
-  {
-    name: "U:Hac Manila - Unionbank Hackathon",
-    organizer: adminListerName,
-    realOrganizerName: "EConnext Ideas and Media",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl:
-      "https://ph.allhackathons.com/hackathon/u-hac-manila-unionbank-hackathon/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/u-hac-manila-unionbank-hackathon/",
-    dateLabel: "Aug 27-28, 2016",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Mandaluyong, Metro Manila",
-    region: "Luzon",
-    eligibility: ["College students", "Developers", "Designers"],
-    teamSize: "Team size on source page",
-    prize: "PHP 80k",
-    difficulty: "Open",
-    interested: 115,
-    lftCount: 26,
-    summary:
-      "A UnionBank-themed hackathon for apps and prototypes across fintech, games, VR, IoT, and robotics.",
-  },
-  {
-    name: "1st Masskara Hackathon",
-    organizer: adminListerName,
-    realOrganizerName: "BNeFIT, HyBrain Development Corporation, and Horsepower.ph",
-    sourceName: "All Hackathons Philippines",
-    sourceUrl: "https://ph.allhackathons.com/hackathon/1st-masskara-hackathon/",
-    externalRegistrationUrl:
-      "https://ph.allhackathons.com/hackathon/1st-masskara-hackathon/",
-    dateLabel: "Oct 17-18, 2016",
-    registrationDeadlineLabel: "Registration closed",
-    setup: "Onsite",
-    location: "Bacolod City",
-    region: "Visayas",
-    eligibility: ["Developers", "Healthcare innovators", "IoT builders"],
-    teamSize: "Team size on source page",
-    prize: "Seed funding package",
-    difficulty: "Open",
-    interested: 94,
-    lftCount: 19,
-    summary:
-      "A Bacolod hackathon for IoT, healthcare, and medical tourism technology concepts.",
+      "Build Slack agents and low-code workflows in a beginner-friendly online challenge.",
   },
 ] as const;
 
@@ -310,7 +182,7 @@ const demoParticipants = [
     role: "Frontend + pitch deck",
     stack: ["React", "Figma", "Tailwind"],
     availability: "Weeknights, weekends",
-    goal: "Looking for backend or AI teammate for PH AI Build Weekend.",
+    goal: "Looking for backend or AI teammate for a remote AI hackathon.",
   },
   {
     displayName: "Andre Santos",
@@ -334,30 +206,30 @@ const demoParticipants = [
 
 const demoTeams = [
   {
-    teamName: "AI Iloilo Builders",
+    teamName: "Gemini Builders",
     leadDisplayName: "Mika Reyes",
-    hackathonName: "AI Fest PH 2026 AI Hackathon",
-    goal: "Build an AI assistant for local tourism and public-service discovery.",
+    hackathonName: "Build with Gemini XPRIZE",
+    goal: "Build an AI assistant for learning and public-service discovery.",
     missingRoles: ["AI/ML", "Backend"],
     currentSize: 2,
     targetSize: 4,
     status: "recruiting",
   },
   {
-    teamName: "Peso Rails",
+    teamName: "Zero Stack Crew",
     leadDisplayName: "Andre Santos",
-    hackathonName: "Build the Future of Finance Hackathon",
-    goal: "Prototype low-cost payment workflows for Filipino micro-merchants.",
+    hackathonName: "H0: Hack the Zero Stack with Vercel v0 and AWS Databases",
+    goal: "Prototype a fast full-stack app with Vercel v0 and AWS databases.",
     missingRoles: ["Frontend", "Pitch"],
     currentSize: 2,
     targetSize: 5,
     status: "recruiting",
   },
   {
-    teamName: "Crop Data Crew",
+    teamName: "Qwen Cloud Crew",
     leadDisplayName: "Gia Lim",
-    hackathonName: "BrAPI Los Banos Hackathon 2025",
-    goal: "Design friendlier crop-data import flows for field researchers.",
+    hackathonName: "Global AI Hackathon Series with Qwen Cloud",
+    goal: "Design and build an AI workflow for research teams.",
     missingRoles: ["Data", "Backend"],
     currentSize: 1,
     targetSize: 4,
@@ -561,7 +433,13 @@ async function getOrCreateHackathon(
     realOrganizerName: hackathon.realOrganizerName,
     sourceName: hackathon.sourceName,
     sourceUrl: hackathon.sourceUrl,
+    sourceKey: hackathon.sourceKey,
+    sourceAdapter: hackathon.sourceAdapter,
+    registrationDeadlineAt: hackathon.registrationDeadlineAt,
+    eventStartAt: hackathon.eventStartAt,
+    eventEndAt: hackathon.eventEndAt,
     lastVerifiedAt: seedVerifiedAt,
+    lastSeenAt: seedVerifiedAt,
     publishedAt: Date.now(),
   });
 }
@@ -811,7 +689,7 @@ async function seedDemoDataHandler(
 
     for (const participant of demoParticipants) {
       const userId = createdUserIds.get(participant.displayName);
-      const hackathonId = createdHackathonIds.get("AI Fest PH 2026 AI Hackathon");
+      const hackathonId = createdHackathonIds.get("Build with Gemini XPRIZE");
 
       if (!userId) throw new Error(`Missing participant ${participant.displayName}`);
 
@@ -831,12 +709,12 @@ async function seedDemoDataHandler(
       await seedPortfolioEntry(ctx, juanUserId, entry);
     }
 
-    const savedHackathonId = createdHackathonIds.get("AI Fest PH 2026 AI Hackathon");
+    const savedHackathonId = createdHackathonIds.get("Build with Gemini XPRIZE");
     const interestedHackathonId = createdHackathonIds.get(
-      "Build the Future of Finance Hackathon",
+      "H0: Hack the Zero Stack with Vercel v0 and AWS Databases",
     );
     const lftHackathonId = createdHackathonIds.get(
-      "BrAPI Los Banos Hackathon 2025",
+      "Global AI Hackathon Series with Qwen Cloud",
     );
 
     if (savedHackathonId) await seedSavedHackathon(ctx, juanUserId, savedHackathonId);
